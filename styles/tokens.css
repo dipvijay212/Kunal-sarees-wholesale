@@ -1,0 +1,170 @@
+/*
+ * Kunal Sarees — design tokens (dark identity)
+ *
+ * Palette values are sampled from the official KS logo:
+ *   background charcoal #111416 · ring slate #435156 · glow #7ea3b4 → #e3feff
+ *
+ * The site is dark-first. Components use the semantic tokens (--ks-canvas,
+ * --ks-ink, --ks-line, ...) so the identity can be tuned from this file.
+ * The icy blue is an accent only: focus rings, active states, small details.
+ */
+
+:root {
+  /* Black & charcoal */
+  --ks-black: #0a0c0d;
+  --ks-charcoal-950: #111416;
+  --ks-charcoal-900: #171b1e;
+  --ks-charcoal-800: #1f2528;
+  --ks-charcoal-700: #2a3135;
+  --ks-charcoal-600: #3a4247;
+
+  /* Slate & silver */
+  --ks-slate-500: #57626a;
+  --ks-slate-400: #7d888f;
+  --ks-silver-300: #adb6bb;
+  --ks-silver-200: #cfd5d8;
+  --ks-silver-100: #e4e8ea;
+  --ks-white: #ffffff;
+
+  /* Icy blue accent */
+  --ks-ice-300: #a9cfdd;
+  --ks-ice-400: #7ea3b4;
+  --ks-ice-500: #628a9c;
+
+  /* Status (tuned for dark surfaces) */
+  --ks-success: #7fb89c;
+  --ks-warning: #d4b06a;
+  --ks-danger: #e08b8b;
+
+  /* Semantic */
+  --ks-canvas: var(--ks-charcoal-950); /* page background */
+  --ks-canvas-deep: var(--ks-black); /* footer and contrast bands */
+  --ks-surface: var(--ks-charcoal-900); /* cards, panels, drawers */
+  --ks-surface-raised: var(--ks-charcoal-800);
+  --ks-surface-muted: rgb(255 255 255 / 0.05); /* hover tint on any dark surface */
+  --ks-field: var(--ks-black); /* form control background */
+  --ks-ink: #f3f5f6; /* primary text */
+  --ks-muted: var(--ks-silver-300); /* secondary text */
+  --ks-subtle: var(--ks-slate-400); /* tertiary text, meta */
+  --ks-line: rgb(255 255 255 / 0.08);
+  --ks-line-strong: rgb(255 255 255 / 0.16);
+  --ks-accent: var(--ks-ice-400);
+  --ks-accent-strong: var(--ks-ice-300); /* accent text on dark */
+  --ks-accent-soft: rgb(126 163 180 / 0.12);
+  --ks-focus: var(--ks-ice-300);
+  --ks-overlay: rgb(5 6 7 / 0.74);
+
+  /* Shape */
+  --ks-radius-xs: 2px;
+  --ks-radius-sm: 3px;
+  --ks-radius-md: 4px;
+  --ks-radius-lg: 8px;
+
+  /* Elevation — used sparingly; borders do most of the separation */
+  --ks-shadow-soft: 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --ks-shadow-lift: 0 24px 64px -24px rgb(0 0 0 / 0.75);
+
+  /* Motion */
+  --ks-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ks-duration-fast: 160ms;
+  --ks-duration: 280ms;
+  --ks-duration-slow: 600ms;
+
+  /* Layout */
+  --ks-container: 82.5rem; /* 1320px */
+  --ks-container-narrow: 55rem; /* 880px */
+  --ks-container-wide: 100rem; /* 1600px */
+  --ks-gutter: 1rem;
+  --ks-section-y: 4rem;
+  --ks-header-height: 4rem;
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --ks-gutter: 1.5rem;
+    --ks-section-y: 5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --ks-gutter: 2rem;
+    --ks-section-y: 7rem;
+    --ks-header-height: 4.5rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  :root {
+    --ks-gutter: 2.5rem;
+    --ks-header-height: 5rem;
+  }
+}
+
+/*
+ * Remove Tailwind's default colour palette so only brand colours are available.
+ * This keeps the UI from drifting toward generic, colourful ecommerce styling.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+}
+
+/* Expose tokens to Tailwind utilities (bg-canvas, text-muted, border-line, ...) */
+@theme inline {
+  --color-black: var(--ks-black);
+  --color-charcoal-950: var(--ks-charcoal-950);
+  --color-charcoal-900: var(--ks-charcoal-900);
+  --color-charcoal-800: var(--ks-charcoal-800);
+  --color-charcoal-700: var(--ks-charcoal-700);
+  --color-charcoal-600: var(--ks-charcoal-600);
+  --color-slate-500: var(--ks-slate-500);
+  --color-slate-400: var(--ks-slate-400);
+  --color-silver-300: var(--ks-silver-300);
+  --color-silver-200: var(--ks-silver-200);
+  --color-silver-100: var(--ks-silver-100);
+  --color-ice-300: var(--ks-ice-300);
+  --color-ice-400: var(--ks-ice-400);
+  --color-ice-500: var(--ks-ice-500);
+  --color-success: var(--ks-success);
+  --color-warning: var(--ks-warning);
+  --color-danger: var(--ks-danger);
+
+  --color-canvas: var(--ks-canvas);
+  --color-canvas-deep: var(--ks-canvas-deep);
+  --color-surface: var(--ks-surface);
+  --color-surface-raised: var(--ks-surface-raised);
+  --color-surface-muted: var(--ks-surface-muted);
+  --color-field: var(--ks-field);
+  --color-ink: var(--ks-ink);
+  --color-muted: var(--ks-muted);
+  --color-subtle: var(--ks-subtle);
+  --color-line: var(--ks-line);
+  --color-line-strong: var(--ks-line-strong);
+  --color-accent: var(--ks-accent);
+  --color-accent-strong: var(--ks-accent-strong);
+  --color-accent-soft: var(--ks-accent-soft);
+
+  --font-display: var(--font-ks-display), "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-ks-sans), "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-xs: var(--ks-radius-xs);
+  --radius-sm: var(--ks-radius-sm);
+  --radius-md: var(--ks-radius-md);
+  --radius-lg: var(--ks-radius-lg);
+
+  --shadow-soft: var(--ks-shadow-soft);
+  --shadow-lift: var(--ks-shadow-lift);
+
+  --ease-luxe: var(--ks-ease);
+}
+
+/* Responsive breakpoints (mobile-first). Tailwind defaults plus `xs`. */
+@theme {
+  --breakpoint-xs: 30rem; /*  480px — large phones */
+  --breakpoint-sm: 40rem; /*  640px — small tablets */
+  --breakpoint-md: 48rem; /*  768px — tablets */
+  --breakpoint-lg: 64rem; /* 1024px — laptops */
+  --breakpoint-xl: 80rem; /* 1280px — desktops */
+  --breakpoint-2xl: 96rem; /* 1536px — large desktops */
+}

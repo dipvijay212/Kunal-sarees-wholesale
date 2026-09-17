@@ -1,0 +1,74 @@
+/*
+ * Layout utilities. Declared with @utility so they work with Tailwind
+ * variants, e.g. `lg:container-narrow`.
+ */
+
+/* Container system ---------------------------------------------------- */
+
+@utility container-page {
+  width: 100%;
+  max-width: calc(var(--ks-container) + var(--ks-gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--ks-gutter);
+}
+
+@utility container-narrow {
+  width: 100%;
+  max-width: calc(var(--ks-container-narrow) + var(--ks-gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--ks-gutter);
+}
+
+@utility container-wide {
+  width: 100%;
+  max-width: calc(var(--ks-container-wide) + var(--ks-gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--ks-gutter);
+}
+
+/* Vertical rhythm between page sections */
+@utility section-y {
+  padding-block: var(--ks-section-y);
+}
+
+@utility section-y-sm {
+  padding-block: calc(var(--ks-section-y) * 0.6);
+}
+
+/* Header ---------------------------------------------------------------- */
+
+@utility h-header {
+  height: var(--ks-header-height);
+}
+
+/* Pulls a full-bleed hero up beneath the transparent header */
+@utility under-header {
+  margin-top: calc(var(--ks-header-height) * -1);
+  padding-top: var(--ks-header-height);
+}
+
+/* Offset for sticky elements that sit below the header */
+@utility top-header {
+  top: calc(var(--ks-header-height) + 1.5rem);
+}
+
+/* Offset in-page anchor targets so the sticky header does not cover them */
+@utility scroll-mt-header {
+  scroll-margin-top: calc(var(--ks-header-height) + 1.5rem);
+}
+
+/* Misc ------------------------------------------------------------------ */
+
+/* Hide scrollbars on horizontally scrolling rails while keeping them scrollable */
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Keep fixed UI clear of the iOS home indicator */
+@utility safe-bottom {
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
