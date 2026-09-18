@@ -122,21 +122,21 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
 
         <div className="flex flex-col lg:col-span-5">
           <div className="flex flex-wrap gap-2">
-            {product.newArrival ? <Badge variant="accent">New arrival</Badge> : null}
+            {product.newArrival ? <Badge variant="accent">NEW</Badge> : null}
             {product.featured ? <Badge variant="solid">Featured</Badge> : null}
             <Badge variant="outline">{product.fabric}</Badge>
             <Badge variant="outline">{product.design}</Badge>
           </div>
 
-          <h1 className="type-h1 mt-5 text-ink">{product.name}</h1>
-          <p className="mt-3 text-sm text-muted">
+          <h1 className="type-h1 mt-4 text-ink font-serif font-normal">{product.name}</h1>
+          <p className="mt-2.5 text-sm text-muted">
             Design code <span className="font-semibold text-ink">{product.productCode}</span>
             {collection ? (
               <>
                 {" · "}
                 <Link
                   href={`/collections/${collection.slug}`}
-                  className="underline decoration-line-strong underline-offset-4 transition-colors hover:text-ink hover:decoration-ink"
+                  className="underline decoration-line-strong underline-offset-4 transition-colors hover:text-maroon hover:decoration-maroon"
                 >
                   {collection.name}
                 </Link>
@@ -144,8 +144,8 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
             ) : null}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-y border-line py-6">
-            <p className="type-price text-3xl text-ink">{formatPrice(product.price)}</p>
+          <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-y border-line py-5">
+            <p className="type-price text-3xl font-semibold text-maroon">{formatPrice(product.price)}</p>
             <p className="text-sm text-muted">per piece · wholesale, excl. GST</p>
           </div>
 

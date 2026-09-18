@@ -17,11 +17,11 @@ export function BrandStatement() {
           className="size-20 rounded-full lg:size-24"
         />
         <blockquote className="mt-10">
-          <p className="font-display text-[1.75rem] leading-[1.2] font-normal text-ink sm:text-4xl lg:text-[2.75rem]">
-            “We choose every saree the way a boutique owner would — by hand, by eye, and with{" "}
-            <em className="text-silver-300">their customer</em> in mind.”
+          <p className="font-serif text-[1.75rem] leading-[1.25] font-normal text-ink sm:text-4xl lg:text-[2.5rem]">
+            “We choose every saree the way a boutique owner would — by hand, by weave, and with{" "}
+            <em className="text-accent-strong not-italic font-semibold">their customer</em> in mind.”
           </p>
-          <footer className="type-eyebrow mt-8 text-muted">The {siteConfig.name} team</footer>
+          <footer className="type-eyebrow mt-8 text-muted uppercase tracking-widest">The {siteConfig.name} Wholesale Desk</footer>
         </blockquote>
       </Container>
     </section>

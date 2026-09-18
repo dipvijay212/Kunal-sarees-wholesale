@@ -35,17 +35,17 @@ export function SectionHeading({
         className,
       )}
     >
-      <div className={cn("flex min-w-0 max-w-2xl flex-col gap-4", isCentered && "items-center")}>
+      <div className={cn("flex min-w-0 max-w-2xl flex-col gap-3", isCentered && "items-center")}>
         {eyebrow ? (
-          <p className="type-eyebrow flex items-center gap-3 text-accent-strong">
-            <span aria-hidden="true" className="h-px w-8 shrink-0 bg-accent" />
+          <p className="type-eyebrow flex items-center gap-2.5 text-gold font-medium text-xs tracking-[0.15em] uppercase">
+            <span aria-hidden="true" className="h-px w-6 shrink-0 bg-gold" />
             {eyebrow}
           </p>
         ) : null}
-        <Heading id={id} className={cn(size === "lg" ? "type-h2" : "type-h3", "text-ink")}>
+        <Heading id={id} className={cn(size === "lg" ? "type-h2" : "type-h3", "text-ink font-serif font-normal")}>
           {title}
         </Heading>
-        {description ? <p className="type-body max-w-xl text-muted">{description}</p> : null}
+        {description ? <p className="type-lead max-w-xl text-muted font-sans mt-0.5">{description}</p> : null}
       </div>
 
       {action ? (

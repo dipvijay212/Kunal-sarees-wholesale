@@ -550,7 +550,7 @@ const seeds: ProductSeed[] = [
     newArrival: false,
     status: "active",
     createdAt: "2026-07-02",
-    photoIds: ["1774437897549-b18aa06ed909", "1588140686379-1b76a52103dc", "1630920501459-f3e99320c4a5"],
+    photoIds: ["1600312914724-0c318dd0eb29", "1588140686379-1b76a52103dc", "1630920501459-f3e99320c4a5"],
   },
   {
     id: "prd-1020",
@@ -754,7 +754,7 @@ const seeds: ProductSeed[] = [
     newArrival: true,
     status: "active",
     createdAt: "2026-08-24",
-    photoIds: ["1774437790863-88a80bca5b29", "1771074153149-6b32d0b420bc", "1695131023163-1e04e1345a91"],
+    photoIds: ["1610030469983-98e550d6193c", "1771074153149-6b32d0b420bc", "1695131023163-1e04e1345a91"],
   },
 
   /* ----------------------------- Bridal Sarees ---------------------------- */
@@ -858,7 +858,7 @@ const seeds: ProductSeed[] = [
     newArrival: false,
     status: "draft",
     createdAt: "2026-09-15",
-    photoIds: ["1774437668001-8d0a23f3d595", "1619043518800-7f14be467dca", "1759738096144-b43206226765"],
+    photoIds: ["1679006831648-7c9ea12e5807", "1619043518800-7f14be467dca", "1759738096144-b43206226765"],
   },
   {
     id: "prd-1032",

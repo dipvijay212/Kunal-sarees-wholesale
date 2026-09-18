@@ -55,10 +55,10 @@ export function PageHeader({ title, eyebrow, description, breadcrumbs, children,
     <header className={cn("border-b border-line", className)}>
       <Container className="pt-6 pb-12 lg:pt-8 lg:pb-16">
         {breadcrumbs ? <Breadcrumbs items={breadcrumbs} /> : null}
-        <div className={cn("flex max-w-3xl flex-col gap-4", breadcrumbs && "mt-10 lg:mt-14")}>
-          {eyebrow ? <p className="type-eyebrow text-accent-strong">{eyebrow}</p> : null}
-          <h1 className="type-h1 text-ink">{title}</h1>
-          {description ? <p className="type-lead text-muted">{description}</p> : null}
+        <div className={cn("flex max-w-3xl flex-col gap-3", breadcrumbs && "mt-8 lg:mt-10")}>
+          {eyebrow ? <p className="type-eyebrow text-gold font-medium tracking-[0.15em] uppercase">{eyebrow}</p> : null}
+          <h1 className="type-h1 text-ink font-serif font-normal">{title}</h1>
+          {description ? <p className="type-lead text-muted font-sans">{description}</p> : null}
         </div>
         {children}
       </Container>

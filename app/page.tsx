@@ -1,6 +1,4 @@
 import { CollectionCard } from "@/components/collection/CollectionCard";
-import { AboutKunalSarees } from "@/components/home/AboutKunalSarees";
-import { FeaturedBanner } from "@/components/home/FeaturedBanner";
 import { HomeHero } from "@/components/home/HomeHero";
 import { OrderingProcess } from "@/components/home/OrderingProcess";
 import { WholesaleCta } from "@/components/home/WholesaleCta";
@@ -36,12 +34,12 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   const products = getProducts();
-  const featuredCollections = getFeaturedCollections(4);
+  const featuredCollections = getFeaturedCollections(6);
   const newArrivals = getNewArrivals(6);
   const lowestMoq = Math.min(...products.map((product) => product.moq));
 
   const stats = [
-    { value: formatNumber(getCategories().length), label: "Categories" },
+    { value: formatNumber(getCategories().length), label: "Collections" },
     { value: `${formatNumber(products.length)}+`, label: "Designs in stock" },
     { value: formatNumber(lowestMoq), label: lowestMoq === 1 ? "Piece minimum" : "Pieces minimum" },
   ];
@@ -80,17 +78,17 @@ export default function HomePage() {
       {/* 2. TRUST / BUSINESS HIGHLIGHTS */}
       <WholesaleHighlights highlights={wholesaleHighlights} />
 
-      {/* 3. FEATURED COLLECTIONS */}
-      <section aria-labelledby="collections-heading" className="section-y">
+      {/* 3. FEATURED COLLECTIONS (6 COLLECTIONS) */}
+      <section aria-labelledby="collections-heading" className="section-y border-t border-line bg-canvas">
         <Container>
           <SectionHeading
             id="collections-heading"
             eyebrow="Curated Edits"
-            title="Featured Collections"
-            description="Explore our handpicked collection edits tailored for boutique stockists and retailers."
+            title="Wholesale Saree Collections"
+            description="Handpicked saree edits tailored for boutiques, retail showrooms and wholesale distributors."
             action={{ label: "All collections", href: "/collections" }}
           />
-          <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4 lg:gap-5">
+          <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
             {featuredCollections.map((collection) => (
               <li key={collection.id}>
                 <CollectionCard collection={collection} />
@@ -101,33 +99,28 @@ export default function HomePage() {
       </section>
 
       {/* 4. NEW ARRIVALS (6 Products) */}
-      <section aria-labelledby="new-arrivals-heading" className="section-y border-t border-line">
+      <section aria-labelledby="new-arrivals-heading" className="section-y border-t border-line bg-canvas">
         <Container>
           <SectionHeading
             id="new-arrivals-heading"
             eyebrow="Fresh Weaves"
-            title="New Arrivals"
+            title="New Wholesale Arrivals"
             description="The latest saree designs added to our wholesale catalogue this season."
             action={{ label: "View all new arrivals", href: "/new-arrivals" }}
           />
-          <ProductGrid products={newArrivals} className="mt-12 lg:mt-16" />
+          <ProductGrid products={newArrivals} className="mt-10 lg:mt-12" />
         </Container>
       </section>
 
-      {/* 5. WHY KUNAL SAREES */}
-      <WhyKunalSarees />
-
-      {/* 6. WHOLESALE PROCESS */}
+      {/* 5. WHOLESALE PROCESS */}
       <OrderingProcess steps={orderingSteps} />
 
-      {/* 7. FEATURED BANNER */}
-      <FeaturedBanner />
+      {/* 6. WHY KUNAL SAREES */}
+      <WhyKunalSarees />
 
-      {/* 8. ABOUT KUNAL SAREES */}
-      <AboutKunalSarees />
-
-      {/* 9. WHATSAPP CTA */}
+      {/* 7. WHOLESALE CTA */}
       <WholesaleCta />
     </>
   );
 }
+

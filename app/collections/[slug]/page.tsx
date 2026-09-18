@@ -43,7 +43,7 @@ export default async function CollectionPage({ params }: PageProps<"/collections
   return (
     <>
       {/* COLLECTION HERO */}
-      <header className="relative isolate overflow-hidden border-b border-line bg-charcoal-950 text-white">
+      <header className="relative isolate overflow-hidden border-b border-line bg-accent-deep text-canvas">
         <div aria-hidden="true" className="absolute inset-0 -z-10">
           <RemoteImage
             src={collection.image.url}
@@ -51,9 +51,9 @@ export default async function CollectionPage({ params }: PageProps<"/collections
             fill
             loading="eager"
             sizes="100vw"
-            className="object-cover opacity-35"
+            className="object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-linear-to-r from-charcoal-950 via-charcoal-950/85 to-charcoal-950/30" />
+          <div className="absolute inset-0 bg-linear-to-r from-accent-deep via-accent-deep/90 to-accent-deep/40" />
         </div>
         <div className="container-page pt-6 pb-16 lg:pt-8 lg:pb-24">
           <Breadcrumbs
@@ -63,16 +63,16 @@ export default async function CollectionPage({ params }: PageProps<"/collections
               { label: collection.name },
             ]}
           />
-          <div className="mt-12 max-w-2xl lg:mt-16">
-            <p className="type-eyebrow text-ice-300">{collection.tagline}</p>
-            <h1 className="type-h1 mt-4 text-white">{collection.name}</h1>
-            <p className="type-lead mt-5 text-silver-200">{collection.description}</p>
+          <div className="mt-10 max-w-2xl lg:mt-14">
+            <p className="type-eyebrow text-gold-light uppercase tracking-[0.15em] font-medium">{collection.tagline}</p>
+            <h1 className="type-h1 mt-3 text-cream font-serif font-normal">{collection.name}</h1>
+            <p className="type-lead mt-4 text-cream/90 font-sans">{collection.description}</p>
             {prices.length > 0 ? (
-              <div className="mt-8 flex flex-wrap items-center gap-4 text-sm text-silver-200">
-                <span className="rounded-full border border-white/20 bg-white/10 px-3.5 py-1 backdrop-blur-xs font-medium text-white">
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-cream/90">
+                <span className="rounded-xs border border-white/20 bg-white/10 px-3.5 py-1 backdrop-blur-xs font-medium text-cream text-xs uppercase tracking-wider">
                   {collectionProducts.length} {collectionProducts.length === 1 ? "design" : "designs"}
                 </span>
-                <span>
+                <span className="font-semibold text-gold-light">
                   {formatPrice(Math.min(...prices))} – {formatPrice(Math.max(...prices))} / piece
                 </span>
               </div>

@@ -3,37 +3,38 @@ import type { Highlight, ProcessStep } from "@/types";
 export const wholesaleHighlights: Highlight[] = [
   {
     title: "Premium Quality",
-    description: "Every saree is hand-inspected for authentic weave, drape, zari finish, and quality before dispatch.",
+    description: "Finest fabrics & craftsmanship",
   },
   {
     title: "Wholesale Pricing",
-    description: "Direct manufacturer per-piece rates published on every design so retailers can plan margins easily.",
+    description: "Best rates for bulk buyers",
   },
   {
     title: "Wide Collection",
-    description: "Over 200+ curated designs spanning Banarasi, Kanjivaram, Organza, Chiffon, and Handloom silks.",
+    description: "Traditional & contemporary designs",
   },
   {
     title: "Direct WhatsApp Ordering",
-    description: "Connect directly with our Surat wholesale desk on WhatsApp for instant stock checks and order booking.",
+    description: "Quick and easy ordering",
   },
 ];
 
 export const orderingSteps: ProcessStep[] = [
   {
-    title: "Browse Collection",
-    description: "Explore our curated catalogue of Banarasi, Kanjivaram, and festive saree collections.",
+    title: "Browse Collections",
+    description: "Explore our curated wholesale saree catalogue across Banarasi, Silk, Organza and Bridal edits.",
   },
   {
-    title: "Add Products",
-    description: "Shortlist your favourite saree designs and choose set quantities for your store.",
+    title: "Select Sarees",
+    description: "Shortlist your chosen saree designs and set colorway quantities to meet your store's MOQ.",
   },
   {
-    title: "Enter Details",
-    description: "Provide your boutique or business name, delivery city, and contact preferences.",
+    title: "Enter Your Business Details",
+    description: "Provide your boutique or shop name, city, state, and contact details in our simple wholesale form.",
   },
   {
-    title: "Send Order on WhatsApp",
-    description: "Share your complete order list directly with our team on WhatsApp with a single tap.",
+    title: "Send Your Order on WhatsApp",
+    description: "Send your complete wholesale order request directly to Kunal Sarees on WhatsApp with one click.",
   },
 ];
+

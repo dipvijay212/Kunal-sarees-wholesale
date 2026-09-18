@@ -29,13 +29,19 @@ export function ProductCard({
   showAddToOrder = true,
 }: ProductCardProps) {
   const [primaryImage, secondaryImage] = product.images;
-  const { min, step } = getQuantityRules(product);
+  const { min } = getQuantityRules(product);
   const availability = getAvailability(product);
   const href = `/products/${product.slug}`;
 
   return (
-    <article className={cn("group relative flex flex-col", className)}>
-      <div className="media-frame aspect-[3/4] rounded-xs">
+    <article
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-xs border border-line bg-surface p-3 sm:p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-lift",
+        className,
+      )}
+    >
+      {/* Image Frame */}
+      <div className="media-frame relative aspect-[4/5] overflow-hidden rounded-xs bg-cream-warm">
         {primaryImage ? (
           <RemoteImage
             src={primaryImage.url}
@@ -43,7 +49,7 @@ export function ProductCard({
             fill
             sizes={sizes}
             loading={eager ? "eager" : "lazy"}
-            className="object-cover group-hover:scale-[1.03]"
+            className="object-cover transition-transform duration-700 ease-luxe group-hover:scale-105"
           />
         ) : null}
         {secondaryImage ? (
@@ -52,46 +58,66 @@ export function ProductCard({
             alt=""
             fill
             sizes={sizes}
-            className="object-cover opacity-0 group-hover:scale-[1.03] group-hover:opacity-100"
+            className="object-cover opacity-0 transition-opacity duration-500 ease-luxe group-hover:scale-105 group-hover:opacity-100"
           />
         ) : null}
 
-        <div className="pointer-events-none absolute top-3 left-3 flex flex-col items-start gap-1.5">
-          {product.newArrival ? <Badge variant="neutral">New</Badge> : null}
+        {/* Badges */}
+        <div className="pointer-events-none absolute top-3.5 left-3.5 flex flex-col items-start gap-1.5 z-10">
+          {product.newArrival ? <Badge variant="accent">NEW</Badge> : null}
           {product.featured ? <Badge variant="solid">Featured</Badge> : null}
           {availability === "out-of-stock" ? <Badge variant="neutral">Made to order</Badge> : null}
-          {availability === "low-stock" ? <Badge variant="accent">Few left</Badge> : null}
         </div>
 
-        <WishlistButton productId={product.id} productName={product.name} className="absolute top-3 right-3 z-10" />
+        {/* Wishlist Icon */}
+        <WishlistButton
+          productId={product.id}
+          productName={product.name}
+          className="absolute top-3.5 right-3.5 z-20"
+        />
       </div>
 
-      <div className="mt-4 flex flex-1 flex-col gap-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <p className="type-eyebrow text-[0.625rem] text-subtle">{product.fabric}</p>
-          <span className="text-[0.6875rem] font-mono font-medium text-muted">{product.productCode}</span>
+      {/* Product Information */}
+      <div className="mt-3.5 flex flex-1 flex-col justify-between">
+        <div>
+          {/* Category & Product Code Row */}
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs">
+            <span className="font-semibold text-gold tracking-[0.08em] uppercase text-xs">
+              {product.fabric}
+            </span>
+            <span className="font-sans font-medium text-muted text-xs">
+              {product.productCode}
+            </span>
+          </div>
+
+          {/* Product Name */}
+          <h3 className="font-display text-lg sm:text-[1.3125rem] font-medium leading-snug text-ink mt-1.5 transition-colors group-hover:text-maroon line-clamp-2 min-h-[2.7em]">
+            <Link href={href} className="focus:outline-none">
+              {product.name}
+            </Link>
+          </h3>
         </div>
-        <h3 className="font-display text-lg leading-snug text-ink sm:text-xl">
-          <Link
-            href={href}
-            className="transition-colors after:absolute after:inset-0 after:content-[''] hover:text-accent-strong"
-          >
-            {product.name}
-          </Link>
-        </h3>
-        <div className="mt-auto pt-1">
-          <p className="flex flex-wrap items-baseline gap-x-1.5">
-            <span className="type-price text-ink">{formatPrice(product.price)}</span>
-            <span className="text-xs text-muted">/ piece</span>
-          </p>
-          <p className="type-caption mt-0.5 text-muted">
-            MOQ {min} {min === 1 ? "piece" : "pieces"}
-            {step > 1 ? ` · Sets of ${step}` : ""}
-          </p>
-          <StockStatusLabel product={product} className="mt-2 text-xs" />
+
+        {/* Commercial & Stock Information */}
+        <div className="mt-3 pt-3 border-t border-line/60">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+            <p className="flex items-baseline gap-1.5">
+              <span className="type-price text-xl sm:text-[1.375rem] font-semibold text-maroon">
+                {formatPrice(product.price)}
+              </span>
+              <span className="text-sm font-normal text-muted">/ Piece</span>
+            </p>
+            <span className="text-sm font-medium text-muted whitespace-nowrap">
+              MOQ: {min} {min === 1 ? "Piece" : "Pieces"}
+            </span>
+          </div>
+
+          <StockStatusLabel product={product} className="mt-2" />
+
+          {showAddToOrder ? <AddToOrderButton product={product} className="mt-3.5" /> : null}
         </div>
-        {showAddToOrder ? <AddToOrderButton product={product} /> : null}
       </div>
     </article>
   );
 }
+

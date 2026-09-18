@@ -66,7 +66,7 @@ function FilterChipGroup<T extends string = string>({ legend, options, selected,
               onClick={() => onSelect(isActive ? null : option.value)}
             >
               {option.label}
-              <span className={cn("text-xs", isActive ? "text-silver-300" : "text-subtle")}>{option.count}</span>
+              <span className={cn("text-xs", isActive ? "text-accent-light" : "text-subtle")}>{option.count}</span>
             </button>
           );
         })}
@@ -104,7 +104,7 @@ function ColorFilterGroup({ legend, options, selected, onSelect }: ColorFilterGr
                 style={{ backgroundColor: option.hex }}
               />
               {option.label}
-              <span className={cn("text-xs", isActive ? "text-silver-300" : "text-subtle")}>{option.count}</span>
+              <span className={cn("text-xs", isActive ? "text-accent-light" : "text-subtle")}>{option.count}</span>
             </button>
           );
         })}

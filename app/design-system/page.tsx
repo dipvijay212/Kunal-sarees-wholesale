@@ -24,9 +24,10 @@ export const metadata: Metadata = {
 };
 
 const palette = [
-  { group: "Black & charcoal", tokens: ["black", "charcoal-950", "charcoal-900", "charcoal-800", "charcoal-700", "charcoal-600"] },
-  { group: "Slate & silver", tokens: ["slate-500", "slate-400", "silver-300", "silver-200", "silver-100", "white"] },
-  { group: "Icy accent", tokens: ["ice-500", "ice-400", "ice-300"] },
+  { group: "Deep Maroon & Wine (10%)", tokens: ["maroon-900", "maroon-800", "maroon-700", "maroon-600"] },
+  { group: "Warm Gold & Zari (5%)", tokens: ["gold-600", "gold-500", "gold-400", "gold-300"] },
+  { group: "Cream & Ivory Canvas (70%)", tokens: ["cream-100", "cream-200", "cream-300", "white"] },
+  { group: "Dark Ink & Text", tokens: ["ink-950", "ink-800", "ink-700", "muted", "subtle"] },
 ];
 
 function Block({ title, children }: { title: string; children: ReactNode }) {

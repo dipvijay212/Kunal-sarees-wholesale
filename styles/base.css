@@ -5,7 +5,7 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     background-color: var(--ks-canvas);
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   /* Lock page scroll while a modal or drawer is open */
@@ -34,7 +34,7 @@
   h6 {
     font-family: var(--font-display);
     font-weight: 500;
-    line-height: 1.1;
+    line-height: 1.15;
     letter-spacing: -0.01em;
     text-wrap: balance;
     overflow-wrap: break-word;
@@ -73,8 +73,8 @@
   }
 
   ::selection {
-    background-color: var(--ks-ice-300);
-    color: var(--ks-charcoal-950);
+    background-color: var(--ks-gold-soft);
+    color: var(--ks-maroon-dark);
   }
 
   :focus-visible {

@@ -122,7 +122,7 @@ export function ProductImageGallery({ images, productName, className }: ProductI
             </div>
             <p
               aria-live="polite"
-              className="absolute bottom-4 left-4 rounded-xs bg-charcoal-950/80 px-2.5 py-1 text-[0.6875rem] font-semibold tracking-[0.14em] text-ink tabular-nums"
+              className="absolute bottom-4 left-4 rounded-xs bg-accent-deep/90 px-2.5 py-1 text-[0.6875rem] font-semibold tracking-[0.14em] text-canvas tabular-nums shadow-xs"
             >
               {activeIndex + 1} / {total}
             </p>
@@ -144,7 +144,7 @@ export function ProductImageGallery({ images, productName, className }: ProductI
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
                     "media-frame block aspect-[3/4] w-full rounded-xs border transition-[border-color,opacity] duration-300",
-                    isActive ? "border-silver-200 opacity-100" : "border-transparent opacity-55 hover:opacity-100",
+                    isActive ? "border-accent ring-1 ring-accent opacity-100" : "border-line opacity-60 hover:opacity-100",
                   )}
                 >
                   <RemoteImage src={image.url} alt="" fill sizes="80px" className="object-cover" />
