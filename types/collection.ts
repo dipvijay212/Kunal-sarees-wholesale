@@ -1,12 +1,15 @@
 import type { ProductImage } from "./product";
 
+/** A curated edit of products, e.g. "Festive Collection". */
 export interface Collection {
-  slug: string;
+  id: string;
   name: string;
+  slug: string;
   tagline: string;
   description: string;
   image: ProductImage;
-  isFeatured: boolean;
+  featured: boolean;
+  order: number;
 }
 
 export interface CollectionWithCount extends Collection {

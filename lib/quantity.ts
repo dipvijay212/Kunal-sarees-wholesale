@@ -1,6 +1,6 @@
-import type { WholesalePricing } from "@/types";
+import type { Product } from "@/types";
 
-/** Upper bound for a single design on one enquiry. Larger orders are handled directly. */
+/** Upper bound for a single design on one order. Larger orders are handled directly. */
 export const MAX_ORDER_QUANTITY = 500;
 
 export interface QuantityRules {
@@ -9,10 +9,18 @@ export interface QuantityRules {
   step: number;
 }
 
-export function getQuantityRules(pricing: WholesalePricing): QuantityRules {
-  const step = Math.max(1, pricing.orderMultiple);
-  const min = Math.max(step, Math.ceil(pricing.minimumOrderQuantity / step) * step);
-  const max = Math.max(min, Math.floor(MAX_ORDER_QUANTITY / step) * step);
+type QuantityInput = Pick<Product, "moq" | "orderMultiple" | "stock">;
+
+/**
+ * Order rules for a design: the minimum order quantity, the set size it must be
+ * ordered in, and an upper bound. Available stock caps the maximum; designs
+ * with no stock can still be enquired about (they are made to order).
+ */
+export function getQuantityRules({ moq, orderMultiple, stock }: QuantityInput): QuantityRules {
+  const step = Math.max(1, orderMultiple);
+  const min = Math.max(step, Math.ceil(moq / step) * step);
+  const cap = stock > 0 ? Math.min(stock, MAX_ORDER_QUANTITY) : MAX_ORDER_QUANTITY;
+  const max = Math.max(min, Math.floor(cap / step) * step);
   return { min, max, step };
 }
 

@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SparkleIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { getAllProducts, getNewArrivals } from "@/lib/catalog";
+import { getNewArrivals, getProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "New Arrivals",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default function NewArrivalsPage() {
-  const newArrivals = getNewArrivals(getAllProducts().length);
+  const newArrivals = getNewArrivals(getProducts().length);
 
   return (
     <>

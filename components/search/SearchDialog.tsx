@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useUI } from "@/components/providers/UIProvider";
 import { ArrowRightIcon, SearchIcon } from "@/components/ui/Icons";
 import { Modal } from "@/components/ui/Modal";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { searchCatalogue } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 
@@ -25,7 +25,7 @@ export function SearchDialog() {
   const trimmed = query.trim();
   const results = useMemo(() => searchCatalogue(trimmed), [trimmed]);
   const resultsHref = `/products?q=${encodeURIComponent(trimmed)}`;
-  const hasResults = results.products.length > 0 || results.collections.length > 0;
+  const hasResults = results.products.length > 0 || results.collections.length > 0 || results.categories.length > 0;
 
   // The dialog focuses its first control when opened; move focus to the input instead.
   useEffect(() => {
@@ -116,6 +116,24 @@ export function SearchDialog() {
               </section>
             ) : null}
 
+            {results.categories.length > 0 ? (
+              <section aria-labelledby="search-categories">
+                <h3 id="search-categories" className="type-eyebrow text-subtle">
+                  Categories
+                </h3>
+                <ul className="mt-2">
+                  {results.categories.map((category) => (
+                    <li key={category.slug}>
+                      <Link href={`/products?category=${category.slug}`} onClick={close} className={rowLinkClass}>
+                        <span className="min-w-0 flex-1 truncate text-ink">{category.name}</span>
+                        <ArrowRightIcon size={16} className="shrink-0 text-subtle" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
             {results.products.length > 0 ? (
               <section aria-labelledby="search-designs">
                 <h3 id="search-designs" className="type-eyebrow text-subtle">
@@ -127,17 +145,17 @@ export function SearchDialog() {
                       <Link href={`/products/${product.slug}`} onClick={close} className={rowLinkClass}>
                         <span className="media-frame relative block aspect-[3/4] w-10 shrink-0 rounded-xs">
                           {product.images[0] ? (
-                            <Image src={product.images[0].src} alt="" fill sizes="40px" className="object-cover" />
+                            <RemoteImage src={product.images[0].url} alt="" fill sizes="40px" className="object-cover" />
                           ) : null}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-ink">{product.name}</span>
                           <span className="block truncate text-xs text-muted">
-                            {product.sku} · {product.fabric}
+                            {product.productCode} · {product.fabric}
                           </span>
                         </span>
                         <span className="type-price shrink-0 text-sm text-ink">
-                          {formatPrice(product.pricing.pricePerPiece)}
+                          {formatPrice(product.price)}
                         </span>
                       </Link>
                     </li>
@@ -156,7 +174,7 @@ export function SearchDialog() {
         ) : (
           <div className="py-6 text-center">
             <p className="text-ink">No designs match “{trimmed}”.</p>
-            <p className="mt-2 text-sm text-muted">Try a fabric, colour or design code such as KS-BN-101.</p>
+            <p className="mt-2 text-sm text-muted">Try a fabric, colour or design code such as KS-BNS-1004.</p>
             <Link href="/products" onClick={close} className="btn btn--link mt-5">
               Browse the full catalogue
             </Link>

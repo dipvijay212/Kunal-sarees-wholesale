@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { IconButton } from "@/components/ui/IconButton";
 import { ChevronLeftIcon, ChevronRightIcon, ExpandIcon } from "@/components/ui/Icons";
 import { Modal } from "@/components/ui/Modal";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { cn } from "@/lib/cn";
 import type { ProductImage } from "@/types";
 
@@ -75,9 +75,9 @@ export function ProductImageGallery({ images, productName, className }: ProductI
           }}
         >
           {images.map((image, index) => (
-            <Image
-              key={image.src}
-              src={image.src}
+            <RemoteImage
+              key={image.url}
+              src={image.url}
               alt={image.alt}
               fill
               sizes="(min-width: 1024px) 50vw, 100vw"
@@ -136,7 +136,7 @@ export function ProductImageGallery({ images, productName, className }: ProductI
           {images.map((image, index) => {
             const isActive = index === activeIndex;
             return (
-              <li key={image.src} className="w-20 shrink-0 lg:w-full">
+              <li key={image.url} className="w-20 shrink-0 lg:w-full">
                 <button
                   type="button"
                   onClick={() => goTo(index)}
@@ -147,7 +147,7 @@ export function ProductImageGallery({ images, productName, className }: ProductI
                     isActive ? "border-silver-200 opacity-100" : "border-transparent opacity-55 hover:opacity-100",
                   )}
                 >
-                  <Image src={image.src} alt="" fill sizes="80px" className="object-cover" />
+                  <RemoteImage src={image.url} alt="" fill sizes="80px" className="object-cover" />
                 </button>
               </li>
             );
@@ -164,7 +164,7 @@ export function ProductImageGallery({ images, productName, className }: ProductI
       >
         <div className="relative flex h-full items-center justify-center p-4 sm:p-10">
           <div className="relative aspect-[3/4] h-full max-h-full max-w-full">
-            <Image src={activeImage.src} alt={activeImage.alt} fill sizes="100vw" className="object-contain" />
+            <RemoteImage src={activeImage.url} alt={activeImage.alt} fill sizes="100vw" className="object-contain" />
           </div>
           {hasMultiple ? (
             <div className="absolute inset-x-4 bottom-6 flex items-center justify-center gap-4 sm:inset-x-10">

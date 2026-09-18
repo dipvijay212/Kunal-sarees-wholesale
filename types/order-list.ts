@@ -8,6 +8,7 @@ import type { Product } from "./product";
 export interface OrderListItem {
   productId: string;
   quantity: number;
+  selectedColors?: Record<string, number>;
   /** Epoch milliseconds, used to keep the list in the order items were added. */
   addedAt: number;
 }

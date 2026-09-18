@@ -16,6 +16,6 @@ export const footerQuickLinks: NavItem[] = [
   { label: "Become a stockist", href: "/wholesale#enquiry" },
   { label: "About us", href: "/about" },
   { label: "Contact", href: "/contact" },
-  { label: "Order list", href: "/order-list" },
+  { label: "Order list", href: "/order" },
   { label: "Saved designs", href: "/wishlist" },
 ];

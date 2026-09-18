@@ -5,8 +5,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
-    // Product photography will be served locally from /public for now.
-    // Add `remotePatterns` here when images move to a CDN.
+    remotePatterns: [
+      // Development product photography (see data/images.ts).
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+    ],
   },
 };
 

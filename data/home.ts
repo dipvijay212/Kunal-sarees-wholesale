@@ -2,38 +2,38 @@ import type { Highlight, ProcessStep } from "@/types";
 
 export const wholesaleHighlights: Highlight[] = [
   {
-    title: "Transparent wholesale rates",
-    description: "Per-piece pricing is listed on every design, so you can plan margins before you enquire.",
+    title: "Premium Quality",
+    description: "Every saree is hand-inspected for authentic weave, drape, zari finish, and quality before dispatch.",
   },
   {
-    title: "Low minimum orders",
-    description: "Order bridal pieces individually and everyday designs in small, practical sets.",
+    title: "Wholesale Pricing",
+    description: "Direct manufacturer per-piece rates published on every design so retailers can plan margins easily.",
   },
   {
-    title: "Checked before dispatch",
-    description: "Every saree is inspected for weave, colour and finish before it is packed.",
+    title: "Wide Collection",
+    description: "Over 200+ curated designs spanning Banarasi, Kanjivaram, Organza, Chiffon, and Handloom silks.",
   },
   {
-    title: "Direct WhatsApp service",
-    description: "Speak to our team directly for availability, customisation and dispatch timelines.",
+    title: "Direct WhatsApp Ordering",
+    description: "Connect directly with our Surat wholesale desk on WhatsApp for instant stock checks and order booking.",
   },
 ];
 
 export const orderingSteps: ProcessStep[] = [
   {
-    title: "Browse the catalogue",
-    description: "Explore collections and shortlist the designs that suit your store and customers.",
+    title: "Browse Collection",
+    description: "Explore our curated catalogue of Banarasi, Kanjivaram, and festive saree collections.",
   },
   {
-    title: "Build your enquiry list",
-    description: "Choose quantities per design. Your list is saved on this device while you browse.",
+    title: "Add Products",
+    description: "Shortlist your favourite saree designs and choose set quantities for your store.",
   },
   {
-    title: "Send it on WhatsApp",
-    description: "Share the full list with our team in one tap. No account or payment is needed.",
+    title: "Enter Details",
+    description: "Provide your boutique or business name, delivery city, and contact preferences.",
   },
   {
-    title: "Confirm and dispatch",
-    description: "We confirm availability, final pricing and delivery, then pack and dispatch your order.",
+    title: "Send Order on WhatsApp",
+    description: "Share your complete order list directly with our team on WhatsApp with a single tap.",
   },
 ];

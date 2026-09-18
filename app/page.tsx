@@ -1,34 +1,38 @@
 import { CollectionCard } from "@/components/collection/CollectionCard";
-import { BrandStatement } from "@/components/home/BrandStatement";
+import { AboutKunalSarees } from "@/components/home/AboutKunalSarees";
+import { FeaturedBanner } from "@/components/home/FeaturedBanner";
 import { HomeHero } from "@/components/home/HomeHero";
 import { OrderingProcess } from "@/components/home/OrderingProcess";
 import { WholesaleCta } from "@/components/home/WholesaleCta";
 import { WholesaleHighlights } from "@/components/home/WholesaleHighlights";
+import { WhyKunalSarees } from "@/components/home/WhyKunalSarees";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { businessSettings } from "@/data/business";
 import { orderingSteps, wholesaleHighlights } from "@/data/home";
 import { siteConfig } from "@/data/site";
 import {
-  getAllCollections,
-  getAllProducts,
-  getBestsellers,
+  getCategories,
   getFeaturedCollections,
   getNewArrivals,
+  getProducts,
 } from "@/lib/catalog";
+import { formatNumber } from "@/lib/format";
 
 export default function HomePage() {
-  const products = getAllProducts();
+  const products = getProducts();
   const featuredCollections = getFeaturedCollections(4);
-  const newArrivals = getNewArrivals(4);
-  const bestsellers = getBestsellers(4);
-  const lowestMinimum = Math.min(...products.map((product) => product.pricing.minimumOrderQuantity));
+  const newArrivals = getNewArrivals(6);
+  const lowestMoq = Math.min(...products.map((product) => product.moq));
 
   const stats = [
-    { value: String(getAllCollections().length), label: "Collections" },
-    { value: `${products.length}+`, label: "Curated designs" },
-    { value: String(lowestMinimum), label: lowestMinimum === 1 ? "Piece minimum" : "Pieces minimum" },
+    { value: formatNumber(getCategories().length), label: "Categories" },
+    { value: `${formatNumber(products.length)}+`, label: "Designs in stock" },
+    { value: formatNumber(lowestMoq), label: lowestMoq === 1 ? "Piece minimum" : "Pieces minimum" },
   ];
 
+  const { address } = businessSettings.contact;
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "WholesaleStore",
@@ -36,13 +40,14 @@ export default function HomePage() {
     description: siteConfig.description,
     url: siteConfig.url,
     logo: `${siteConfig.url}${siteConfig.brand.logo.src}`,
-    telephone: `+${siteConfig.contact.whatsappNumber}`,
+    telephone: `+${businessSettings.contact.whatsappNumber}`,
+    email: businessSettings.contact.email,
     address: {
       "@type": "PostalAddress",
-      streetAddress: siteConfig.contact.address.lines.join(", "),
-      addressLocality: siteConfig.contact.address.city,
-      addressRegion: siteConfig.contact.address.region,
-      postalCode: siteConfig.contact.address.postalCode,
+      streetAddress: address.lines.join(", "),
+      addressLocality: address.city,
+      addressRegion: address.region,
+      postalCode: address.postalCode,
       addressCountry: "IN",
     },
     sameAs: siteConfig.social.map((link) => link.href),
@@ -55,57 +60,59 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c") }}
       />
 
+      {/* 1. HERO SECTION */}
       <HomeHero stats={stats} />
+
+      {/* 2. TRUST / BUSINESS HIGHLIGHTS */}
       <WholesaleHighlights highlights={wholesaleHighlights} />
 
+      {/* 3. FEATURED COLLECTIONS */}
       <section aria-labelledby="collections-heading" className="section-y">
-        <div className="container-page">
+        <Container>
           <SectionHeading
             id="collections-heading"
-            eyebrow="Collections"
-            title="Curated for every counter"
-            description="Six edits covering heirloom silks, lightweight party wear and handloom everyday sarees."
+            eyebrow="Curated Edits"
+            title="Featured Collections"
+            description="Explore our handpicked collection edits tailored for boutique stockists and retailers."
             action={{ label: "All collections", href: "/collections" }}
           />
           <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4 lg:gap-5">
             {featuredCollections.map((collection) => (
-              <li key={collection.slug}>
+              <li key={collection.id}>
                 <CollectionCard collection={collection} />
               </li>
             ))}
           </ul>
-        </div>
+        </Container>
       </section>
 
+      {/* 4. NEW ARRIVALS (6 Products) */}
       <section aria-labelledby="new-arrivals-heading" className="section-y border-t border-line">
-        <div className="container-page">
+        <Container>
           <SectionHeading
             id="new-arrivals-heading"
-            eyebrow="Just in"
-            title="New arrivals"
-            description="The latest designs added to the catalogue this season."
+            eyebrow="Fresh Weaves"
+            title="New Arrivals"
+            description="The latest saree designs added to our wholesale catalogue this season."
             action={{ label: "View all new arrivals", href: "/new-arrivals" }}
           />
           <ProductGrid products={newArrivals} className="mt-12 lg:mt-16" />
-        </div>
+        </Container>
       </section>
 
-      <BrandStatement />
+      {/* 5. WHY KUNAL SAREES */}
+      <WhyKunalSarees />
 
-      <section aria-labelledby="bestsellers-heading" className="section-y">
-        <div className="container-page">
-          <SectionHeading
-            id="bestsellers-heading"
-            eyebrow="Proven sellers"
-            title="Most reordered by retailers"
-            description="Designs our stockists come back for, season after season."
-            action={{ label: "Full catalogue", href: "/products" }}
-          />
-          <ProductGrid products={bestsellers} className="mt-12 lg:mt-16" />
-        </div>
-      </section>
-
+      {/* 6. WHOLESALE PROCESS */}
       <OrderingProcess steps={orderingSteps} />
+
+      {/* 7. FEATURED BANNER */}
+      <FeaturedBanner />
+
+      {/* 8. ABOUT KUNAL SAREES */}
+      <AboutKunalSarees />
+
+      {/* 9. WHATSAPP CTA */}
       <WholesaleCta />
     </>
   );

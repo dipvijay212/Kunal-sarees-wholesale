@@ -3,7 +3,7 @@ import { Container } from "@/components/ui/Container";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { footerQuickLinks } from "@/data/navigation";
 import { siteConfig } from "@/data/site";
-import { getAllCollections } from "@/lib/catalog";
+import { getCollections } from "@/lib/catalog";
 import type { NavItem } from "@/types";
 import { ContactDetails } from "./ContactDetails";
 import { Logo } from "./Logo";
@@ -32,7 +32,7 @@ function FooterLinkList({ id, title, items }: { id: string; title: string; items
 }
 
 export function Footer() {
-  const collectionLinks: NavItem[] = getAllCollections().map((collection) => ({
+  const collectionLinks: NavItem[] = getCollections().map((collection) => ({
     label: collection.name,
     href: `/collections/${collection.slug}`,
   }));

@@ -1,76 +1,72 @@
 import type { Collection } from "@/types";
+import { unsplashImage } from "./images";
 
+/** Curated edits shown on the storefront. */
 export const collections: Collection[] = [
   {
-    slug: "banarasi-silk",
-    name: "Banarasi Silk",
-    tagline: "Katan and tanchoi weaves from Varanasi",
+    id: "col-new-arrivals",
+    name: "New Arrivals",
+    slug: "new-arrivals",
+    tagline: "The latest designs on the floor",
     description:
-      "Pure katan and tanchoi silks woven on traditional looms in Varanasi. Dense zari, clean selvedges and a weight that drapes well — the dependable core of a festive and wedding assortment.",
-    image: {
-      src: "/images/collections/banarasi-silk.svg",
-      alt: "Banarasi silk saree with gold zari pallu",
-    },
-    isFeatured: true,
+      "Fresh sets added to the catalogue this season, across organza, georgette and silk. Reserve early — new designs move quickly.",
+    image: unsplashImage("1787020308815-cf964f915b2b", "Woman in a blue and pink patterned saree"),
+    featured: true,
+    order: 1,
   },
   {
-    slug: "kanjivaram-weaves",
-    name: "Kanjivaram Weaves",
-    tagline: "Temple borders and korvai contrasts",
+    id: "col-festive",
+    name: "Festive Collection",
+    slug: "festive-collection",
+    tagline: "Navratri, Diwali and wedding season",
     description:
-      "Mulberry silk Kanjivarams with interlocked korvai borders and temple motifs. Heavier, more structured sarees for customers who buy once and keep for decades.",
-    image: {
-      src: "/images/collections/kanjivaram-weaves.svg",
-      alt: "Kanjivaram silk saree with contrast temple border",
-    },
-    isFeatured: true,
+      "Sequin, mirror and bandhani work in colours that sell through the festive calendar. Built for volume ordering.",
+    image: unsplashImage("1774437897985-9a7f1b7867a8", "Woman in a colourful festive saree"),
+    featured: true,
+    order: 2,
   },
   {
-    slug: "organza-luxe",
-    name: "Organza Luxe",
-    tagline: "Sheer, light and quietly embellished",
+    id: "col-premium-banarasi",
+    name: "Premium Banarasi",
+    slug: "premium-banarasi",
+    tagline: "Katan and tanchoi from Varanasi",
     description:
-      "Crisp organza in soft pastels with pearl, sequin and thread embroidery. Light enough for day functions, finished well enough for evening receptions.",
-    image: {
-      src: "/images/collections/organza-luxe.svg",
-      alt: "Pastel organza saree with pearl embroidery",
-    },
-    isFeatured: true,
+      "Our top Banarasi weaves — pure katan silk, real zari and jaal pallus, sourced directly from weaving families in Varanasi.",
+    image: unsplashImage("1641699862936-be9f49b1c38d", "Woman in a purple and gold Banarasi saree"),
+    featured: true,
+    order: 3,
   },
   {
-    slug: "georgette-chiffon",
-    name: "Georgette & Chiffon",
-    tagline: "Fluid party wear that moves fast",
+    id: "col-silk",
+    name: "Silk Collection",
+    slug: "silk-collection",
+    tagline: "Kanjivaram, Tussar and satin silks",
     description:
-      "Fluid georgettes and chiffons with sequin, mirror and ombre finishes. Easy to wear, easy to sell, and priced for steady repeat orders.",
-    image: {
-      src: "/images/collections/georgette-chiffon.svg",
-      alt: "Black georgette saree with silver sequin work",
-    },
-    isFeatured: true,
+      "Structured silks for customers who buy once and keep for decades. Temple borders, korvai contrasts and handloom Tussar.",
+    image: unsplashImage("1679006831648-7c9ea12e5807", "Woman in a green silk saree with jewellery"),
+    featured: true,
+    order: 4,
   },
   {
-    slug: "linen-cotton",
-    name: "Linen & Cotton",
-    tagline: "Handloom textures for everyday elegance",
+    id: "col-bridal",
+    name: "Bridal Collection",
+    slug: "bridal-collection",
+    tagline: "Trousseau pieces, single unit orders",
     description:
-      "Linen, Chanderi and Jamdani handlooms for workwear and daytime occasions. Breathable fabrics with a refined finish that suit year-round sales.",
-    image: {
-      src: "/images/collections/linen-cotton.svg",
-      alt: "Indigo linen saree with hand block print",
-    },
-    isFeatured: false,
+      "Statement bridal sarees in heavy zari and zardozi handwork, supplied in presentation boxes and available as single pieces.",
+    image: unsplashImage("1570212773364-e30cd076539e", "Bride wearing a wedding saree"),
+    featured: true,
+    order: 5,
   },
   {
-    slug: "bridal-couture",
-    name: "Bridal Couture",
-    tagline: "Heirloom pieces, available from a single unit",
+    id: "col-daily-elegance",
+    name: "Daily Elegance",
+    slug: "daily-elegance",
+    tagline: "Handloom cottons and light silks",
     description:
-      "Statement bridal sarees in heavy zari, tissue and zardozi handwork. Available as single pieces so boutiques can offer exclusivity without holding deep stock.",
-    image: {
-      src: "/images/collections/bridal-couture.svg",
-      alt: "Red bridal Banarasi saree with dense gold zari",
-    },
-    isFeatured: true,
+      "Everyday sarees with a refined finish — Chanderi, Jamdani, linen and printed chiffons for work and daytime wear.",
+    image: unsplashImage("1774437561949-17b3bcf88db9", "Woman in a handloom cotton saree"),
+    featured: true,
+    order: 6,
   },
 ];

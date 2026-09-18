@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CatalogueBrowser } from "@/components/product/CatalogueBrowser";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { getAllProducts } from "@/lib/catalog";
+import { getProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Wholesale Catalogue",
@@ -13,14 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default function ProductsPage() {
-  const products = getAllProducts();
+  const products = getProducts();
 
   return (
     <>
       <PageHeader
         eyebrow="Catalogue"
         title="The wholesale catalogue"
-        description="Every design with its per-piece wholesale rate and minimum order. Filter by collection, fabric or occasion."
+        description="Every design with its per-piece wholesale rate and minimum order. Filter by category, collection or fabric."
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Catalogue" }]}
       />
       <section className="section-y-sm">

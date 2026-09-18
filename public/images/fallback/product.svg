@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Image unavailable">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f2528"/>
+      <stop offset="1" stop-color="#111416"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <rect x="24" y="24" width="852" height="1152" fill="none" stroke="#ffffff" stroke-opacity="0.1"/>
+  <g transform="translate(450 560)">
+    <circle r="86" fill="none" stroke="#7ea3b4" stroke-opacity="0.5" stroke-width="2"/>
+    <circle r="74" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
+    <text x="0" y="22" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="62" letter-spacing="4" fill="#e4e8ea">KS</text>
+  </g>
+  <text x="450" y="716" text-anchor="middle" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="24" letter-spacing="6" fill="#adb6bb">IMAGE UNAVAILABLE</text>
+</svg>

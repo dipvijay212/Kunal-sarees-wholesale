@@ -33,7 +33,7 @@ export function OrderListDrawer() {
             </div>
             <p className="-mt-2 text-xs text-subtle">Excludes GST and shipping. Final pricing is confirmed on WhatsApp.</p>
             <WhatsAppButton fullWidth label="Send order on WhatsApp" message={buildOrderListMessage(lines, summary)} />
-            <Button href="/order-list" variant="secondary" fullWidth onClick={closeOrderList}>
+            <Button href="/order" variant="secondary" fullWidth onClick={closeOrderList}>
               Review full list
             </Button>
           </div>

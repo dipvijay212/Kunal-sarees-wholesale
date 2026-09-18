@@ -1,4 +1,4 @@
-import type { OrderListItem } from "@/types";
+import type { OrderListItem, PlacedOrder } from "@/types";
 import { createLocalStore } from "./local-store";
 
 /*
@@ -8,6 +8,7 @@ import { createLocalStore } from "./local-store";
 
 const EMPTY_ORDER_LIST: OrderListItem[] = [];
 const EMPTY_WISHLIST: string[] = [];
+const EMPTY_PLACED_ORDERS: PlacedOrder[] = [];
 
 function isOrderListItem(value: unknown): value is OrderListItem {
   if (typeof value !== "object" || value === null) return false;
@@ -29,6 +30,20 @@ function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
+function isPlacedOrder(value: unknown): value is PlacedOrder {
+  if (typeof value !== "object" || value === null) return false;
+  const order = value as Record<string, unknown>;
+  return (
+    typeof order.id === "string" &&
+    typeof order.orderNumber === "string" &&
+    typeof order.createdAt === "number"
+  );
+}
+
+function isPlacedOrderList(value: unknown): value is PlacedOrder[] {
+  return Array.isArray(value) && value.every(isPlacedOrder);
+}
+
 export const orderListStore = createLocalStore<OrderListItem[]>({
   key: "ks:order-list:v1",
   initialValue: EMPTY_ORDER_LIST,
@@ -41,17 +56,33 @@ export const wishlistStore = createLocalStore<string[]>({
   validate: isStringList,
 });
 
+export const placedOrdersStore = createLocalStore<PlacedOrder[]>({
+  key: "ks:placed-orders:v1",
+  initialValue: EMPTY_PLACED_ORDERS,
+  validate: isPlacedOrderList,
+});
+
 /* Order list actions ------------------------------------------------------- */
 
-export function addToOrderList(productId: string, quantity: number) {
+export function addToOrderList(
+  productId: string,
+  quantity: number,
+  selectedColors?: Record<string, number>,
+) {
   orderListStore.set((items) => {
     const existing = items.find((item) => item.productId === productId);
     if (existing) {
       return items.map((item) =>
-        item.productId === productId ? { ...item, quantity: item.quantity + quantity } : item,
+        item.productId === productId
+          ? {
+              ...item,
+              quantity: item.quantity + quantity,
+              selectedColors: selectedColors || item.selectedColors,
+            }
+          : item,
       );
     }
-    return [...items, { productId, quantity, addedAt: Date.now() }];
+    return [...items, { productId, quantity, selectedColors, addedAt: Date.now() }];
   });
 }
 
@@ -79,4 +110,10 @@ export function toggleWishlist(productId: string) {
 
 export function removeFromWishlist(productId: string) {
   wishlistStore.set((ids) => ids.filter((id) => id !== productId));
+}
+
+/* Placed Order actions ----------------------------------------------------- */
+
+export function savePlacedOrder(order: PlacedOrder) {
+  placedOrdersStore.set((orders) => [order, ...orders.filter((o) => o.id !== order.id)]);
 }

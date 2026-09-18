@@ -50,6 +50,11 @@ export const ArrowRightIcon = createIcon("ArrowRightIcon", <path d="M4 12h16m-5-
 
 export const ArrowLeftIcon = createIcon("ArrowLeftIcon", <path d="M20 12H4m5-5-5 5 5 5" />);
 
+export const HomeIcon = createIcon(
+  "HomeIcon",
+  <path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-5V15h-5v6h-5A1.5 1.5 0 0 1 3 19.5v-9Z" />,
+);
+
 export const ChevronLeftIcon = createIcon("ChevronLeftIcon", <path d="m15 5-7 7 7 7" />);
 
 export const ChevronRightIcon = createIcon("ChevronRightIcon", <path d="m9 5 7 7-7 7" />);

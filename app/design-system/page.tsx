@@ -16,7 +16,7 @@ import { ArrowRightIcon, BagIcon, HeartIcon, MenuIcon, SearchIcon } from "@/comp
 import { LoadingState } from "@/components/ui/LoadingState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { getAllCollections, getAllProducts } from "@/lib/catalog";
+import { getCollections, getProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Design System",
@@ -41,8 +41,8 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export default function DesignSystemPage() {
-  const [product] = getAllProducts();
-  const [collection] = getAllCollections();
+  const [product] = getProducts();
+  const [collection] = getCollections();
 
   return (
     <>

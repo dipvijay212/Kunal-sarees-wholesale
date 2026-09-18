@@ -1,47 +1,64 @@
 export type Fabric =
   | "Banarasi Silk"
   | "Kanjivaram Silk"
-  | "Organza"
+  | "Tussar Silk"
+  | "Satin Silk"
+  | "Tissue Silk"
+  | "Chanderi Cotton Silk"
   | "Georgette"
   | "Chiffon"
+  | "Organza"
+  | "Cotton"
   | "Linen"
-  | "Chanderi Cotton Silk"
-  | "Jamdani Cotton"
-  | "Tissue Silk";
+  | "Crepe";
 
-export type WorkType =
+/** The dominant work or weaving technique on the saree. */
+export type DesignType =
   | "Zari Weave"
   | "Tanchoi Weave"
   | "Korvai Weave"
+  | "Jamdani Weave"
+  | "Temple Border"
   | "Hand Embroidery"
+  | "Zardozi Handwork"
   | "Sequin Work"
   | "Mirror Work"
+  | "Digital Print"
   | "Hand Block Print"
+  | "Bandhani"
   | "Ombre Dye"
-  | "Jamdani Weave"
-  | "Zardozi Handwork";
+  | "Plain Solid";
 
-export type Occasion = "Bridal" | "Wedding" | "Festive" | "Party" | "Workwear" | "Everyday Luxe";
+/** Catalogue lifecycle. Only `active` products are listed on the storefront. */
+export type ProductStatus = "active" | "draft" | "discontinued";
 
-export type StockStatus = "in-stock" | "low-stock" | "made-to-order";
-
-export interface ProductImage {
-  src: string;
-  alt: string;
-}
+/** Derived from `stock`; never stored on the product itself. */
+export type ProductAvailability = "in-stock" | "low-stock" | "out-of-stock";
 
 export interface ProductColor {
   name: string;
+  /** Swatch colour for the UI. */
   hex: string;
 }
 
-export interface WholesalePricing {
-  /** Wholesale price per piece in INR, exclusive of GST. */
-  pricePerPiece: number;
-  /** Smallest quantity a retailer can order for this design. */
-  minimumOrderQuantity: number;
-  /** Quantities must be multiples of this value (e.g. sold in sets of 4). */
-  orderMultiple: number;
+export interface ProductImage {
+  url: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
+/** A single colourway of a product, with its own stock and code. */
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  /** Colour-specific code, e.g. KS-BNS-1001-WN. */
+  variantCode: string;
+  color: ProductColor;
+  /** Pieces available in this colourway. */
+  stock: number;
+  /** Per-piece price override; falls back to `Product.price` when omitted. */
+  price?: number;
 }
 
 export interface ProductSpecifications {
@@ -54,23 +71,33 @@ export interface ProductSpecifications {
 
 export interface Product {
   id: string;
-  slug: string;
   /** Design code used by the business when confirming orders. */
-  sku: string;
+  productCode: string;
   name: string;
-  collectionSlug: string;
-  fabric: Fabric;
-  work: WorkType;
-  occasions: Occasion[];
-  color: ProductColor;
+  slug: string;
   description: string;
-  highlights: string[];
-  specifications: ProductSpecifications;
+  /** One line used on cards, search results and meta descriptions. */
+  shortDescription: string;
+  categoryId: string;
+  collectionId: string;
+  fabric: Fabric;
+  design: DesignType;
+  /** Wholesale price per piece in INR, excluding GST. */
+  price: number;
+  /** Minimum order quantity, in pieces. */
+  moq: number;
+  /** Quantities must be multiples of this many pieces (sets). */
+  orderMultiple: number;
+  /** Pieces available across all colourways. */
+  stock: number;
+  colors: ProductColor[];
   images: ProductImage[];
-  pricing: WholesalePricing;
-  stockStatus: StockStatus;
-  isNew: boolean;
-  isBestseller: boolean;
+  variants: ProductVariant[];
+  specifications: ProductSpecifications;
+  highlights: string[];
+  featured: boolean;
+  newArrival: boolean;
+  status: ProductStatus;
   /** ISO date the design was added to the catalogue. */
-  addedOn: string;
+  createdAt: string;
 }

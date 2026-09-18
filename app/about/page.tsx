@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { BrandStatement } from "@/components/home/BrandStatement";
 import { WholesaleCta } from "@/components/home/WholesaleCta";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Container } from "@/components/ui/Container";
+import { RemoteImage } from "@/components/ui/RemoteImage";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { aboutStory, aboutValues } from "@/data/about";
 import { siteConfig } from "@/data/site";
-import { getAllCollections, getAllProducts } from "@/lib/catalog";
+import { getCategories, getProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "About",
@@ -17,9 +17,12 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const [silkCategory] = getCategories();
+  const storyImage = silkCategory.image;
+
   const facts = [
-    { value: String(getAllCollections().length), label: "Curated collections" },
-    { value: `${getAllProducts().length}+`, label: "Designs in the catalogue" },
+    { value: String(getCategories().length), label: "Fabric categories" },
+    { value: `${getProducts().length}+`, label: "Designs in the catalogue" },
     { value: siteConfig.contact.address.city, label: "Where we are based" },
   ];
 
@@ -47,9 +50,9 @@ export default function AboutPage() {
 
           <aside className="lg:col-span-5">
             <div className="media-frame aspect-[4/5] rounded-xs">
-              <Image
-                src="/images/collections/banarasi-silk.svg"
-                alt="Banarasi silk saree with gold zari pallu"
+              <RemoteImage
+                src={storyImage.url}
+                alt={storyImage.alt}
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"
                 className="object-cover"

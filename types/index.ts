@@ -1,5 +1,10 @@
+export type * from "./banner";
+export type * from "./business";
 export type * from "./catalogue";
+export type * from "./category";
 export type * from "./collection";
+export type * from "./customer";
+export type * from "./order";
 export type * from "./order-list";
 export type * from "./product";
 export type * from "./site";

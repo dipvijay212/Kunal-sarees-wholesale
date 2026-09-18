@@ -1,6 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { ClockIcon, MailIcon, MapPinIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/Icons";
-import { getDirectionsUrl, siteConfig } from "@/data/site";
+import { getDirectionsUrl } from "@/data/site";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/cn";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/whatsapp";
 
@@ -28,7 +31,8 @@ interface ContactDetailsProps {
 
 /** Address, phone, WhatsApp, email and hours from the site config. */
 export function ContactDetails({ showHours = true, className }: ContactDetailsProps) {
-  const { contact } = siteConfig;
+  const settings = useSettings();
+  const contact = settings.contact;
 
   return (
     <ul className={cn("flex flex-col gap-5 text-sm leading-relaxed", className)}>

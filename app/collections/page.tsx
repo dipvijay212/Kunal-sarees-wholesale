@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CollectionCard } from "@/components/collection/CollectionCard";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { getAllCollections } from "@/lib/catalog";
+import { getCollections } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Collections",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function CollectionsPage() {
-  const collections = getAllCollections();
+  const collections = getCollections();
 
   return (
     <>
@@ -24,7 +24,7 @@ export default function CollectionsPage() {
       <section className="section-y-sm">
         <ul className="container-page grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           {collections.map((collection, index) => (
-            <li key={collection.slug}>
+            <li key={collection.id}>
               <CollectionCard
                 collection={collection}
                 eager={index < 3}
