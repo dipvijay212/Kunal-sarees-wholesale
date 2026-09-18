@@ -14,7 +14,7 @@ import {
 import { formatPieces, formatPrice } from "@/lib/format";
 import type { Product, Fabric, DesignType, ProductStatus } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { PlusIcon, SearchIcon, TrashIcon } from "@/components/ui/Icons";
+import { PlusIcon, SearchIcon } from "@/components/ui/Icons";
 
 export default function AdminProductsPage() {
   const products = useLocalStore(adminProductsStore);

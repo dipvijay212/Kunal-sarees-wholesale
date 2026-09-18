@@ -32,7 +32,7 @@ export const defaultWhatsAppMessage = `Hello, I would like to know more about yo
 
 export function buildProductEnquiryMessage(product: Product, quantity?: number): string {
   const lines = [
-    `Hello ${siteConfig.name},`,
+    `Hello ${getBusinessName()},`,
     "",
     "I would like to enquire about this design:",
     `• ${product.name} (${product.productCode})`,
@@ -57,7 +57,7 @@ export function buildMultiColorEnquiryMessage(
   totalQuantity: number,
 ): string {
   const lines = [
-    `Hello ${siteConfig.name},`,
+    `Hello ${getBusinessName()},`,
     "",
     "I would like to place an enquiry for this design:",
     `• Product: ${product.name} (${product.productCode})`,
@@ -90,7 +90,7 @@ export function buildOrderListMessage(lines: OrderListLine[], summary: OrderList
   );
 
   return [
-    `Hello ${siteConfig.name},`,
+    `Hello ${getBusinessName()},`,
     "",
     "I would like to place a wholesale order for the following designs:",
     "",
@@ -116,7 +116,7 @@ export interface WholesaleEnquiryDetails {
 
 export function buildWholesaleEnquiryMessage(details: WholesaleEnquiryDetails): string {
   const lines = [
-    `Hello ${siteConfig.name},`,
+    `Hello ${getBusinessName()},`,
     "",
     "I would like to become a wholesale stockist.",
     "",
@@ -150,7 +150,7 @@ export function buildCheckoutWhatsAppMessage(
   summary: OrderListSummary,
 ): string {
   const messageLines: string[] = [
-    `Hello ${siteConfig.name},`,
+    `Hello ${getBusinessName()},`,
     "",
     "I would like to place a wholesale order.",
     "",

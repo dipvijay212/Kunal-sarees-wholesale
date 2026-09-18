@@ -14,7 +14,7 @@ export interface CollectionRepository {
 export const collectionRepository: CollectionRepository = {
   getAll() {
     if (typeof window === "undefined") return staticCollections;
-    return adminCollectionsStore.get();
+    return adminCollectionsStore.getSnapshot();
   },
 
   getById(id) {

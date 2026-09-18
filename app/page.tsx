@@ -20,6 +20,20 @@ import {
 } from "@/lib/catalog";
 import { formatNumber } from "@/lib/format";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Kunal Sarees — Timeless Sarees. Wholesale Excellence.",
+  description:
+    "Discover premium Banarasi, Kanjivaram, organza and bridal saree collections curated for retailers, boutiques, resellers and wholesale buyers across India.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Kunal Sarees — Timeless Sarees. Wholesale Excellence.",
+    description:
+      "Discover premium Banarasi, Kanjivaram, organza and bridal saree collections curated for retailers, boutiques, resellers and wholesale buyers across India.",
+  },
+};
+
 export default function HomePage() {
   const products = getProducts();
   const featuredCollections = getFeaturedCollections(4);

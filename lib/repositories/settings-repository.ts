@@ -10,7 +10,7 @@ export interface SettingsRepository {
 export const settingsRepository: SettingsRepository = {
   get() {
     if (typeof window === "undefined") return staticSettings;
-    return adminSettingsStore.get();
+    return adminSettingsStore.getSnapshot();
   },
 
   update(data) {

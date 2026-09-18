@@ -22,7 +22,7 @@ import {
 } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
-import type { CatalogueFilters, FilterOption, Product, ProductAvailability } from "@/types";
+import type { CatalogueFilters, FilterOption, Product } from "@/types";
 import { ProductGrid } from "./ProductGrid";
 
 const ITEMS_PER_PAGE = 12;

@@ -11,7 +11,7 @@ export interface OrderRepository {
 export const orderRepository: OrderRepository = {
   getAll() {
     if (typeof window === "undefined") return [];
-    return adminOrdersStore.get();
+    return adminOrdersStore.getSnapshot();
   },
 
   getById(id) {

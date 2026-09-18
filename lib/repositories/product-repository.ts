@@ -14,10 +14,10 @@ export interface ProductRepository {
 export const productRepository: ProductRepository = {
   getAll(options = {}) {
     if (typeof window === "undefined") {
-      return options.includeInactive ? staticProducts : staticProducts.filter((p) => p.status === "active");
+      return options.includeInactive ? staticProducts : staticProducts.filter((p: Product) => p.status === "active");
     }
-    const all = adminProductsStore.get();
-    return options.includeInactive ? all : all.filter((p) => p.status === "active");
+    const all = adminProductsStore.getSnapshot();
+    return options.includeInactive ? all : all.filter((p: Product) => p.status === "active");
   },
 
   getById(id, options = {}) {

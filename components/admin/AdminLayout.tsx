@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { useLocalStore } from "@/hooks/use-local-store";
@@ -18,15 +18,10 @@ export function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const session = useLocalStore(adminAuthStore);
-  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (pathname !== "/admin/login" && !session.isAuthenticated) {
-        router.replace("/admin/login");
-      } else {
-        setIsChecking(false);
-      }
+    if (pathname !== "/admin/login" && !session.isAuthenticated) {
+      router.replace("/admin/login");
     }
   }, [pathname, session.isAuthenticated, router]);
 
@@ -34,7 +29,7 @@ export function AdminLayout({
     return <>{children}</>;
   }
 
-  if (isChecking || !session.isAuthenticated) {
+  if (!session.isAuthenticated) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-canvas p-6">
         <LoadingState variant="lines" count={3} label="Authenticating admin session..." />

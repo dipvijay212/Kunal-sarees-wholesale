@@ -4,7 +4,7 @@ import Link from "next/link";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useLocalStore } from "@/hooks/use-local-store";
 import { adminOrdersStore } from "@/lib/admin-stores";
-import { formatPieces, formatPrice } from "@/lib/format";
+import type { PlacedOrder } from "@/types";
 
 export interface CustomerProfile {
   id: string;
@@ -20,7 +20,7 @@ export interface CustomerProfile {
   lastOrderDate: string;
 }
 
-export function getCustomerProfilesFromOrders(orders: Array<Record<string, any>>): CustomerProfile[] {
+export function getCustomerProfilesFromOrders(orders: PlacedOrder[]): CustomerProfile[] {
   const map = new Map<string, CustomerProfile>();
 
   orders.forEach((o) => {

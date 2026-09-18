@@ -14,7 +14,7 @@ export interface CategoryRepository {
 export const categoryRepository: CategoryRepository = {
   getAll() {
     if (typeof window === "undefined") return staticCategories;
-    return adminCategoriesStore.get();
+    return adminCategoriesStore.getSnapshot();
   },
 
   getById(id) {
