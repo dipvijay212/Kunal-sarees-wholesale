@@ -40,7 +40,7 @@ export function TopBar() {
           </a>
           <span aria-hidden="true" className="text-gold-light/40">|</span>
           <div className="flex items-center text-cream">
-            <SocialLinks size="sm" />
+            <SocialLinks size="sm" variant="ghost" itemClassName="text-cream/90 hover:text-gold-light hover:bg-white/10" />
           </div>
         </div>
       </Container>

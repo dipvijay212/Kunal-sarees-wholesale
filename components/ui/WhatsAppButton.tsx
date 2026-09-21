@@ -16,6 +16,7 @@ export interface WhatsAppButtonProps {
   size?: ButtonSize;
   fullWidth?: boolean;
   className?: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
 }
 
 /**
@@ -29,6 +30,7 @@ export function WhatsAppButton({
   size = "md",
   fullWidth = false,
   className,
+  onClick,
 }: WhatsAppButtonProps) {
   const href = buildWhatsAppUrl(message);
 
@@ -42,6 +44,7 @@ export function WhatsAppButton({
         icon={<WhatsAppIcon size={isFloating ? 24 : 18} />}
         variant={isFloating ? "solid" : "outline"}
         size={isFloating ? "lg" : "md"}
+        onClick={onClick}
         className={cn(isFloating && "safe-bottom fixed right-4 z-30 shadow-lift sm:right-6", className)}
       />
     );
@@ -52,6 +55,7 @@ export function WhatsAppButton({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
       className={buttonClassName({ variant, size, fullWidth, className })}
     >
       <WhatsAppIcon size={size === "sm" ? 16 : 18} />

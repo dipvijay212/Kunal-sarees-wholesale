@@ -31,7 +31,13 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Settings", href: "/admin/settings", icon: <SparkleIcon size={18} /> },
 ];
 
-export function AdminSidebar({ className }: { className?: string }) {
+export function AdminSidebar({
+  className,
+  onItemClick,
+}: {
+  className?: string;
+  onItemClick?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -42,8 +48,8 @@ export function AdminSidebar({ className }: { className?: string }) {
       )}
     >
       {/* Brand Header */}
-      <div className="flex h-16 items-center justify-between border-b border-line px-5">
-        <Link href="/admin" className="flex items-center gap-2.5">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">
+        <Link href="/admin" onClick={onItemClick} className="flex items-center gap-2.5">
           <div className="flex size-8 items-center justify-center rounded-xs bg-accent text-xs font-bold text-accent-contrast">
             KS
           </div>
@@ -69,6 +75,7 @@ export function AdminSidebar({ className }: { className?: string }) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onItemClick}
               className={cn(
                 "flex items-center justify-between rounded-xs px-3.5 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -89,7 +96,7 @@ export function AdminSidebar({ className }: { className?: string }) {
       </nav>
 
       {/* Back to Storefront Link */}
-      <div className="border-t border-line p-3">
+      <div className="border-t border-line p-3 shrink-0">
         <Link
           href="/"
           target="_blank"

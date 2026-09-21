@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { WhatsAppIcon } from "@/components/ui/Icons";
 import { siteConfig } from "@/data/site";
 import { formatPieces, formatPrice } from "@/lib/format";
+import { clearOrderList } from "@/lib/stores";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import type { OrderListLine, OrderListSummary } from "@/types";
 
@@ -83,6 +84,7 @@ export function OrderCheckoutModal({ open, onClose, lines, summary }: OrderCheck
 
     const url = buildWhatsAppUrl(messageLines.join("\n"));
     window.open(url, "_blank", "noopener,noreferrer");
+    clearOrderList();
     onClose();
   };
 

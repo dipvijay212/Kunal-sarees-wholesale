@@ -1,12 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { RemoteImage } from "@/components/ui/RemoteImage";
 import { getAvailability } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
 import { getQuantityRules } from "@/lib/quantity";
 import type { Product } from "@/types";
 import { AddToOrderButton } from "./AddToOrderButton";
+import { ProductImageCarousel } from "./ProductImageCarousel";
 import { StockStatusLabel } from "./StockStatusLabel";
 import { WishlistButton } from "./WishlistButton";
 
@@ -28,13 +31,15 @@ export function ProductCard({
   className,
   showAddToOrder = true,
 }: ProductCardProps) {
-  const [primaryImage, secondaryImage] = product.images;
+  const [isHovered, setIsHovered] = useState(false);
   const { min } = getQuantityRules(product);
   const availability = getAvailability(product);
   const href = `/products/${product.slug}`;
 
   return (
     <article
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-xs border border-line bg-surface p-3 sm:p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-lift",
         className,
@@ -42,25 +47,13 @@ export function ProductCard({
     >
       {/* Image Frame */}
       <div className="media-frame relative aspect-[4/5] overflow-hidden rounded-xs bg-cream-warm">
-        {primaryImage ? (
-          <RemoteImage
-            src={primaryImage.url}
-            alt={primaryImage.alt}
-            fill
-            sizes={sizes}
-            loading={eager ? "eager" : "lazy"}
-            className="object-cover transition-transform duration-700 ease-luxe group-hover:scale-105"
-          />
-        ) : null}
-        {secondaryImage ? (
-          <RemoteImage
-            src={secondaryImage.url}
-            alt=""
-            fill
-            sizes={sizes}
-            className="object-cover opacity-0 transition-opacity duration-500 ease-luxe group-hover:scale-105 group-hover:opacity-100"
-          />
-        ) : null}
+        <ProductImageCarousel
+          images={product.images}
+          alt={product.name}
+          eager={eager}
+          sizes={sizes}
+          isHovered={isHovered}
+        />
 
         {/* Badges */}
         <div className="pointer-events-none absolute top-3.5 left-3.5 flex flex-col items-start gap-1.5 z-10">
@@ -120,4 +113,3 @@ export function ProductCard({
     </article>
   );
 }
-

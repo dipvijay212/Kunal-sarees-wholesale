@@ -35,8 +35,8 @@ export function WholesaleCta() {
                 <WhatsAppButton
                   size="lg"
                   label="Chat on WhatsApp"
-                  variant="secondary"
-                  className="border-gold/50 text-cream hover:bg-white/10 tracking-[0.08em]"
+                  variant="ghost"
+                  className="border border-gold/50 bg-white/10 text-cream hover:bg-gold hover:text-maroon-dark hover:border-gold font-semibold tracking-[0.08em] transition-all duration-300 shadow-sm"
                 />
               </div>
             </div>

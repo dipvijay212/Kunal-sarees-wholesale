@@ -250,7 +250,7 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="font-semibold text-ink block">Category</label>
                 <select
                   value={editingProduct.categoryId || ""}
@@ -260,21 +260,6 @@ export default function AdminProductsPage() {
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="font-semibold text-ink block">Collection</label>
-                <select
-                  value={editingProduct.collectionId || ""}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, collectionId: e.target.value })}
-                  className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
-                >
-                  {collections.map((col) => (
-                    <option key={col.id} value={col.id}>
-                      {col.name}
                     </option>
                   ))}
                 </select>

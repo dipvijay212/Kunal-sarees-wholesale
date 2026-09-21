@@ -70,7 +70,7 @@ export default async function CollectionPage({ params }: PageProps<"/collections
             {prices.length > 0 ? (
               <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-cream/90">
                 <span className="rounded-xs border border-white/20 bg-white/10 px-3.5 py-1 backdrop-blur-xs font-medium text-cream text-xs uppercase tracking-wider">
-                  {collectionProducts.length} {collectionProducts.length === 1 ? "design" : "designs"}
+                  {collectionProducts.length} {collectionProducts.length === 1 ? "Saree" : "Sarees"}
                 </span>
                 <span className="font-semibold text-gold-light">
                   {formatPrice(Math.min(...prices))} – {formatPrice(Math.max(...prices))} / piece

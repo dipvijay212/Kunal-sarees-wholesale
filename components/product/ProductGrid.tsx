@@ -13,7 +13,7 @@ export function ProductGrid({ products, eagerCount = 0, className }: ProductGrid
   return (
     <ul
       className={cn(
-        "grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 md:gap-x-6 lg:grid-cols-4 lg:gap-y-14",
+        "grid grid-cols-1 xs:grid-cols-2 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 lg:gap-6",
         className,
       )}
     >

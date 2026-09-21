@@ -59,8 +59,8 @@ const LAVENDER: ProductColor = { name: "Lavender", hex: "#9a8cc0" };
 /* Seeds -------------------------------------------------------------------- */
 
 interface ProductSeed extends Omit<Product, "images" | "variants"> {
-  /** Unsplash photo ids: [draped saree, fabric close-up, border detail]. */
-  photoIds: [string, string, string];
+  /** Unsplash photo ids: [draped saree, fabric close-up, border detail, optional additional views]. */
+  photoIds: string[];
 }
 
 const seeds: ProductSeed[] = [
@@ -890,12 +890,16 @@ const seeds: ProductSeed[] = [
 /* Builders ----------------------------------------------------------------- */
 
 function buildImages({ name, fabric, photoIds }: ProductSeed): ProductImage[] {
-  const [drape, fabricDetail, borderDetail] = photoIds;
-  return [
-    unsplashImage(drape, `${name} draped on a model`),
-    unsplashImage(fabricDetail, `${name} — ${fabric.toLowerCase()} fabric detail`),
-    unsplashImage(borderDetail, `${name} — border and pallu detail`),
+  const captions = [
+    `${name} draped on a model`,
+    `${name} — ${fabric.toLowerCase()} fabric detail`,
+    `${name} — border and pallu detail`,
+    `${name} — drape styling view`,
+    `${name} — pleats detail`,
   ];
+  return photoIds.map((photoId, idx) =>
+    unsplashImage(photoId, captions[idx] || `${name} — view ${idx + 1}`)
+  );
 }
 
 /** Initials used as the colour suffix in a variant code, e.g. "Deep Wine" → "DW". */

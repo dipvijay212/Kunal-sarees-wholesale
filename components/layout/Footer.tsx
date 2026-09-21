@@ -53,9 +53,12 @@ export function Footer() {
               <WhatsAppButton
                 size="sm"
                 label="WhatsApp Enquiry"
-                className="bg-gold hover:bg-gold-light text-maroon-dark font-bold border-transparent"
+                className="bg-gold hover:bg-gold-light text-maroon-dark font-bold border-transparent shadow-sm"
               />
-              <SocialLinks className="[&_a]:border-gold/40 [&_a]:text-cream [&_a:hover]:border-gold-light [&_a:hover]:text-gold-light [&_a:hover]:bg-maroon" />
+              <SocialLinks
+                variant="ghost"
+                itemClassName="border border-gold/40 bg-white/10 text-cream hover:bg-gold hover:text-maroon-dark hover:border-gold transition-all duration-300"
+              />
             </div>
           </div>
 

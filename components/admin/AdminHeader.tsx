@@ -3,8 +3,16 @@
 import { useRouter } from "next/navigation";
 import { logoutAdmin } from "@/lib/admin-stores";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { MenuIcon } from "@/components/ui/Icons";
 
-export function AdminHeader({ title }: { title: string }) {
+export function AdminHeader({
+  title,
+  onOpenMobileMenu,
+}: {
+  title: string;
+  onOpenMobileMenu?: () => void;
+}) {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -13,8 +21,18 @@ export function AdminHeader({ title }: { title: string }) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-line bg-canvas px-6">
-      <h1 className="type-h4 text-ink font-serif">{title}</h1>
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-line bg-canvas px-4 sm:px-6">
+      <div className="flex items-center gap-3">
+        {onOpenMobileMenu ? (
+          <IconButton
+            label="Open Admin Navigation"
+            icon={<MenuIcon size={20} />}
+            onClick={onOpenMobileMenu}
+            className="md:hidden text-ink hover:text-maroon"
+          />
+        ) : null}
+        <h1 className="type-h4 text-ink font-serif">{title}</h1>
+      </div>
 
       <div className="flex items-center gap-4">
         {/* Admin user info badge */}

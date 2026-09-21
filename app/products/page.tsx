@@ -19,9 +19,9 @@ export default function ProductsPage() {
     <>
       <PageHeader
         eyebrow="Catalogue"
-        title="The wholesale catalogue"
-        description="Every design with its per-piece wholesale rate and minimum order. Filter by category, collection or fabric."
-        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Catalogue" }]}
+        title="Browse Our Sarees"
+        description="Explore handcrafted Banarasi, Kanjivaram silk, georgette, and festive sarees curated for boutiques and retailers."
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sarees" }]}
       />
       <section className="section-y-sm">
         <div className="container-page">

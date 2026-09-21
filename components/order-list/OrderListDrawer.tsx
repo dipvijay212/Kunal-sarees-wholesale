@@ -13,8 +13,13 @@ import { OrderListLineItem } from "./OrderListLineItem";
 
 export function OrderListDrawer() {
   const { isOrderListOpen, closeOrderList } = useUI();
-  const { lines, summary, updateQuantity, removeItem } = useOrderList();
+  const { lines, summary, updateQuantity, removeItem, clear } = useOrderList();
   const isEmpty = lines.length === 0;
+
+  const handleSendOrder = () => {
+    clear();
+    closeOrderList();
+  };
 
   return (
     <Drawer
@@ -32,7 +37,12 @@ export function OrderListDrawer() {
               <span className="type-price text-xl text-ink">{formatPrice(summary.estimatedValue)}</span>
             </div>
             <p className="-mt-2 text-xs text-subtle">Excludes GST and shipping. Final pricing is confirmed on WhatsApp.</p>
-            <WhatsAppButton fullWidth label="Send order on WhatsApp" message={buildOrderListMessage(lines, summary)} />
+            <WhatsAppButton
+              fullWidth
+              label="Send order on WhatsApp"
+              message={buildOrderListMessage(lines, summary)}
+              onClick={handleSendOrder}
+            />
             <Button href="/order" variant="secondary" fullWidth onClick={closeOrderList}>
               Review full list
             </Button>

@@ -1,12 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
-import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
-import { TopBar } from "@/components/layout/TopBar";
-import { OrderListDrawer } from "@/components/order-list/OrderListDrawer";
+import { SiteShell } from "@/components/layout/SiteShell";
 import { UIProvider } from "@/components/providers/UIProvider";
-import { SearchDialog } from "@/components/search/SearchDialog";
-import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { siteConfig } from "@/data/site";
 import "@/styles/globals.css";
 
@@ -74,16 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <span className="btn btn--primary btn--sm">Skip to content</span>
         </a>
         <UIProvider>
-          <TopBar />
-          <Header />
-          <main id="main-content" className="flex-1">
-            {children}
-          </main>
-          <Footer />
-          <OrderListDrawer />
-          <SearchDialog />
-          {/* Mobile floating WhatsApp shortcut */}
-          <WhatsAppButton variant="floating" label={`Chat with ${siteConfig.name} on WhatsApp`} className="lg:hidden" />
+          <SiteShell>{children}</SiteShell>
         </UIProvider>
       </body>
     </html>
