@@ -11,12 +11,10 @@ import { businessSettings } from "@/data/business";
 import { orderingSteps, wholesaleHighlights } from "@/data/home";
 import { siteConfig } from "@/data/site";
 import {
-  getCategories,
   getFeaturedCollections,
   getNewArrivals,
   getProducts,
 } from "@/lib/catalog";
-import { formatNumber } from "@/lib/format";
 
 import type { Metadata } from "next";
 
@@ -36,13 +34,6 @@ export default function HomePage() {
   const products = getProducts();
   const featuredCollections = getFeaturedCollections(6);
   const newArrivals = getNewArrivals(6);
-  const lowestMoq = Math.min(...products.map((product) => product.moq));
-
-  const stats = [
-    { value: formatNumber(getCategories().length), label: "Collections" },
-    { value: `${formatNumber(products.length)}+`, label: "Designs in stock" },
-    { value: formatNumber(lowestMoq), label: lowestMoq === 1 ? "Piece minimum" : "Pieces minimum" },
-  ];
 
   const { address } = businessSettings.contact;
   const organizationJsonLd = {
@@ -73,7 +64,7 @@ export default function HomePage() {
       />
 
       {/* 1. HERO SECTION */}
-      <HomeHero stats={stats} />
+      <HomeHero />
 
       {/* 2. TRUST / BUSINESS HIGHLIGHTS */}
       <WholesaleHighlights highlights={wholesaleHighlights} />
@@ -112,13 +103,27 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* 5. WHOLESALE PROCESS */}
+      {/* 5. ALL PRODUCTS (Complete Wholesale Catalogue) */}
+      <section aria-labelledby="all-products-heading" className="section-y border-t border-line bg-canvas">
+        <Container>
+          <SectionHeading
+            id="all-products-heading"
+            eyebrow="Complete Wholesale Collection"
+            title="All Saree Designs"
+            description="Explore our complete catalogue across Banarasi, Kanjivaram, organza, georgette, and festive collections."
+            action={{ label: "View full catalogue", href: "/products" }}
+          />
+          <ProductGrid products={products} className="mt-10 lg:mt-12" />
+        </Container>
+      </section>
+
+      {/* 6. WHOLESALE PROCESS */}
       <OrderingProcess steps={orderingSteps} />
 
-      {/* 6. WHY KUNAL SAREES */}
+      {/* 7. WHY KUNAL SAREES */}
       <WhyKunalSarees />
 
-      {/* 7. WHOLESALE CTA */}
+      {/* 8. WHOLESALE CTA */}
       <WholesaleCta />
     </>
   );

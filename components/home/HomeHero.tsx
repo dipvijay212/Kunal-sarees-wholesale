@@ -1,18 +1,18 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { ArrowRightIcon } from "@/components/ui/Icons";
+import { ArrowRightIcon, MailIcon, PhoneIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { siteConfig } from "@/data/site";
 import type { Banner } from "@/types";
 
 interface HomeHeroProps {
   banner?: Banner;
-  stats: { value: string; label: string }[];
+  stats?: { value: string; label: string }[];
 }
 
 /** Split luxury editorial hero for Kunal Sarees */
-export function HomeHero({ stats }: HomeHeroProps) {
+export function HomeHero({}: HomeHeroProps) {
   return (
     <section className="relative isolate overflow-hidden border-b border-line bg-canvas">
       {/* Subtle traditional Indian textile pattern background */}
@@ -80,17 +80,50 @@ export function HomeHero({ stats }: HomeHeroProps) {
               />
             </div>
 
-            {/* Wholesale Stats */}
-            <dl className="mt-10 grid w-full max-w-lg grid-cols-3 gap-3 border-t border-line/80 pt-6 sm:gap-6 lg:mt-14">
-              {stats.map((stat) => (
-                <div key={stat.label} className="flex min-w-0 flex-col-reverse gap-1">
-                  <dt className="text-[0.6875rem] font-medium tracking-[0.08em] text-muted uppercase">
-                    {stat.label}
-                  </dt>
-                  <dd className="font-display text-2xl sm:text-3xl font-semibold text-ink">{stat.value}</dd>
-                </div>
-              ))}
-            </dl>
+            {/* Wholesale Direct Contact & Enquiry Desk */}
+            <div className="mt-10 w-full max-w-xl border-t border-line/80 pt-6 sm:mt-12 sm:pt-8">
+              <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-gold">
+                Direct Wholesale Support &amp; Enquiries
+              </p>
+
+              <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
+                {/* Phone & WhatsApp */}
+                <a
+                  href={siteConfig.contact.phoneHref}
+                  className="group flex items-center gap-3.5 rounded-xs border border-line bg-surface p-3.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-maroon/50 hover:shadow-soft"
+                >
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xs bg-accent-soft text-maroon transition-colors group-hover:bg-maroon group-hover:text-white">
+                    <PhoneIcon size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">
+                      Call / WhatsApp
+                    </span>
+                    <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
+                      {siteConfig.contact.phoneDisplay}
+                    </span>
+                  </div>
+                </a>
+
+                {/* Wholesale Email */}
+                <a
+                  href={`mailto:${siteConfig.contact.email}`}
+                  className="group flex items-center gap-3.5 rounded-xs border border-line bg-surface p-3.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/60 hover:shadow-soft"
+                >
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xs bg-gold/10 text-gold transition-colors group-hover:bg-gold group-hover:text-white">
+                    <MailIcon size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">
+                      Wholesale Email
+                    </span>
+                    <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
+                      {siteConfig.contact.email}
+                    </span>
+                  </div>
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Right Column: High-Quality Indian Saree Photography Showcase */}

@@ -43,7 +43,8 @@ export default async function CollectionPage({ params }: PageProps<"/collections
   return (
     <>
       {/* COLLECTION HERO */}
-      <header className="relative isolate overflow-hidden border-b border-line bg-accent-deep text-canvas">
+      <header className="relative isolate overflow-hidden border-b border-line bg-[#2E0A12] text-canvas">
+        {/* Background Image & Atmospheric Luxury Gradient Overlay */}
         <div aria-hidden="true" className="absolute inset-0 -z-10">
           <RemoteImage
             src={collection.image.url}
@@ -51,32 +52,84 @@ export default async function CollectionPage({ params }: PageProps<"/collections
             fill
             loading="eager"
             sizes="100vw"
-            className="object-cover opacity-30"
+            className="object-cover opacity-20 filter brightness-75 contrast-125"
           />
-          <div className="absolute inset-0 bg-linear-to-r from-accent-deep via-accent-deep/90 to-accent-deep/40" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#20040A] via-[#2E0A12]/95 to-[#2E0A12]/80 lg:to-[#2E0A12]/50" />
+          <div className="absolute inset-0 bg-linear-to-t from-[#20040A] via-transparent to-black/30" />
         </div>
-        <div className="container-page pt-6 pb-16 lg:pt-8 lg:pb-24">
+
+        <div className="container-page pt-6 pb-12 lg:pt-8 lg:pb-16">
           <Breadcrumbs
+            variant="light"
             items={[
               { label: "Home", href: "/" },
               { label: "Collections", href: "/collections" },
               { label: collection.name },
             ]}
           />
-          <div className="mt-10 max-w-2xl lg:mt-14">
-            <p className="type-eyebrow text-gold-light uppercase tracking-[0.15em] font-medium">{collection.tagline}</p>
-            <h1 className="type-h1 mt-3 text-cream font-serif font-normal">{collection.name}</h1>
-            <p className="type-lead mt-4 text-cream/90 font-sans">{collection.description}</p>
-            {prices.length > 0 ? (
-              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-cream/90">
-                <span className="rounded-xs border border-white/20 bg-white/10 px-3.5 py-1 backdrop-blur-xs font-medium text-cream text-xs uppercase tracking-wider">
-                  {collectionProducts.length} {collectionProducts.length === 1 ? "Saree" : "Sarees"}
+
+          <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-12 lg:items-center lg:gap-12">
+            {/* Left Content Column */}
+            <div className="lg:col-span-7 xl:col-span-8">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/15 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold-light backdrop-blur-xs">
+                <span className="size-1.5 rounded-full bg-gold-light animate-pulse" />
+                <span>{collection.tagline}</span>
+              </div>
+
+              <h1 className="mt-3.5 font-serif text-3xl font-normal tracking-tight text-cream sm:text-4xl lg:text-5xl">
+                {collection.name}
+              </h1>
+
+              <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-cream/90 sm:text-lg">
+                {collection.description}
+              </p>
+
+              {prices.length > 0 ? (
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center rounded-xs border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider text-cream backdrop-blur-xs">
+                    {collectionProducts.length} {collectionProducts.length === 1 ? "Design" : "Designs"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-xs border border-gold/40 bg-gold/15 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-gold-light">
+                    Wholesale: {formatPrice(Math.min(...prices))} – {formatPrice(Math.max(...prices))} / piece
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-5 text-xs text-cream/75">
+                <span className="flex items-center gap-1.5">
+                  <span className="font-bold text-gold-light">✓</span> Master Weaver Direct
                 </span>
-                <span className="font-semibold text-gold-light">
-                  {formatPrice(Math.min(...prices))} – {formatPrice(Math.max(...prices))} / piece
+                <span className="flex items-center gap-1.5">
+                  <span className="font-bold text-gold-light">✓</span> Ready Stock for Dispatch
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-bold text-gold-light">✓</span> Live Video Preview on WhatsApp
                 </span>
               </div>
-            ) : null}
+            </div>
+
+            {/* Right Featured Weave Showcase Card (Desktop) */}
+            <div className="hidden lg:col-span-5 lg:block xl:col-span-4">
+              <div className="group relative mx-auto aspect-[4/5] max-w-xs overflow-hidden rounded-xs border-2 border-gold/30 bg-maroon-dark shadow-2xl">
+                <RemoteImage
+                  src={collection.image.url}
+                  alt={collection.image.alt}
+                  fill
+                  sizes="(min-width: 1024px) 320px, 100vw"
+                  loading="eager"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/20 to-transparent" />
+                <div className="absolute right-4 bottom-4 left-4 text-cream">
+                  <span className="text-[0.6875rem] font-semibold uppercase tracking-widest text-gold-light">
+                    Curated Wholesale Edit
+                  </span>
+                  <p className="mt-0.5 font-serif text-lg font-normal text-cream">
+                    {collection.name}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>

@@ -12,26 +12,49 @@ export interface BreadcrumbItem {
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
   className?: string;
+  variant?: "default" | "light";
 }
 
-export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, className, variant = "default" }: BreadcrumbsProps) {
+  const isLight = variant === "light";
   return (
     <nav aria-label="Breadcrumb" className={className}>
-      <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
+      <ol
+        className={cn(
+          "flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs",
+          isLight ? "text-cream/70" : "text-muted",
+        )}
+      >
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
             <li key={`${item.label}-${index}`} className="flex min-w-0 items-center gap-1.5">
               {item.href && !isLast ? (
-                <Link href={item.href} className="transition-colors hover:text-ink">
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "transition-colors",
+                    isLight ? "hover:text-cream text-cream/80" : "hover:text-ink",
+                  )}
+                >
                   {item.label}
                 </Link>
               ) : (
-                <span aria-current={isLast ? "page" : undefined} className={cn(isLast && "text-ink")}>
+                <span
+                  aria-current={isLast ? "page" : undefined}
+                  className={cn(
+                    isLast && (isLight ? "text-gold-light font-medium" : "text-ink"),
+                  )}
+                >
                   {item.label}
                 </span>
               )}
-              {!isLast ? <ChevronRightIcon size={12} className="shrink-0 text-subtle" /> : null}
+              {!isLast ? (
+                <ChevronRightIcon
+                  size={12}
+                  className={cn("shrink-0", isLight ? "text-gold-light/50" : "text-subtle")}
+                />
+              ) : null}
             </li>
           );
         })}

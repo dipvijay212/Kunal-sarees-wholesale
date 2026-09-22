@@ -50,6 +50,9 @@
   --ks-accent: var(--ks-maroon);
   --ks-accent-strong: var(--ks-maroon-dark);
   --ks-accent-soft: rgb(110 31 42 / 0.08);
+  --ks-accent-deep: #380C14;
+  --ks-accent-light: var(--ks-gold-light);
+  --ks-accent-contrast: #FFFFFF;
   --ks-gold-accent: var(--ks-gold);
   --ks-gold-soft: rgb(179 138 74 / 0.12);
   --ks-focus: var(--ks-gold);
@@ -145,6 +148,9 @@
   --color-accent: var(--ks-accent);
   --color-accent-strong: var(--ks-accent-strong);
   --color-accent-soft: var(--ks-accent-soft);
+  --color-accent-deep: var(--ks-accent-deep);
+  --color-accent-light: var(--ks-accent-light);
+  --color-accent-contrast: var(--ks-accent-contrast);
   --color-gold-accent: var(--ks-gold-accent);
   --color-gold-soft: var(--ks-gold-soft);
 
