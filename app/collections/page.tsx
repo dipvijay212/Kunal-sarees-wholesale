@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CollectionCard } from "@/components/collection/CollectionCard";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { getCollections } from "@/lib/catalog";
+import { fetchCollections } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Collections",
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/collections" },
 };
 
-export default function CollectionsPage() {
-  const collections = getCollections();
+export default async function CollectionsPage() {
+  const collections = await fetchCollections();
 
   return (
     <>

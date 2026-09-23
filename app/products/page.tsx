@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CatalogueBrowser } from "@/components/product/CatalogueBrowser";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { getProducts } from "@/lib/catalog";
+import { fetchProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Wholesale Catalogue",
@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/products" },
 };
 
-export default function ProductsPage() {
-  const products = getProducts();
+export default async function ProductsPage() {
+  const products = await fetchProducts();
 
   return (
     <>

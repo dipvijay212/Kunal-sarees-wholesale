@@ -13,24 +13,25 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { businessSettings } from "@/data/business";
 import { siteConfig } from "@/data/site";
 import {
+  fetchProductBySlug,
+  fetchProducts,
   getAvailability,
   getCategoryById,
   getCollectionById,
-  getProductBySlug,
-  getProducts,
   getRelatedProducts,
 } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 
-export function generateStaticParams() {
-  return getProducts().map((product) => ({ slug: product.slug }));
+export async function generateStaticParams() {
+  const prods = await fetchProducts();
+  return prods.map((product) => ({ slug: product.slug }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: PageProps<"/products/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await fetchProductBySlug(slug);
   if (!product) return {};
 
   return {
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: PageProps<"/products/[slug]">
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await fetchProductBySlug(slug);
   if (!product) notFound();
 
   const category = getCategoryById(product.categoryId);

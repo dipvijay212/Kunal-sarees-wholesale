@@ -34,10 +34,10 @@ export default function AdminCollectionsPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCollection?.name) return;
-    saveAdminCollection(editingCollection as Partial<Collection> & { name: string });
+    await saveAdminCollection(editingCollection as Partial<Collection> & { name: string });
     setIsModalOpen(false);
     setEditingCollection(null);
   };

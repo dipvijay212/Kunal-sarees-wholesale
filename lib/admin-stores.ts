@@ -1,8 +1,7 @@
 import { createLocalStore } from "./local-store";
-import { products as mockProducts } from "@/data/products";
-import { categories as mockCategories } from "@/data/categories";
-import { collections as mockCollections } from "@/data/collections";
 import { businessSettings } from "@/data/business";
+import { authApi, adminApi, categoriesApi, collectionsApi } from "./api";
+import { adaptProduct, adaptCategory, adaptCollection, adaptOrder } from "./api-adapters";
 import type { Product, Category, Collection, BusinessSettings, PlacedOrder } from "@/types";
 
 /* 1. Admin Auth Store ---------------------------------------------------- */
@@ -28,183 +27,245 @@ export const adminAuthStore = createLocalStore<AdminSession>({
   validate: isAdminSession,
 });
 
-export function loginAdmin(email: string, password: string): { success: boolean; error?: string } {
-  if (email.trim().toLowerCase() === "admin@kunalsarees.com" && password === "Admin@123") {
+export async function loginAdmin(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await authApi.login({ email, password });
     adminAuthStore.set({
       isAuthenticated: true,
-      email: "admin@kunalsarees.com",
-      name: "Kunal Sarees Admin",
+      email: res.user.email,
+      name: res.user.name,
       loginAt: Date.now(),
     });
+    // Trigger initial background sync for admin data
+    syncAdminData();
     return { success: true };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Invalid email or password.";
+    return { success: false, error: errorMsg };
   }
-  return { success: false, error: "Invalid email or password. Use demo credentials." };
 }
 
 export function logoutAdmin() {
+  authApi.logout();
   adminAuthStore.reset();
 }
 
 /* 2. Admin Products Store ------------------------------------------------ */
 
 function isProductList(val: unknown): val is Product[] {
-  return Array.isArray(val) && val.length > 0 && typeof val[0].id === "string";
+  return Array.isArray(val);
 }
 
 export const adminProductsStore = createLocalStore<Product[]>({
-  key: "ks:admin:products:v1",
-  initialValue: mockProducts,
+  key: "ks:admin:products:v2",
+  initialValue: [],
   validate: isProductList,
 });
 
-export function saveAdminProduct(productData: Partial<Product>) {
-  adminProductsStore.set((products) => {
+export async function syncAdminProducts() {
+  try {
+    const res = await adminApi.products.getAll({ limit: 100 });
+    const adapted = res.products.map(adaptProduct);
+    adminProductsStore.set(adapted);
+    return adapted;
+  } catch (err) {
+    console.error("Failed to sync admin products:", err);
+    return adminProductsStore.getSnapshot();
+  }
+}
+
+export async function saveAdminProduct(productData: Partial<Product>) {
+  try {
     if (productData.id) {
-      // Edit existing product
-      return products.map((p) => (p.id === productData.id ? ({ ...p, ...productData } as Product) : p));
+      const rawId = productData.id.replace(/^prd-/, "");
+      await adminApi.products.update(rawId, {
+        name: productData.name,
+        slug: productData.slug,
+        productCode: productData.productCode,
+        description: productData.description,
+        shortDescription: productData.shortDescription,
+        fabric: productData.fabric,
+        price: productData.price,
+        minimumOrderQuantity: productData.moq,
+        stockQuantity: productData.stock,
+        isAvailable: productData.status === "active",
+        isFeatured: productData.featured,
+        isNew: productData.newArrival,
+      });
+    } else {
+      const name = productData.name || "Untitled Saree";
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const codeDigits = Math.floor(1000 + Math.random() * 9000);
+      await adminApi.products.create({
+        name,
+        slug: productData.slug || slug,
+        productCode: productData.productCode || `KS-NEW-${codeDigits}`,
+        description: productData.description || "",
+        shortDescription: productData.shortDescription || productData.description || "",
+        fabric: productData.fabric || "Banarasi Silk",
+        color: (productData.colors || []).map((c) => c.name).join(", ") || "Red",
+        price: productData.price || 2500,
+        minimumOrderQuantity: productData.moq || 2,
+        stockQuantity: productData.stock ?? 50,
+        isAvailable: productData.status ? productData.status === "active" : true,
+        isFeatured: Boolean(productData.featured),
+        isNew: Boolean(productData.newArrival),
+        images: (productData.images || []).map((img, idx) => ({
+          imageUrl: img.url,
+          altText: img.alt || name,
+          displayOrder: idx + 1,
+        })),
+      });
     }
-    // Add new product
-    const name = productData.name || "Untitled Saree";
-    const newId = `prod-${Date.now()}`;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const codeDigits = Math.floor(1000 + Math.random() * 9000);
-    const newProduct: Product = {
-      id: newId,
-      productCode: productData.productCode || `KS-NEW-${codeDigits}`,
-      name,
-      slug: productData.slug || slug,
-      description: productData.description || "",
-      shortDescription: productData.shortDescription || productData.description || "",
-      categoryId: productData.categoryId || mockCategories[0].id,
-      collectionId: productData.collectionId || mockCollections[0].id,
-      fabric: productData.fabric || "Banarasi Silk",
-      design: productData.design || "Zari Weave",
-      price: productData.price || 2500,
-      moq: productData.moq || 5,
-      orderMultiple: productData.orderMultiple || 1,
-      stock: productData.stock ?? 50,
-      colors: productData.colors || [{ name: "Red", hex: "#DC2626" }],
-      images: productData.images || [
-        {
-          url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=85",
-          alt: name,
-          width: 1200,
-          height: 1600,
-        },
-      ],
-      variants: [],
-      specifications: productData.specifications || {
-        sareeLength: "5.5 meters",
-        blousePiece: "0.8 meters (Unstitched)",
-        weight: "750g",
-        washCare: "Dry Clean Only",
-        origin: "Surat, Gujarat",
-      },
-      highlights: productData.highlights || ["Pure Silk Fabric", "Intricate Weave", "Wholesale MOQ 5 Pcs"],
-      featured: Boolean(productData.featured),
-      newArrival: Boolean(productData.newArrival),
-      status: productData.status || "active",
-      createdAt: new Date().toISOString(),
-    };
-    return [newProduct, ...products];
-  });
+    await syncAdminProducts();
+  } catch (err) {
+    console.error("Error saving admin product:", err);
+  }
 }
 
-export function deleteAdminProduct(id: string) {
-  adminProductsStore.set((products) => products.filter((p) => p.id !== id));
+export async function deleteAdminProduct(id: string) {
+  try {
+    const rawId = id.replace(/^prd-/, "");
+    await adminApi.products.delete(rawId);
+    adminProductsStore.set((products) => products.filter((p) => p.id !== id));
+  } catch (err) {
+    console.error("Error deleting admin product:", err);
+  }
 }
 
-export function toggleAdminProductStatus(id: string) {
-  adminProductsStore.set((products) =>
-    products.map((p) =>
-      p.id === id ? { ...p, status: p.status === "active" ? "draft" : "active" } : p,
-    ),
-  );
+export async function toggleAdminProductStatus(id: string) {
+  const current = adminProductsStore.getSnapshot().find((p) => p.id === id);
+  if (!current) return;
+  const newStatus = current.status === "active" ? "draft" : "active";
+  const rawId = id.replace(/^prd-/, "");
+  try {
+    await adminApi.products.update(rawId, {
+      isAvailable: newStatus === "active",
+    });
+    adminProductsStore.set((products) =>
+      products.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
+    );
+  } catch (err) {
+    console.error("Error toggling product status:", err);
+  }
 }
 
 /* 3. Admin Categories Store ---------------------------------------------- */
 
 function isCategoryList(val: unknown): val is Category[] {
-  return Array.isArray(val) && val.length > 0 && typeof val[0].id === "string";
+  return Array.isArray(val);
 }
 
 export const adminCategoriesStore = createLocalStore<Category[]>({
-  key: "ks:admin:categories:v1",
-  initialValue: mockCategories,
+  key: "ks:admin:categories:v2",
+  initialValue: [],
   validate: isCategoryList,
 });
 
-export function saveAdminCategory(categoryData: Partial<Category>) {
-  adminCategoriesStore.set((categories) => {
-    if (categoryData.id) {
-      return categories.map((c) => (c.id === categoryData.id ? ({ ...c, ...categoryData } as Category) : c));
-    }
-    const name = categoryData.name || "New Category";
-    const newId = `cat-${Date.now()}`;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const newCat: Category = {
-      id: newId,
-      name,
-      slug: categoryData.slug || slug,
-      description: categoryData.description || "",
-      image: categoryData.image || {
-        url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
-        alt: name,
-        width: 800,
-        height: 1000,
-      },
-      featured: Boolean(categoryData.featured),
-      order: categories.length + 1,
-    };
-    return [...categories, newCat];
-  });
+export async function syncAdminCategories() {
+  try {
+    const res = await categoriesApi.getAll();
+    const adapted = res.categories.map((c, i) => adaptCategory(c, i));
+    adminCategoriesStore.set(adapted);
+    return adapted;
+  } catch (err) {
+    console.error("Failed to sync admin categories:", err);
+    return adminCategoriesStore.getSnapshot();
+  }
 }
 
-export function deleteAdminCategory(id: string) {
-  adminCategoriesStore.set((categories) => categories.filter((c) => c.id !== id));
+export async function saveAdminCategory(categoryData: Partial<Category>) {
+  try {
+    if (categoryData.id) {
+      const rawId = categoryData.id.replace(/^cat-/, "");
+      await adminApi.categories.update(rawId, {
+        name: categoryData.name,
+        slug: categoryData.slug,
+        description: categoryData.description,
+      });
+    } else {
+      const name = categoryData.name || "New Category";
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      await adminApi.categories.create({
+        name,
+        slug: categoryData.slug || slug,
+        description: categoryData.description || "",
+      });
+    }
+    await syncAdminCategories();
+  } catch (err) {
+    console.error("Error saving admin category:", err);
+  }
+}
+
+export async function deleteAdminCategory(id: string) {
+  try {
+    const rawId = id.replace(/^cat-/, "");
+    await adminApi.categories.delete(rawId);
+    adminCategoriesStore.set((categories) => categories.filter((c) => c.id !== id));
+  } catch (err) {
+    console.error("Error deleting category:", err);
+  }
 }
 
 /* 4. Admin Collections Store --------------------------------------------- */
 
 function isCollectionList(val: unknown): val is Collection[] {
-  return Array.isArray(val) && val.length > 0 && typeof val[0].id === "string";
+  return Array.isArray(val);
 }
 
 export const adminCollectionsStore = createLocalStore<Collection[]>({
-  key: "ks:admin:collections:v1",
-  initialValue: mockCollections,
+  key: "ks:admin:collections:v2",
+  initialValue: [],
   validate: isCollectionList,
 });
 
-export function saveAdminCollection(collectionData: Partial<Collection>) {
-  adminCollectionsStore.set((collections) => {
-    if (collectionData.id) {
-      return collections.map((col) => (col.id === collectionData.id ? ({ ...col, ...collectionData } as Collection) : col));
-    }
-    const name = collectionData.name || "New Collection";
-    const newId = `col-${Date.now()}`;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const newCol: Collection = {
-      id: newId,
-      name,
-      slug: collectionData.slug || slug,
-      tagline: collectionData.tagline || "",
-      description: collectionData.description || "",
-      image: collectionData.image || {
-        url: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
-        alt: name,
-        width: 800,
-        height: 1000,
-      },
-      featured: Boolean(collectionData.featured),
-      order: collections.length + 1,
-    };
-    return [...collections, newCol];
-  });
+export async function syncAdminCollections() {
+  try {
+    const res = await collectionsApi.getAll();
+    const adapted = res.collections.map((col, i) => adaptCollection(col, i));
+    adminCollectionsStore.set(adapted);
+    return adapted;
+  } catch (err) {
+    console.error("Failed to sync admin collections:", err);
+    return adminCollectionsStore.getSnapshot();
+  }
 }
 
-export function deleteAdminCollection(id: string) {
-  adminCollectionsStore.set((collections) => collections.filter((c) => c.id !== id));
+export async function saveAdminCollection(collectionData: Partial<Collection>) {
+  try {
+    if (collectionData.id) {
+      const rawId = collectionData.id.replace(/^col-/, "");
+      await adminApi.collections.update(rawId, {
+        name: collectionData.name,
+        slug: collectionData.slug,
+        description: collectionData.description,
+        image: collectionData.image?.url,
+      });
+    } else {
+      const name = collectionData.name || "New Collection";
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      await adminApi.collections.create({
+        name,
+        slug: collectionData.slug || slug,
+        description: collectionData.description || "",
+        image: collectionData.image?.url,
+      });
+    }
+    await syncAdminCollections();
+  } catch (err) {
+    console.error("Error saving admin collection:", err);
+  }
+}
+
+export async function deleteAdminCollection(id: string) {
+  try {
+    const rawId = id.replace(/^col-/, "");
+    await adminApi.collections.delete(rawId);
+    adminCollectionsStore.set((collections) => collections.filter((c) => c.id !== id));
+  } catch (err) {
+    console.error("Error deleting collection:", err);
+  }
 }
 
 /* 5. Admin Settings Store ------------------------------------------------ */
@@ -242,98 +303,62 @@ export interface AdminOrderRecord extends PlacedOrder {
   orderStatus: OrderStatusLabel;
 }
 
-const SEED_ORDERS: AdminOrderRecord[] = [
-  {
-    id: "ord-seed-1",
-    orderNumber: "KS-ORD-2026-8812",
-    customerDetails: {
-      fullName: "Rajesh Sharma",
-      businessName: "Sharma Silk Store",
-      customerType: "Retailer",
-      whatsappNumber: "9876543210",
-      mobileNumber: "9876543210",
-      city: "Surat",
-      state: "Gujarat",
-      pincode: "395002",
-      fullAddress: "Shop 104, Millennium Market, Ring Road",
-      notes: "Need urgent dispatch for festival season.",
-    },
-    items: [
-      {
-        productId: "prod-banarasi-01",
-        productCode: "KS-BNS-1001",
-        productName: "Aaranya Temple Border Kanjivaram Saree",
-        quantity: 15,
-        price: 3450,
-        lineTotal: 51750,
-        selectedColors: { Red: 10, Green: 5 },
-      },
-    ],
-    summary: {
-      designCount: 1,
-      totalPieces: 15,
-      estimatedValue: 51750,
-    },
-    placedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-    whatsappUrl: "https://wa.me/919913238496",
-    orderStatus: "New",
-  },
-  {
-    id: "ord-seed-2",
-    orderNumber: "KS-ORD-2026-4409",
-    customerDetails: {
-      fullName: "Priya Mehta",
-      businessName: "Vogue Boutique",
-      customerType: "Boutique",
-      whatsappNumber: "9812345678",
-      mobileNumber: "9812345678",
-      city: "Ahmedabad",
-      state: "Gujarat",
-      pincode: "380009",
-      fullAddress: "12 CG Road, Opp Municipal Market",
-      notes: "Please include fabric shade swatches.",
-    },
-    items: [
-      {
-        productId: "prod-banarasi-02",
-        productCode: "KS-BNS-1002",
-        productName: "Meenakshi Korvai Silk Saree",
-        quantity: 20,
-        price: 4200,
-        lineTotal: 84000,
-        selectedColors: { Pink: 10, Blue: 10 },
-      },
-    ],
-    summary: {
-      designCount: 1,
-      totalPieces: 20,
-      estimatedValue: 84000,
-    },
-    placedAt: new Date(Date.now() - 3600000 * 28).toISOString(),
-    whatsappUrl: "https://wa.me/919913238496",
-    orderStatus: "Confirmed",
-  },
-];
-
-function isAdminOrderList(val: unknown): val is AdminOrderRecord[] {
+function isOrderList(val: unknown): val is AdminOrderRecord[] {
   return Array.isArray(val);
 }
 
 export const adminOrdersStore = createLocalStore<AdminOrderRecord[]>({
-  key: "ks:admin:orders:v1",
-  initialValue: SEED_ORDERS,
-  validate: isAdminOrderList,
+  key: "ks:admin:orders:v2",
+  initialValue: [],
+  validate: isOrderList,
 });
 
-export function saveAdminOrder(order: PlacedOrder) {
-  adminOrdersStore.set((orders) => [
-    { ...order, orderStatus: "New" as OrderStatusLabel },
-    ...orders.filter((o) => o.id !== order.id && o.orderNumber !== order.orderNumber),
-  ]);
+export async function syncAdminOrders() {
+  try {
+    const res = await adminApi.orders.getAll({ limit: 100 });
+    const adapted = res.orders.map((o) => adaptOrder(o) as AdminOrderRecord);
+    adminOrdersStore.set(adapted);
+    return adapted;
+  } catch (err) {
+    console.error("Failed to sync admin orders:", err);
+    return adminOrdersStore.getSnapshot();
+  }
 }
 
-export function updateOrderStatus(orderId: string, status: OrderStatusLabel) {
-  adminOrdersStore.set((orders) =>
-    orders.map((o) => (o.id === orderId || o.orderNumber === orderId ? { ...o, orderStatus: status } : o)),
-  );
+export async function updateOrderStatus(id: string, newStatus: OrderStatusLabel) {
+  const rawId = id.replace(/^ord-/, "");
+  const statusMap: Record<OrderStatusLabel, string> = {
+    New: "pending",
+    Confirmed: "confirmed",
+    Processing: "processing",
+    Ready: "packed",
+    Completed: "completed",
+    Cancelled: "cancelled",
+  };
+  try {
+    await adminApi.orders.updateStatus(rawId, statusMap[newStatus] || "pending");
+    adminOrdersStore.set((orders) =>
+      orders.map((o) => (o.id === id ? { ...o, orderStatus: newStatus } : o))
+    );
+  } catch (err) {
+    console.error("Error updating order status:", err);
+  }
+}
+
+export function saveAdminOrder(order: PlacedOrder) {
+  const adminRecord: AdminOrderRecord = {
+    ...order,
+    orderStatus: "New",
+  };
+  adminOrdersStore.set((orders) => [adminRecord, ...orders]);
+}
+
+export async function syncAdminData() {
+  if (typeof window === "undefined") return;
+  await Promise.allSettled([
+    syncAdminProducts(),
+    syncAdminCategories(),
+    syncAdminCollections(),
+    syncAdminOrders(),
+  ]);
 }

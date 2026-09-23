@@ -402,3 +402,44 @@ export function filterProducts(source: Product[], filters: CatalogueFilters): Pr
       return [...filtered].sort((a, b) => Number(b.featured) - Number(a.featured));
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Async Fetchers for Server & Client Components                              */
+/* -------------------------------------------------------------------------- */
+
+export async function fetchProducts(options?: GetProductsOptions): Promise<Product[]> {
+  return productRepository.fetchAll(options);
+}
+
+export async function fetchProductBySlug(slug: string): Promise<Product | undefined> {
+  return productRepository.fetchBySlug(slug);
+}
+
+export async function fetchCategories(): Promise<CategoryWithCount[]> {
+  const categories = await categoryRepository.fetchAll();
+  const products = await productRepository.fetchAll();
+  return categories.map((cat) => ({
+    ...cat,
+    productCount: products.filter((p) => p.categoryId === cat.id).length,
+  }));
+}
+
+export async function fetchCollections(): Promise<CollectionWithCount[]> {
+  const collections = await collectionRepository.fetchAll();
+  const products = await productRepository.fetchAll();
+  return collections.map((col) => ({
+    ...col,
+    productCount: products.filter((p) => p.collectionId === col.id).length,
+  }));
+}
+
+export async function fetchFeaturedCollections(limit = 6): Promise<CollectionWithCount[]> {
+  const collections = await fetchCollections();
+  return collections.filter((col) => col.featured).slice(0, limit);
+}
+
+export async function fetchNewArrivals(limit = 6): Promise<Product[]> {
+  const products = await fetchProducts();
+  return products.filter((p) => p.newArrival).slice(0, limit);
+}
+

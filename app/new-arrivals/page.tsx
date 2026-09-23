@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SparkleIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { getNewArrivals, getProducts } from "@/lib/catalog";
+import { fetchNewArrivals } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "New Arrivals",
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/new-arrivals" },
 };
 
-export default function NewArrivalsPage() {
-  const newArrivals = getNewArrivals(getProducts().length);
+export default async function NewArrivalsPage() {
+  const newArrivals = await fetchNewArrivals(50);
 
   return (
     <>

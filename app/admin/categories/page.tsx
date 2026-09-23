@@ -34,10 +34,10 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCategory?.name) return;
-    saveAdminCategory(editingCategory as Partial<Category> & { name: string });
+    await saveAdminCategory(editingCategory as Partial<Category> & { name: string });
     setIsModalOpen(false);
     setEditingCategory(null);
   };

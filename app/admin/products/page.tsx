@@ -69,10 +69,10 @@ export default function AdminProductsPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct?.name || !editingProduct?.price) return;
-    saveAdminProduct(editingProduct as Partial<Product> & { name: string; price: number });
+    await saveAdminProduct(editingProduct as Partial<Product> & { name: string; price: number });
     setIsModalOpen(false);
     setEditingProduct(null);
   };

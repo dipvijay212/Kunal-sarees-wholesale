@@ -1,36 +1,61 @@
-import { customers } from "@/data/customers";
-import { orders } from "@/data/orders";
+import { orderRepository, customerRepository } from "@/lib/repositories";
 import type { Customer, Order, OrderStatus } from "@/types";
 
 /*
- * Customer and order queries. Nothing on the storefront uses these yet — they
- * back the mock order history and are ready for an admin area later.
+ * Customer and order queries backed by live repository layer.
  */
 
-const customersById = new Map(customers.map((customer) => [customer.id, customer]));
-
 export function getCustomers(): Customer[] {
-  return customers;
+  const profiles = customerRepository.getAll();
+  return profiles.map((p) => ({
+    id: p.id,
+    businessName: p.business,
+    contactName: p.name,
+    type: "retail-store" as const,
+    phone: p.whatsapp,
+    city: p.city,
+    state: p.state,
+    since: p.lastOrderDate,
+  }));
 }
 
 export function getCustomerById(id: string): Customer | undefined {
-  return customersById.get(id);
-}
-
-function byMostRecent(a: Order, b: Order): number {
-  return b.placedAt.localeCompare(a.placedAt);
+  return getCustomers().find((c) => c.id === id);
 }
 
 export function getOrders(): Order[] {
-  return [...orders].sort(byMostRecent);
+  const adminOrders = orderRepository.getAll();
+  return adminOrders.map((o) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    customerId: o.customerDetails.whatsappNumber || o.customerDetails.fullName,
+    items: o.items.map((it) => ({
+      id: it.productId,
+      productId: it.productId,
+      productCode: it.productCode,
+      productName: it.productName,
+      quantity: it.quantity,
+      unitPrice: it.price,
+      lineTotal: it.lineTotal,
+    })),
+    status: (o.orderStatus?.toLowerCase() || "enquiry") as OrderStatus,
+    channel: "whatsapp" as const,
+    subtotal: o.summary.estimatedValue,
+    discount: 0,
+    gstRate: 0,
+    gstAmount: 0,
+    shipping: 0,
+    total: o.summary.estimatedValue,
+    placedAt: o.placedAt,
+  }));
 }
 
 export function getOrderById(id: string): Order | undefined {
-  return orders.find((order) => order.id === id);
+  return getOrders().find((order) => order.id === id);
 }
 
 export function getOrderByNumber(orderNumber: string): Order | undefined {
-  return orders.find((order) => order.orderNumber === orderNumber);
+  return getOrders().find((order) => order.orderNumber === orderNumber);
 }
 
 export function getOrdersByCustomer(customerId: string): Order[] {

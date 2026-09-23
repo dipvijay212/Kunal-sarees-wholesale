@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { useLocalStore } from "@/hooks/use-local-store";
-import { adminAuthStore } from "@/lib/admin-stores";
+import { adminAuthStore, syncAdminData } from "@/lib/admin-stores";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Drawer } from "@/components/ui/Drawer";
 
@@ -24,6 +24,8 @@ export function AdminLayout({
   useEffect(() => {
     if (pathname !== "/admin/login" && !session.isAuthenticated) {
       router.replace("/admin/login");
+    } else if (session.isAuthenticated) {
+      syncAdminData();
     }
   }, [pathname, session.isAuthenticated, router]);
 

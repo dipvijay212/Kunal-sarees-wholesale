@@ -7,18 +7,20 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { RemoteImage } from "@/components/ui/RemoteImage";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { siteConfig } from "@/data/site";
-import { getCollectionBySlug, getCollections, getProductsByCollection } from "@/lib/catalog";
+import { fetchCollections, fetchProducts } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 
-export function generateStaticParams() {
-  return getCollections().map((collection) => ({ slug: collection.slug }));
+export async function generateStaticParams() {
+  const cols = await fetchCollections();
+  return cols.map((collection) => ({ slug: collection.slug }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: PageProps<"/collections/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const collection = getCollectionBySlug(slug);
+  const cols = await fetchCollections();
+  const collection = cols.find((c) => c.slug === slug);
   if (!collection) return {};
 
   return {
@@ -34,10 +36,12 @@ export async function generateMetadata({ params }: PageProps<"/collections/[slug
 
 export default async function CollectionPage({ params }: PageProps<"/collections/[slug]">) {
   const { slug } = await params;
-  const collection = getCollectionBySlug(slug);
+  const cols = await fetchCollections();
+  const collection = cols.find((c) => c.slug === slug);
   if (!collection) notFound();
 
-  const collectionProducts = getProductsByCollection(collection.id);
+  const allProducts = await fetchProducts();
+  const collectionProducts = allProducts.filter((p) => p.collectionId === collection.id);
   const prices = collectionProducts.map((product) => product.price);
 
   return (

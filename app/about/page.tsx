@@ -7,7 +7,7 @@ import { RemoteImage } from "@/components/ui/RemoteImage";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { aboutStory, aboutValues } from "@/data/about";
 import { siteConfig } from "@/data/site";
-import { getCategories, getProducts } from "@/lib/catalog";
+import { fetchCategories, fetchProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "About",
@@ -16,13 +16,19 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
 };
 
-export default function AboutPage() {
-  const [silkCategory] = getCategories();
-  const storyImage = silkCategory.image;
+export default async function AboutPage() {
+  const categories = await fetchCategories();
+  const products = await fetchProducts();
+  const storyImage = categories[0]?.image || {
+    url: "https://images.unsplash.com/photo-1619043518800-7f14be467dca?auto=format&fit=crop&w=1200&q=85",
+    alt: "Kunal Sarees Surat Wholesale",
+    width: 1200,
+    height: 800,
+  };
 
   const facts = [
-    { value: String(getCategories().length), label: "Fabric categories" },
-    { value: `${getProducts().length}+`, label: "Designs in the catalogue" },
+    { value: String(categories.length || 10), label: "Fabric categories" },
+    { value: `${products.length || 12}+`, label: "Designs in the catalogue" },
     { value: siteConfig.contact.address.city, label: "Where we are based" },
   ];
 

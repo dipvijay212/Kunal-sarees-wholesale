@@ -1,17 +1,11 @@
 /**
- * Mock data layer. UI components never hardcode catalogue data — they read it
- * through the query helpers in lib/catalog.ts (products, categories,
- * collections, banners) and lib/crm.ts (customers, orders), which import the
- * raw arrays exported here.
+ * Static configuration, brand identity, and marketing copy.
+ * Catalogue entities (products, categories, collections, orders) are served dynamically
+ * by the backend REST API via lib/api.ts and lib/catalog.ts.
  */
 
 export { banners } from "./banners";
 export { businessSettings } from "./business";
-export { categories } from "./categories";
-export { collections } from "./collections";
-export { customers } from "./customers";
-export { orders } from "./orders";
-export { products } from "./products";
 export { FALLBACK_IMAGE_URL, LANDSCAPE, PORTRAIT, unsplashImage } from "./images";
 export { formatAddress, getDirectionsUrl, siteConfig } from "./site";
 export { footerQuickLinks, mainNavigation } from "./navigation";

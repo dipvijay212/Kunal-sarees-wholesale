@@ -11,9 +11,9 @@ import { businessSettings } from "@/data/business";
 import { orderingSteps, wholesaleHighlights } from "@/data/home";
 import { siteConfig } from "@/data/site";
 import {
-  getFeaturedCollections,
-  getNewArrivals,
-  getProducts,
+  fetchFeaturedCollections,
+  fetchNewArrivals,
+  fetchProducts,
 } from "@/lib/catalog";
 
 import type { Metadata } from "next";
@@ -30,10 +30,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
-  const products = getProducts();
-  const featuredCollections = getFeaturedCollections(6);
-  const newArrivals = getNewArrivals(6);
+export default async function HomePage() {
+  const products = await fetchProducts();
+  const featuredCollections = await fetchFeaturedCollections(6);
+  const newArrivals = await fetchNewArrivals(6);
 
   const { address } = businessSettings.contact;
   const organizationJsonLd = {

@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea, fieldAria } from "@/components/ui/FormField";
 import { CheckIcon, WhatsAppIcon } from "@/components/ui/Icons";
-import { collections } from "@/data/collections";
+import { getCollections } from "@/lib/catalog";
 import { buildWhatsAppUrl, buildWholesaleEnquiryMessage, type WholesaleEnquiryDetails } from "@/lib/whatsapp";
 
 type FormValues = Required<WholesaleEnquiryDetails>;
@@ -172,7 +172,7 @@ export function WholesaleEnquiryForm() {
             onChange={(event) => update("interest", event.target.value)}
           >
             <option>All collections</option>
-            {collections.map((collection) => (
+            {getCollections().map((collection) => (
               <option key={collection.slug}>{collection.name}</option>
             ))}
           </Select>

@@ -15,6 +15,7 @@ import { useOrderList } from "@/hooks/use-order-list";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { clearOrderList, savePlacedOrder } from "@/lib/stores";
 import { orderRepository } from "@/lib/repositories";
+import { ordersApi } from "@/lib/api";
 import { buildCheckoutWhatsAppMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type { CheckoutFormData, PlacedOrder } from "@/types";
 
@@ -137,49 +138,99 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    // Generate Order Number
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    const orderNumber = `KS-ORD-2026-${randomDigits}`;
+    try {
+      // Submit order to Backend API
+      const itemsPayload = lines.map(({ product, item }) => {
+        const rawId = parseInt(product.id.replace(/\D/g, ""), 10) || 1;
+        return {
+          productId: rawId,
+          quantity: item.quantity,
+        };
+      });
 
-    // Format WhatsApp Message
-    const messageText = buildCheckoutWhatsAppMessage(formData, lines, summary);
-    const whatsappUrl = buildWhatsAppUrl(messageText, businessSettings.contact.whatsappNumber);
+      const apiResult = await ordersApi.create({
+        customerName: formData.fullName,
+        businessName: formData.businessName || undefined,
+        phone: formData.mobileNumber.replace(/\D/g, ""),
+        whatsappNumber: formData.whatsappNumber.replace(/\D/g, ""),
+        address: formData.fullAddress,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode.replace(/\D/g, ""),
+        notes: formData.notes || undefined,
+        items: itemsPayload,
+      });
 
-    // Create PlacedOrder mock object
-    const placedOrder: PlacedOrder = {
-      id: `ord-${Date.now()}`,
-      orderNumber,
-      customerDetails: { ...formData },
-      items: lines.map(({ product, item, lineTotal }) => ({
-        productId: product.id,
-        productCode: product.productCode,
-        productName: product.name,
-        quantity: item.quantity,
-        price: product.price,
-        lineTotal,
-        selectedColors: item.selectedColors,
-      })),
-      summary: { ...summary },
-      placedAt: new Date().toISOString(),
-      whatsappUrl,
-    };
+      const orderNumber = apiResult.orderNumber;
 
-    // Save to local mock order history & clear active list
-    savePlacedOrder(placedOrder);
-    orderRepository.create(placedOrder);
-    clearOrderList();
+      // Format WhatsApp Message with confirmed order number
+      const messageText = buildCheckoutWhatsAppMessage(formData, lines, summary);
+      const whatsappUrl = buildWhatsAppUrl(messageText, businessSettings.contact.whatsappNumber);
 
-    // Open WhatsApp link in new tab (standard click-to-chat action)
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+      const placedOrder: PlacedOrder = {
+        id: `ord-${Date.now()}`,
+        orderNumber,
+        customerDetails: { ...formData },
+        items: lines.map(({ product, item, lineTotal }) => ({
+          productId: product.id,
+          productCode: product.productCode,
+          productName: product.name,
+          quantity: item.quantity,
+          price: product.price,
+          lineTotal,
+          selectedColors: item.selectedColors,
+        })),
+        summary: { ...summary },
+        placedAt: new Date().toISOString(),
+        whatsappUrl,
+      };
 
-    // Navigate to Order Success page
-    router.push(`/order/success?orderNumber=${orderNumber}`);
+      savePlacedOrder(placedOrder);
+      orderRepository.create(placedOrder);
+      clearOrderList();
+
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+      router.push(`/order/success?orderNumber=${orderNumber}`);
+    } catch (err: unknown) {
+      console.error("Failed to place order:", err);
+      // Fallback: continue with generated reference
+      const randomDigits = Math.floor(1000 + Math.random() * 9000);
+      const fallbackOrderNumber = `KS-ORD-2026-${randomDigits}`;
+      const messageText = buildCheckoutWhatsAppMessage(formData, lines, summary);
+      const whatsappUrl = buildWhatsAppUrl(messageText, businessSettings.contact.whatsappNumber);
+
+      const placedOrder: PlacedOrder = {
+        id: `ord-${Date.now()}`,
+        orderNumber: fallbackOrderNumber,
+        customerDetails: { ...formData },
+        items: lines.map(({ product, item, lineTotal }) => ({
+          productId: product.id,
+          productCode: product.productCode,
+          productName: product.name,
+          quantity: item.quantity,
+          price: product.price,
+          lineTotal,
+          selectedColors: item.selectedColors,
+        })),
+        summary: { ...summary },
+        placedAt: new Date().toISOString(),
+        whatsappUrl,
+      };
+
+      savePlacedOrder(placedOrder);
+      orderRepository.create(placedOrder);
+      clearOrderList();
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+      router.push(`/order/success?orderNumber=${fallbackOrderNumber}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

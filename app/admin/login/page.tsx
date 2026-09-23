@@ -12,15 +12,25 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("Admin@123");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
-    const result = loginAdmin(email, password);
-    if (result.success) {
-      router.push("/admin");
-    } else {
-      setError(result.error || "Login failed");
+    try {
+      const result = await loginAdmin(email, password);
+      if (result.success) {
+        router.push("/admin");
+      } else {
+        setError(result.error || "Login failed");
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -83,8 +93,8 @@ export default function AdminLoginPage() {
               />
             </div>
 
-            <Button type="submit" size="lg" fullWidth className="mt-2">
-              Sign In to Admin Portal
+            <Button type="submit" size="lg" fullWidth className="mt-2" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In to Admin Portal"}
             </Button>
           </form>
         </div>
