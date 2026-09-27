@@ -75,7 +75,7 @@ export function Button(props: ButtonProps) {
     const { className, content, rest } = splitStyleProps(props);
     const { type = "button", ...buttonProps } = rest;
     return (
-      <button type={type} className={className} {...buttonProps}>
+      <button type={type} className={className} suppressHydrationWarning {...buttonProps}>
         {content}
       </button>
     );

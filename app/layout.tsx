@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { UIProvider } from "@/components/providers/UIProvider";
 import { siteConfig } from "@/data/site";
+import type { Language } from "@/lib/translations";
 import "@/styles/globals.css";
 
 const displayFont = Cormorant_Garamond({
@@ -20,31 +23,31 @@ const sansFont = Manrope({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Kunal Sarees | Premium Wholesale Sarees",
+    default: "Kunal Sarees | सूरत डायरेक्ट होलसेल साड़ियां",
     template: "%s | Kunal Sarees",
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
     "Kunal Sarees",
-    "wholesale sarees",
-    "saree wholesaler Surat",
-    "Banarasi silk sarees wholesale",
-    "Kanjivaram sarees wholesale",
-    "bridal sarees wholesale",
-    "B2B saree supplier India",
+    "होलसेल साड़ियां",
+    "सूरत साड़ी होलसेलर",
+    "बनारसी सिल्क साड़ी होलसेल",
+    "कांजीवरम साड़ी",
+    "ब्राइडल साड़ियां",
+    "सूरत साड़ी थोक बाजार",
   ],
   openGraph: {
     type: "website",
-    locale: siteConfig.locale,
+    locale: "hi_IN",
     siteName: siteConfig.name,
-    title: "Kunal Sarees | Premium Wholesale Sarees",
+    title: "Kunal Sarees | सूरत डायरेक्ट होलसेल साड़ियां",
     description: siteConfig.description,
     images: [{ url: siteConfig.brand.ogImage, width: 1200, height: 630, alt: siteConfig.name }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kunal Sarees | Premium Wholesale Sarees",
+    title: "Kunal Sarees | सूरत डायरेक्ट होलसेल साड़ियां",
     description: siteConfig.description,
     images: [siteConfig.brand.ogImage],
   },
@@ -57,17 +60,27 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const langCookie = cookieStore.get("kunal_lang")?.value;
+  const initialLang: Language = (langCookie === "en" || langCookie === "hi") ? (langCookie as Language) : "hi";
+
   return (
-    <html lang="en-IN" className={`${displayFont.variable} ${sansFont.variable}`}>
-      <body className="flex min-h-dvh flex-col bg-canvas text-ink antialiased">
-        {/* Hidden until focused with the keyboard */}
-        <a href="#main-content" className="sr-only fixed top-3 left-3 z-50 focus-visible:not-sr-only focus-visible:fixed">
-          <span className="btn btn--primary btn--sm">Skip to content</span>
-        </a>
-        <UIProvider>
-          <SiteShell>{children}</SiteShell>
-        </UIProvider>
+    <html lang={initialLang} className={`${displayFont.variable} ${sansFont.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-canvas text-ink antialiased">
+        <LanguageProvider initialLanguage={initialLang}>
+          <UIProvider>
+            <SiteShell>{children}</SiteShell>
+          </UIProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

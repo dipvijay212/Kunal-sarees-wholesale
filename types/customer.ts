@@ -20,13 +20,19 @@ export interface Customer {
 
 export interface CheckoutFormData {
   fullName: string;
-  businessName: string;
-  customerType: CustomerTypeOption;
-  whatsappNumber: string;
   mobileNumber: string;
-  city: string;
-  state: string;
-  pincode: string;
+  whatsappNumber: string;
   fullAddress: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  businessName?: string;
+  customerType?: CustomerTypeOption;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  gstin?: string;
   notes?: string;
 }
+
+

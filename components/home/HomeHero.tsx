@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { ArrowRightIcon, MailIcon, PhoneIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { siteConfig } from "@/data/site";
 import type { Banner } from "@/types";
 
@@ -13,6 +16,8 @@ interface HomeHeroProps {
 
 /** Split luxury editorial hero for Kunal Sarees */
 export function HomeHero({}: HomeHeroProps) {
+  const { t } = useLanguage();
+
   return (
     <section className="relative isolate overflow-hidden border-b border-line bg-canvas">
       {/* Subtle traditional Indian textile pattern background */}
@@ -33,60 +38,55 @@ export function HomeHero({}: HomeHeroProps) {
         <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
           {/* Left Column: Brand Statement & CTA */}
           <div className="flex flex-col items-start lg:col-span-7">
-            {/* Small Eyebrow */}
-            <div className="inline-flex items-center gap-2.5 text-xs font-medium tracking-[0.15em] text-gold uppercase">
-              <span className="inline-block h-px w-6 bg-gold" />
-              <span>TRADITION MEETS BUSINESS</span>
-            </div>
-
-            {/* Hero Business Badge */}
-            <div className="mt-4 inline-flex items-center gap-2.5 rounded-xs border border-gold/30 bg-cream-warm/80 px-3.5 py-1.5 shadow-xs backdrop-blur-xs">
-              <span className="flex size-5 items-center justify-center rounded-full bg-maroon text-[0.625rem] font-bold text-white">
+            {/* Elegant Unified Brand & Origin Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-cream-warm/90 px-3.5 py-1.5 shadow-xs backdrop-blur-xs">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-maroon text-[0.625rem] font-bold text-white shadow-xs">
                 KS
               </span>
-              <span className="font-display text-sm font-semibold tracking-widest text-ink uppercase">
+              <span className="font-serif text-xs font-bold tracking-wider text-ink uppercase">
                 {siteConfig.name}
               </span>
               <span aria-hidden="true" className="text-gold">·</span>
-              <span className="text-[0.6875rem] font-semibold tracking-wider text-muted uppercase">
-                {siteConfig.positioning}
+              <span className="text-xs font-medium text-maroon-dark">
+                {t.hero.eyebrow}
               </span>
             </div>
 
-            {/* Main Heading */}
-            <h1 className="type-display mt-6 text-ink font-serif font-normal">
-              <span className="block text-lg sm:text-xl font-sans font-semibold tracking-[0.1em] text-maroon uppercase mb-1">
-                Kunal Sarees
+            {/* Main Heading - Clean, regal, with ample breathing room for Hindi matras */}
+            <h1 className="mt-5 font-serif text-3xl font-medium tracking-normal text-ink sm:text-4xl md:text-5xl lg:text-[3.25rem] xl:text-[3.625rem] leading-[1.24] sm:leading-[1.22]">
+              <span className="block text-ink">
+                {t.hero.titleMain}
               </span>
-              Timeless Sarees.{" "}
-              <span className="block italic text-maroon-dark font-normal">Wholesale Excellence.</span>
+              <span className="mt-1 block text-maroon-dark font-serif font-semibold">
+                {t.hero.titleSub}
+              </span>
             </h1>
 
             {/* Supporting Text */}
-            <p className="type-lead mt-5 max-w-xl text-muted font-sans">
-              Discover exquisite saree collections curated for retailers, boutiques, resellers and wholesale buyers across India.
+            <p className="mt-4 sm:mt-5 max-w-xl text-base sm:text-lg leading-relaxed text-muted font-sans">
+              {t.hero.supporting}
             </p>
 
             {/* CTAs */}
-            <div className="mt-8 flex flex-col gap-3.5 w-full xs:w-auto xs:flex-row xs:items-center">
-              <Button href="/collections" size="lg" trailingIcon={<ArrowRightIcon size={18} />}>
-                Explore Collections
+            <div className="mt-6 sm:mt-8 flex flex-col gap-3.5 w-full xs:w-auto xs:flex-row xs:items-center">
+              <Button href="/products" size="lg" trailingIcon={<ArrowRightIcon size={18} />}>
+                {t.hero.btnExplore}
               </Button>
               <WhatsAppButton
                 variant="secondary"
                 size="lg"
-                label="Order on WhatsApp"
-                className="border-maroon/40 text-maroon hover:bg-maroon hover:text-white"
+                label={t.hero.btnWhatsapp}
+                className="border-maroon/30 text-maroon hover:bg-maroon hover:text-white"
               />
             </div>
 
             {/* Wholesale Direct Contact & Enquiry Desk */}
-            <div className="mt-10 w-full max-w-xl border-t border-line/80 pt-6 sm:mt-12 sm:pt-8">
+            <div className="mt-8 sm:mt-10 w-full max-w-xl border-t border-line/80 pt-5 sm:pt-6">
               <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-gold">
-                Direct Wholesale Support &amp; Enquiries
+                {t.hero.directSupport}
               </p>
 
-              <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {/* Phone & WhatsApp */}
                 <a
                   href={siteConfig.contact.phoneHref}
@@ -97,7 +97,7 @@ export function HomeHero({}: HomeHeroProps) {
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">
-                      Call / WhatsApp
+                      {t.hero.callWhatsapp}
                     </span>
                     <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
                       {siteConfig.contact.phoneDisplay}
@@ -115,7 +115,7 @@ export function HomeHero({}: HomeHeroProps) {
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">
-                      Wholesale Email
+                      {t.hero.wholesaleEmail}
                     </span>
                     <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
                       {siteConfig.contact.email}
@@ -131,7 +131,7 @@ export function HomeHero({}: HomeHeroProps) {
             <div className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-xs border border-line-strong bg-cream-warm shadow-lift ring-4 ring-gold/15">
               <Image
                 src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85"
-                alt="Exquisite Indian silk saree showcase with rich zari pallu"
+                alt={t.hero.photoTagTitle}
                 fill
                 priority
                 sizes="(min-width: 1024px) 40vw, 90vw"
@@ -145,14 +145,14 @@ export function HomeHero({}: HomeHeroProps) {
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <p className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-gold-light">
-                      Surat Direct Wholesale
+                      {t.hero.photoTagSub}
                     </p>
                     <p className="font-display text-base sm:text-lg font-medium">
-                      Pure Banarasi & Kanjivaram Weaves
+                      {t.hero.photoTagTitle}
                     </p>
                   </div>
                   <span className="shrink-0 rounded-xs border border-gold/40 bg-gold/20 px-2.5 py-1 text-[0.6875rem] font-medium text-gold-light uppercase tracking-[0.08em]">
-                    MOQ 5 Pcs
+                    {t.hero.moqBadge}
                   </span>
                 </div>
               </div>
@@ -167,4 +167,3 @@ export function HomeHero({}: HomeHeroProps) {
     </section>
   );
 }
-

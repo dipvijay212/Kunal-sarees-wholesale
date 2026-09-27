@@ -4,9 +4,13 @@ import type { ProductImage } from "./product";
 export interface Collection {
   id: string;
   name: string;
+  name_en?: string;
+  name_hi?: string;
   slug: string;
   tagline: string;
   description: string;
+  description_en?: string;
+  description_hi?: string;
   image: ProductImage;
   featured: boolean;
   order: number;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { loginAdmin } from "@/lib/admin-stores";
@@ -83,7 +84,15 @@ export default function AdminLoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-ink">Password</label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-medium text-ink">Password</label>
+                <Link
+                  href="/forgot-password?type=admin"
+                  className="text-xs text-accent hover:underline focus:outline-none"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 required

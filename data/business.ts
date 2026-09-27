@@ -26,11 +26,11 @@ export const businessSettings: BusinessSettings = {
   id: "biz-kunal-sarees",
   businessName: "Kunal Sarees",
   brandMark: "KS",
-  positioning: "Premium Wholesale Sarees",
+  positioning: "प्रीमियम होलसेल साड़ियां",
   description:
-    "Kunal Sarees supplies boutiques and retailers across India with premium Banarasi, Kanjivaram, organza and bridal sarees at wholesale prices.",
+    "Kunal Sarees से बुटीक, दुकानदारों और रीसेलर्स को बनारसी, सिल्क, ऑर्गेंजा और ब्राइडल साड़ियों का बेहतरीन होलसेल कलेक्शन मिलता है।",
   currency: "INR",
-  locale: "en_IN",
+  locale: "hi_IN",
   gstin: "24ABCDE1234F1Z5",
   contact: {
     whatsappNumber,

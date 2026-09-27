@@ -1,16 +1,22 @@
+"use client";
+
 import type { ComponentType } from "react";
 import { Container } from "@/components/ui/Container";
 import { ChatIcon, PackageIcon, ShieldCheckIcon, TagIcon, type IconProps } from "@/components/ui/Icons";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { Highlight } from "@/types";
 
 const icons: ComponentType<IconProps>[] = [ShieldCheckIcon, TagIcon, PackageIcon, ChatIcon];
 
-export function WholesaleHighlights({ highlights }: { highlights: Highlight[] }) {
+export function WholesaleHighlights({ highlights }: { highlights?: Highlight[] }) {
+  const { t } = useLanguage();
+  const activeHighlights = highlights && highlights.length > 0 ? highlights : t.highlights;
+
   return (
     <section aria-label="Wholesale Buyer Benefits" className="border-b border-line bg-white/60">
       <Container>
         <ul className="grid grid-cols-1 divide-y divide-line sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-line">
-          {highlights.map((highlight, index) => {
+          {activeHighlights.map((highlight, index) => {
             const Icon = icons[index % icons.length];
             return (
               <li key={highlight.title} className="flex items-start gap-3.5 py-6 sm:py-8 lg:px-6 lg:first:pl-0 lg:last:pr-0">
@@ -29,4 +35,3 @@ export function WholesaleHighlights({ highlights }: { highlights: Highlight[] })
     </section>
   );
 }
-

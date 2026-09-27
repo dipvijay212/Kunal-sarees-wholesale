@@ -81,7 +81,7 @@ export function Modal({
         </header>
 
         <IconButton
-          label="Close"
+          label="बंद करें"
           icon={<CloseIcon size={20} />}
           onClick={onClose}
           variant={isFull ? "overlay" : "ghost"}

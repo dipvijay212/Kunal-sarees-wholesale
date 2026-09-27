@@ -65,7 +65,7 @@ export function Drawer({
               </p>
             ) : null}
           </div>
-          <IconButton label="Close" icon={<CloseIcon size={20} />} onClick={onClose} className="-mr-2" />
+          <IconButton label="बंद करें" icon={<CloseIcon size={20} />} onClick={onClose} className="-mr-2" />
         </header>
 
         <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6", bodyClassName)}>

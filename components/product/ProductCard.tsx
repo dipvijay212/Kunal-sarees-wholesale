@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { getAvailability } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
@@ -31,41 +33,58 @@ export function ProductCard({
   className,
   showAddToOrder = true,
 }: ProductCardProps) {
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const { t, getLocalized } = useLanguage();
   const { min } = getQuantityRules(product);
   const availability = getAvailability(product);
   const href = `/products/${product.slug}`;
 
+  const displayName = getLocalized(product, "name") || product.name;
+  const displayFabric = getLocalized(product, "fabric") || product.fabric;
+
+  const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    // Do not trigger card navigation if user clicked a button, link, or input
+    if (target.closest("button") || target.closest("input") || target.closest("select")) {
+      return;
+    }
+    router.push(href);
+  };
+
   return (
     <article
+      onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xs border border-line bg-surface p-3 sm:p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-lift",
+        "group relative flex flex-col overflow-hidden rounded-xs border border-line bg-surface p-3 sm:p-4 shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-line-strong hover:shadow-lift cursor-pointer",
         className,
       )}
     >
       {/* Image Frame */}
       <div className="media-frame relative aspect-[4/5] overflow-hidden rounded-xs bg-cream-warm">
-        <ProductImageCarousel
-          images={product.images}
-          alt={product.name}
-          eager={eager}
-          sizes={sizes}
-          isHovered={isHovered}
-        />
+        <Link href={href} className="block size-full focus:outline-none" aria-label={displayName}>
+          <ProductImageCarousel
+            images={product.images}
+            alt={displayName}
+            eager={eager}
+            sizes={sizes}
+            isHovered={isHovered}
+          />
+        </Link>
 
         {/* Badges */}
         <div className="pointer-events-none absolute top-3.5 left-3.5 flex flex-col items-start gap-1.5 z-10">
-          {product.newArrival ? <Badge variant="accent">NEW</Badge> : null}
-          {product.featured ? <Badge variant="solid">Featured</Badge> : null}
-          {availability === "out-of-stock" ? <Badge variant="neutral">Made to order</Badge> : null}
+          {product.newArrival ? <Badge variant="accent">{t.products.badgeNew}</Badge> : null}
+          {product.featured ? <Badge variant="solid">{t.products.badgeFeatured}</Badge> : null}
+          {availability === "out-of-stock" ? <Badge variant="neutral">{t.products.madeToOrder}</Badge> : null}
         </div>
 
         {/* Wishlist Icon */}
         <WishlistButton
           productId={product.id}
-          productName={product.name}
+          productName={displayName}
           className="absolute top-3.5 right-3.5 z-20"
         />
       </div>
@@ -75,8 +94,8 @@ export function ProductCard({
         <div>
           {/* Category & Product Code Row */}
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs">
-            <span className="font-semibold text-gold tracking-[0.08em] uppercase text-xs">
-              {product.fabric}
+            <span className="font-semibold text-gold tracking-[0.04em] uppercase text-xs">
+              {displayFabric}
             </span>
             <span className="font-sans font-medium text-muted text-xs">
               {product.productCode}
@@ -85,8 +104,8 @@ export function ProductCard({
 
           {/* Product Name */}
           <h3 className="font-display text-lg sm:text-[1.3125rem] font-medium leading-snug text-ink mt-1.5 transition-colors group-hover:text-maroon line-clamp-2 min-h-[2.7em]">
-            <Link href={href} className="focus:outline-none">
-              {product.name}
+            <Link href={href} className="focus:outline-none hover:underline">
+              {displayName}
             </Link>
           </h3>
         </div>
@@ -98,16 +117,16 @@ export function ProductCard({
               <span className="type-price text-xl sm:text-[1.375rem] font-semibold text-maroon">
                 {formatPrice(product.price)}
               </span>
-              <span className="text-sm font-normal text-muted">/ Piece</span>
+              <span className="text-sm font-normal text-muted">{t.products.perPiece}</span>
             </p>
             <span className="text-sm font-medium text-muted whitespace-nowrap">
-              MOQ: {min} {min === 1 ? "Piece" : "Pieces"}
+              {t.products.moq} {min} {t.products.pieces}
             </span>
           </div>
 
           <StockStatusLabel product={product} className="mt-2" />
 
-          {showAddToOrder ? <AddToOrderButton product={product} className="mt-3.5" /> : null}
+          {showAddToOrder ? <AddToOrderButton product={product} className="mt-3.5 relative z-10" /> : null}
         </div>
       </div>
     </article>

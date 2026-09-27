@@ -80,7 +80,7 @@
   --ks-container-wide: 100rem; /* 1600px */
   --ks-gutter: 1rem;
   --ks-section-y: 3.25rem; /* 52px on mobile */
-  --ks-header-height: 4.25rem;
+  --ks-header-height: 4.5rem;
   --ks-topbar-height: 2.25rem;
 }
 
@@ -88,6 +88,7 @@
   :root {
     --ks-gutter: 1.5rem;
     --ks-section-y: 4rem; /* 64px on tablet */
+    --ks-header-height: 4.75rem;
   }
 }
 
@@ -95,14 +96,14 @@
   :root {
     --ks-gutter: 2rem;
     --ks-section-y: 5rem; /* 80px on desktop */
-    --ks-header-height: 4.75rem;
+    --ks-header-height: 5.25rem;
   }
 }
 
 @media (min-width: 80rem) {
   :root {
     --ks-gutter: 2.5rem;
-    --ks-header-height: 5.25rem;
+    --ks-header-height: 5.75rem;
   }
 }
 
@@ -154,8 +155,8 @@
   --color-gold-accent: var(--ks-gold-accent);
   --color-gold-soft: var(--ks-gold-soft);
 
-  --font-display: var(--font-ks-display), "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  --font-sans: var(--font-ks-sans), "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Noto Serif Devanagari", var(--font-ks-display), "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Mukta", var(--font-ks-sans), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   --radius-xs: var(--ks-radius-xs);
   --radius-sm: var(--ks-radius-sm);

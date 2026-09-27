@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useLocalStore } from "@/hooks/use-local-store";
 import {
@@ -8,12 +8,30 @@ import {
   deleteAdminCategory,
   saveAdminCategory,
 } from "@/lib/admin-stores";
+import { adminApi } from "@/lib/api";
 import type { Category } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { PlusIcon } from "@/components/ui/Icons";
+import { PlusIcon, CloseIcon } from "@/components/ui/Icons";
+import type { Language } from "@/lib/translations";
 
 export default function AdminCategoriesPage() {
   const categories = useLocalStore(adminCategoriesStore);
+
+  // Active Enabled Languages in System
+  const [availableLanguages, setAvailableLanguages] = useState<Language[]>(["hi", "en"]);
+
+  useEffect(() => {
+    adminApi.settings.getLanguage()
+      .then((res) => {
+        if (res && Array.isArray(res.availableLanguages)) {
+          setAvailableLanguages(res.availableLanguages);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const isHindiEnabled = availableLanguages.includes("hi");
+  const isEnglishEnabled = availableLanguages.includes("en");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -21,8 +39,12 @@ export default function AdminCategoriesPage() {
   const handleOpenAddModal = () => {
     setEditingCategory({
       name: "",
+      name_hi: "",
+      name_en: "",
       slug: "",
       description: "",
+      description_hi: "",
+      description_en: "",
       featured: true,
       order: categories.length + 1,
     });
@@ -36,8 +58,14 @@ export default function AdminCategoriesPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingCategory?.name) return;
-    await saveAdminCategory(editingCategory as Partial<Category> & { name: string });
+    if (!editingCategory) return;
+    const primaryName = editingCategory.name_hi || editingCategory.name_en || editingCategory.name || "";
+    if (!primaryName) return;
+
+    await saveAdminCategory({
+      ...editingCategory,
+      name: primaryName,
+    });
     setIsModalOpen(false);
     setEditingCategory(null);
   };
@@ -69,9 +97,16 @@ export default function AdminCategoriesPage() {
           <tbody className="divide-y divide-line">
             {categories.map((cat) => (
               <tr key={cat.id} className="hover:bg-canvas-deep/50 transition-colors">
-                <td className="px-4 py-3 font-semibold text-ink">{cat.name}</td>
+                <td className="px-4 py-3 font-semibold text-ink">
+                  <div>{cat.name_hi || cat.name}</div>
+                  {cat.name_en && cat.name_en !== cat.name_hi ? (
+                    <div className="text-xs text-muted font-normal">EN: {cat.name_en}</div>
+                  ) : null}
+                </td>
                 <td className="px-4 py-3 font-mono text-xs text-muted">{cat.slug}</td>
-                <td className="px-4 py-3 text-xs text-muted max-w-xs truncate">{cat.description}</td>
+                <td className="px-4 py-3 text-xs text-muted max-w-xs truncate">
+                  {cat.description_hi || cat.description_en || cat.description}
+                </td>
                 <td className="px-4 py-3">
                   <span
                     className={`rounded-xs px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${
@@ -104,46 +139,147 @@ export default function AdminCategoriesPage() {
       </div>
 
       {isModalOpen && editingCategory ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-xs border border-line bg-canvas p-6 shadow-lg">
-            <h3 className="type-h3 text-ink font-serif border-b border-line pb-3">
-              {editingCategory.id ? "Edit Category" : "Add Category"}
-            </h3>
-
-            <form onSubmit={handleSave} className="mt-4 space-y-4 text-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-xs p-3 sm:p-6 overflow-hidden"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div className="relative flex flex-col w-full max-w-md max-h-[90vh] rounded-xs border border-line bg-canvas shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-line px-5 py-4 bg-canvas shrink-0">
               <div>
-                <label className="font-semibold text-ink block">Category Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingCategory.name || ""}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                  className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-                />
+                <h3 className="type-h4 text-ink font-serif">
+                  {editingCategory.id ? "Edit Category" : "Add Category"}
+                </h3>
+                <p className="text-[11px] text-muted">
+                  Configure category names and multilingual descriptions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-xs p-1.5 text-muted hover:text-ink hover:bg-canvas-deep transition-colors"
+                aria-label="Close"
+              >
+                <CloseIcon size={18} />
+              </button>
+            </div>
+
+            {/* Form & Scrollable Content */}
+            <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
+              <div className="overflow-y-auto p-5 space-y-4 text-xs flex-1">
+                {/* Category Name (Hindi) */}
+                {isHindiEnabled && (
+                  <div>
+                    <label className="font-semibold text-ink block">
+                      Category Name (Hindi / हिंदी) *
+                    </label>
+                    <input
+                      type="text"
+                      required={isHindiEnabled}
+                      placeholder="उदा. बनारसी सिल्क"
+                      value={editingCategory.name_hi || editingCategory.name || ""}
+                      onChange={(e) =>
+                        setEditingCategory({
+                          ...editingCategory,
+                          name_hi: e.target.value,
+                          name: e.target.value,
+                        })
+                      }
+                      className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Category Name (English) */}
+                {isEnglishEnabled && (
+                  <div>
+                    <label className="font-semibold text-ink block">
+                      Category Name (English) {!isHindiEnabled ? "*" : ""}
+                    </label>
+                    <input
+                      type="text"
+                      required={!isHindiEnabled}
+                      placeholder="e.g. Banarasi Silk"
+                      value={editingCategory.name_en || (!isHindiEnabled ? editingCategory.name : "") || ""}
+                      onChange={(e) =>
+                        setEditingCategory({
+                          ...editingCategory,
+                          name_en: e.target.value,
+                          name: !isHindiEnabled ? e.target.value : (editingCategory.name || e.target.value),
+                        })
+                      }
+                      className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="font-semibold text-ink block">URL Slug</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. banarasi-silk"
+                    value={editingCategory.slug || ""}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, slug: e.target.value })}
+                    className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                {/* Description Hindi */}
+                {isHindiEnabled && (
+                  <div>
+                    <label className="font-semibold text-ink block">Description (Hindi / हिंदी)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="उदा. बनारस के कारीगरों द्वारा तैयार की गई शुद्ध सिल्क साड़ियां..."
+                      value={editingCategory.description_hi || editingCategory.description || ""}
+                      onChange={(e) =>
+                        setEditingCategory({
+                          ...editingCategory,
+                          description_hi: e.target.value,
+                          description: e.target.value,
+                        })
+                      }
+                      className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Description English */}
+                {isEnglishEnabled && (
+                  <div>
+                    <label className="font-semibold text-ink block">Description (English)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Luxurious handcrafted Banarasi silk sarees..."
+                      value={editingCategory.description_en || ""}
+                      onChange={(e) =>
+                        setEditingCategory({
+                          ...editingCategory,
+                          description_en: e.target.value,
+                          ...(!isHindiEnabled ? { description: e.target.value } : {}),
+                        })
+                      }
+                      className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 cursor-pointer text-ink font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={editingCategory.featured || false}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, featured: e.target.checked })}
+                    className="accent-accent"
+                  />
+                  Show as Featured Category
+                </label>
               </div>
 
-              <div>
-                <label className="font-semibold text-ink block">Description</label>
-                <textarea
-                  rows={3}
-                  value={editingCategory.description || ""}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
-                  className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
-                />
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer text-ink font-semibold">
-                <input
-                  type="checkbox"
-                  checked={editingCategory.featured || false}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, featured: e.target.checked })}
-                  className="accent-accent"
-                />
-                Show as Featured Category
-              </label>
-
-              <div className="flex justify-end gap-3 border-t border-line pt-4">
-                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+              {/* Sticky Footer */}
+              <div className="flex justify-end gap-3 border-t border-line bg-canvas-deep px-5 py-3.5 shrink-0">
+                <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit">Save Category</Button>

@@ -9,6 +9,8 @@ export interface OrderItem {
   /** Copied at order time so history is not affected by catalogue edits. */
   productCode: string;
   productName: string;
+  productNameEn?: string;
+  productNameHi?: string;
   colorName?: string;
   quantity: number;
   unitPrice: number;
@@ -41,14 +43,15 @@ export interface PlacedOrder {
   orderNumber: string;
   customerDetails: {
     fullName: string;
-    businessName: string;
-    customerType: string;
-    whatsappNumber: string;
     mobileNumber: string;
-    city: string;
-    state: string;
-    pincode: string;
+    whatsappNumber: string;
     fullAddress: string;
+    email?: string;
+    businessName?: string;
+    customerType?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     notes?: string;
   };
   items: {

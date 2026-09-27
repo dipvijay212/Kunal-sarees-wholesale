@@ -1,48 +1,33 @@
+"use client";
+
 import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { ChatIcon, PackageIcon, ShieldCheckIcon, TagIcon } from "@/components/ui/Icons";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
-const pillars = [
-  {
-    icon: ShieldCheckIcon,
-    title: "Premium Quality",
-    description: "Carefully selected fabrics and designs.",
-  },
-  {
-    icon: TagIcon,
-    title: "Wholesale Focus",
-    description: "Collections created for business buyers.",
-  },
-  {
-    icon: PackageIcon,
-    title: "Wide Variety",
-    description: "Traditional and contemporary sarees across multiple categories.",
-  },
-  {
-    icon: ChatIcon,
-    title: "Easy Ordering",
-    description: "Select products and send your complete order directly through WhatsApp.",
-  },
-];
+const pillarIcons = [ShieldCheckIcon, TagIcon, PackageIcon, ChatIcon];
 
 export function WhyKunalSarees() {
+  const { t } = useLanguage();
+  const { whyUs } = t;
+
   return (
     <section aria-labelledby="why-us-heading" className="section-y border-t border-line bg-canvas">
       <Container>
         <div className="grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
           {/* Left Column: Editorial Content */}
           <div className="lg:col-span-7">
-            <p className="type-eyebrow text-gold font-medium tracking-[0.15em] uppercase">B2B Wholesale Advantage</p>
+            <p className="type-eyebrow text-gold font-medium tracking-[0.15em] uppercase">{whyUs.eyebrow}</p>
             <h2 id="why-us-heading" className="type-h2 mt-3 text-ink font-serif font-normal">
-              Why Choose Kunal Sarees?
+              {whyUs.title}
             </h2>
             <p className="mt-4 text-base leading-relaxed text-muted max-w-xl">
-              We partner with retailers, boutiques, resellers and wholesale buyers across India to supply premium sarees with authentic craftsmanship and reliable fulfillment.
+              {whyUs.description}
             </p>
 
             <div className="mt-10 grid gap-6 sm:grid-cols-2">
-              {pillars.map((pillar) => {
-                const Icon = pillar.icon;
+              {whyUs.pillars.map((pillar, index) => {
+                const Icon = pillarIcons[index % pillarIcons.length];
                 return (
                   <div
                     key={pillar.title}
@@ -73,8 +58,8 @@ export function WhyKunalSarees() {
               />
               <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 rounded-xs border border-white/20 bg-black/60 p-3 text-white backdrop-blur-xs text-center">
-                <p className="font-display text-base font-medium">Finest Fabrics & Craftsmanship</p>
-                <p className="text-[0.6875rem] text-gold-light">Curated for retail showrooms & boutiques</p>
+                <p className="font-display text-base font-medium">{whyUs.badgeTitle}</p>
+                <p className="text-[0.6875rem] text-gold-light">{whyUs.badgeSubtitle}</p>
               </div>
             </div>
           </div>
@@ -83,4 +68,3 @@ export function WhyKunalSarees() {
     </section>
   );
 }
-

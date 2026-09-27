@@ -25,7 +25,7 @@ export interface WhatsAppButtonProps {
  */
 export function WhatsAppButton({
   message = defaultWhatsAppMessage,
-  label = "Enquire on WhatsApp",
+  label = "WhatsApp पर बात करें",
   variant = "primary",
   size = "md",
   fullWidth = false,

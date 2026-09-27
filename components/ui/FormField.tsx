@@ -47,13 +47,13 @@ export function fieldAria(id: string, { error, hint }: { error?: string; hint?: 
 }
 
 export function Input({ className, ...props }: ComponentPropsWithoutRef<"input">) {
-  return <input className={cn("input", className)} {...props} />;
+  return <input className={cn("input", className)} suppressHydrationWarning {...props} />;
 }
 
 export function Select({ className, ...props }: ComponentPropsWithoutRef<"select">) {
-  return <select className={cn("select", className)} {...props} />;
+  return <select className={cn("select", className)} suppressHydrationWarning {...props} />;
 }
 
 export function Textarea({ className, ...props }: ComponentPropsWithoutRef<"textarea">) {
-  return <textarea className={cn("textarea", className)} {...props} />;
+  return <textarea className={cn("textarea", className)} suppressHydrationWarning {...props} />;
 }

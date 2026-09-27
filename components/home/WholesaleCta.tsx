@@ -1,9 +1,15 @@
+"use client";
+
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function WholesaleCta() {
+  const { t } = useLanguage();
+  const { cta } = t;
+
   return (
     <section aria-labelledby="cta-heading" className="section-y border-t border-line bg-canvas">
       <Container>
@@ -12,31 +18,31 @@ export function WholesaleCta() {
             {/* Left Column: Copy & Actions (Span 7) */}
             <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-14 lg:col-span-7 z-10">
               <span className="text-xs font-medium uppercase tracking-[0.15em] text-gold-light">
-                Wholesale Enquiries
+                {cta.eyebrow}
               </span>
               <h2
                 id="cta-heading"
                 className="font-serif text-3xl sm:text-4xl lg:text-[2.625rem] font-normal text-cream leading-tight mt-3"
               >
-                Looking for the right sarees for your business?
+                {cta.title}
               </h2>
               <p className="mt-4 text-sm sm:text-base leading-relaxed text-cream/90 max-w-xl">
-                Explore our latest wholesale collections or connect directly with Kunal Sarees for your bulk requirements.
+                {cta.description}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Button
-                  href="/collections"
+                  href="/products"
                   size="lg"
-                  className="bg-gold hover:bg-gold-light text-maroon-dark font-semibold shadow-sm tracking-[0.08em]"
+                  className="bg-gold hover:bg-gold-light text-maroon-dark font-semibold shadow-sm tracking-[0.04em]"
                 >
-                  Explore Collections
+                  {cta.btnExplore}
                 </Button>
                 <WhatsAppButton
                   size="lg"
-                  label="Chat on WhatsApp"
+                  label={cta.btnWhatsapp}
                   variant="ghost"
-                  className="border border-gold/50 bg-white/10 text-cream hover:bg-gold hover:text-maroon-dark hover:border-gold font-semibold tracking-[0.08em] transition-all duration-300 shadow-sm"
+                  className="border border-gold/50 bg-white/10 text-cream hover:bg-gold hover:text-maroon-dark hover:border-gold font-semibold tracking-[0.04em] transition-all duration-300 shadow-sm"
                 />
               </div>
             </div>
@@ -61,5 +67,3 @@ export function WholesaleCta() {
     </section>
   );
 }
-
-

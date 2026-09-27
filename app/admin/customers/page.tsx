@@ -38,10 +38,10 @@ export function getCustomerProfilesFromOrders(orders: PlacedOrder[]): CustomerPr
       map.set(key, {
         id: encodeURIComponent(key),
         name: o.customerDetails.fullName,
-        business: o.customerDetails.businessName,
+        business: o.customerDetails.businessName || "-",
         whatsapp: o.customerDetails.whatsappNumber,
-        city: o.customerDetails.city,
-        state: o.customerDetails.state,
+        city: o.customerDetails.city || "-",
+        state: o.customerDetails.state || "-",
         type: o.customerDetails.customerType || "Retailer",
         totalOrders: 1,
         totalPieces: o.summary.totalPieces,

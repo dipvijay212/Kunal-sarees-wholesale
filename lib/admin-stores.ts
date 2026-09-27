@@ -76,45 +76,110 @@ export async function syncAdminProducts() {
 
 export async function saveAdminProduct(productData: Partial<Product>) {
   try {
+    const rawName = productData.name || productData.name_hi || productData.name_en || "साड़ी";
+    const nameHi = productData.name_hi || rawName;
+    const nameEn = productData.name_en || rawName;
+
+    // Combine specifications with description for complete clarity
+    let fullDescription = productData.description || "";
+    if (productData.specifications?.sareeLength || productData.specifications?.blousePiece) {
+      const specsSummary = [
+        productData.specifications.sareeLength ? `Saree Cut: ${productData.specifications.sareeLength}` : "",
+        productData.specifications.blousePiece ? `Blouse: ${productData.specifications.blousePiece}` : "",
+      ].filter(Boolean).join(" | ");
+
+      if (specsSummary && !fullDescription.includes(specsSummary)) {
+        fullDescription = fullDescription ? `${specsSummary}\n\n${fullDescription}` : specsSummary;
+      }
+    }
+
+    const descHi = productData.description_hi || fullDescription;
+    const descEn = productData.description_en || fullDescription;
+    const shortDesc = productData.shortDescription || productData.shortDescription_hi || productData.shortDescription_en || (fullDescription ? fullDescription.slice(0, 120) : rawName);
+    const shortHi = shortDesc;
+    const shortEn = shortDesc;
+
+    const fabricVal = typeof productData.fabric === "string" ? productData.fabric : (productData.fabric_hi || productData.fabric_en || "Banarasi Silk");
+    const colorVal = (typeof productData.color_hi === "string" ? productData.color_hi : "") ||
+                     (typeof productData.color_en === "string" ? productData.color_en : "") ||
+                     (productData.colors || []).map((c) => c.name).join(", ") ||
+                     "Multi / Matching Set";
+
+    // Extract raw Category ID number if in string format (e.g. "cat-1" -> 1 or "1" -> 1)
+    let categoryIdNum: number | undefined = undefined;
+    if (productData.categoryId) {
+      const parsedId = Number(String(productData.categoryId).replace(/^cat-/, ""));
+      if (!isNaN(parsedId) && parsedId > 0) {
+        categoryIdNum = parsedId;
+      }
+    }
+
+    const productImages = (productData.images || []).map((img, idx) => ({
+      imageUrl: img.url,
+      altText: img.alt || rawName,
+      displayOrder: idx + 1,
+    }));
+
     if (productData.id) {
       const rawId = productData.id.replace(/^prd-/, "");
       await adminApi.products.update(rawId, {
-        name: productData.name,
+        name: rawName,
+        name_hi: nameHi,
+        name_en: nameEn,
         slug: productData.slug,
         productCode: productData.productCode,
-        description: productData.description,
-        shortDescription: productData.shortDescription,
-        fabric: productData.fabric,
+        categoryId: categoryIdNum,
+        description: fullDescription,
+        description_hi: descHi,
+        description_en: descEn,
+        shortDescription: shortDesc,
+        short_description_hi: shortHi,
+        short_description_en: shortEn,
+        fabric: fabricVal,
+        fabric_hi: fabricVal,
+        fabric_en: fabricVal,
+        color: colorVal,
+        color_hi: colorVal,
+        color_en: colorVal,
         price: productData.price,
         minimumOrderQuantity: productData.moq,
         stockQuantity: productData.stock,
         isAvailable: productData.status === "active",
-        isFeatured: productData.featured,
-        isNew: productData.newArrival,
+        isFeatured: Boolean(productData.featured),
+        isNew: Boolean(productData.newArrival),
+        videoUrl: productData.videoUrl || null,
+        images: productImages,
       });
     } else {
-      const name = productData.name || "Untitled Saree";
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "saree";
       const codeDigits = Math.floor(1000 + Math.random() * 9000);
       await adminApi.products.create({
-        name,
+        name: rawName,
+        name_hi: nameHi,
+        name_en: nameEn,
         slug: productData.slug || slug,
         productCode: productData.productCode || `KS-NEW-${codeDigits}`,
-        description: productData.description || "",
-        shortDescription: productData.shortDescription || productData.description || "",
-        fabric: productData.fabric || "Banarasi Silk",
-        color: (productData.colors || []).map((c) => c.name).join(", ") || "Red",
+        categoryId: categoryIdNum,
+        description: fullDescription,
+        description_hi: descHi,
+        description_en: descEn,
+        shortDescription: shortDesc,
+        short_description_hi: shortHi,
+        short_description_en: shortEn,
+        fabric: fabricVal,
+        fabric_hi: fabricVal,
+        fabric_en: fabricVal,
+        color: colorVal,
+        color_hi: colorVal,
+        color_en: colorVal,
         price: productData.price || 2500,
         minimumOrderQuantity: productData.moq || 2,
         stockQuantity: productData.stock ?? 50,
         isAvailable: productData.status ? productData.status === "active" : true,
         isFeatured: Boolean(productData.featured),
         isNew: Boolean(productData.newArrival),
-        images: (productData.images || []).map((img, idx) => ({
-          imageUrl: img.url,
-          altText: img.alt || name,
-          displayOrder: idx + 1,
-        })),
+        videoUrl: productData.videoUrl || null,
+        images: productImages,
       });
     }
     await syncAdminProducts();
@@ -176,20 +241,32 @@ export async function syncAdminCategories() {
 
 export async function saveAdminCategory(categoryData: Partial<Category>) {
   try {
+    const nameHi = categoryData.name_hi || categoryData.name || "साड़ी";
+    const nameEn = categoryData.name_en || categoryData.name || "Saree";
+    const descHi = categoryData.description_hi || categoryData.description || "";
+    const descEn = categoryData.description_en || categoryData.description || "";
+
     if (categoryData.id) {
       const rawId = categoryData.id.replace(/^cat-/, "");
       await adminApi.categories.update(rawId, {
-        name: categoryData.name,
+        name: nameHi,
+        name_hi: nameHi,
+        name_en: nameEn,
         slug: categoryData.slug,
-        description: categoryData.description,
+        description: descHi,
+        description_hi: descHi,
+        description_en: descEn,
       });
     } else {
-      const name = categoryData.name || "New Category";
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const slug = (categoryData.name_en || categoryData.name || "category").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       await adminApi.categories.create({
-        name,
+        name: nameHi,
+        name_hi: nameHi,
+        name_en: nameEn,
         slug: categoryData.slug || slug,
-        description: categoryData.description || "",
+        description: descHi,
+        description_hi: descHi,
+        description_en: descEn,
       });
     }
     await syncAdminCategories();
@@ -358,7 +435,6 @@ export async function syncAdminData() {
   await Promise.allSettled([
     syncAdminProducts(),
     syncAdminCategories(),
-    syncAdminCollections(),
     syncAdminOrders(),
   ]);
 }

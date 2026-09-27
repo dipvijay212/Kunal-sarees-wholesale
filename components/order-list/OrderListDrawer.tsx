@@ -1,50 +1,42 @@
 "use client";
 
 import { useUI } from "@/components/providers/UIProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BagIcon } from "@/components/ui/Icons";
-import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { useOrderList } from "@/hooks/use-order-list";
-import { formatPieces, formatPrice, pluralize } from "@/lib/format";
-import { buildOrderListMessage } from "@/lib/whatsapp";
+import { formatPrice } from "@/lib/format";
 import { OrderListLineItem } from "./OrderListLineItem";
 
 export function OrderListDrawer() {
   const { isOrderListOpen, closeOrderList } = useUI();
-  const { lines, summary, updateQuantity, removeItem, clear } = useOrderList();
+  const { t, language } = useLanguage();
+  const { lines, summary, updateQuantity, removeItem } = useOrderList();
   const isEmpty = lines.length === 0;
 
-  const handleSendOrder = () => {
-    clear();
-    closeOrderList();
-  };
+  const headerDescription = isEmpty
+    ? undefined
+    : (language === "en"
+        ? `${summary.designCount} ${summary.designCount === 1 ? t.orderList.design : t.orderList.designs} · ${summary.totalPieces} ${t.products.pieces}`
+        : `${summary.designCount} साड़ियां · ${summary.totalPieces} पीस`);
 
   return (
     <Drawer
       open={isOrderListOpen}
       onClose={closeOrderList}
-      title="Order list"
-      description={
-        isEmpty ? undefined : `${pluralize(summary.designCount, "design")} · ${formatPieces(summary.totalPieces)}`
-      }
+      title={t.orderList.title}
+      description={headerDescription}
       footer={
         isEmpty ? undefined : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <span className="field-label">Estimated value</span>
+              <span className="field-label">{t.orderList.subtotal}</span>
               <span className="type-price text-xl text-ink">{formatPrice(summary.estimatedValue)}</span>
             </div>
-            <p className="-mt-2 text-xs text-subtle">Excludes GST and shipping. Final pricing is confirmed on WhatsApp.</p>
-            <WhatsAppButton
-              fullWidth
-              label="Send order on WhatsApp"
-              message={buildOrderListMessage(lines, summary)}
-              onClick={handleSendOrder}
-            />
-            <Button href="/order" variant="secondary" fullWidth onClick={closeOrderList}>
-              Review full list
+            <Button href="/checkout" size="lg" fullWidth onClick={closeOrderList}>
+              {t.orderList.proceedToCheckout}
             </Button>
           </div>
         )
@@ -53,11 +45,11 @@ export function OrderListDrawer() {
       {isEmpty ? (
         <EmptyState
           icon={<BagIcon size={26} />}
-          title="Your order list is empty"
-          description="Add designs and quantities as you browse, then send the full list to our team on WhatsApp."
+          title={t.orderList.emptyTitle}
+          description={t.orderList.emptySubtitle}
           action={
             <Button href="/products" onClick={closeOrderList}>
-              Browse catalogue
+              {t.orderList.btnBrowse}
             </Button>
           }
           className="px-0 py-10"

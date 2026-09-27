@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { useUI } from "@/components/providers/UIProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Drawer } from "@/components/ui/Drawer";
-import { BagIcon, ChevronRightIcon, HeartIcon, SearchIcon } from "@/components/ui/Icons";
+import { BagIcon, ChevronRightIcon, HeartIcon, SearchIcon, UserIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { mainNavigation } from "@/data/navigation";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { getMainNavigation } from "@/data/navigation";
 import { siteConfig } from "@/data/site";
 import { useOrderList } from "@/hooks/use-order-list";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useCustomer } from "@/hooks/use-customer";
+
 import { cn } from "@/lib/cn";
 import { Logo } from "./Logo";
 import { SocialLinks } from "./SocialLinks";
@@ -25,20 +29,30 @@ const secondaryItemClass =
 
 export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
   const { openSearch, openOrderList } = useUI();
+  const { t, isSwitchAllowed } = useLanguage();
   const { summary } = useOrderList();
   const { count: savedCount } = useWishlist();
+  const { isAuthenticated, customer, logout } = useCustomer();
+  const navItems = getMainNavigation(t);
+
 
   return (
     <Drawer
       id={id}
       open={open}
       onClose={onClose}
-      title="Wholesale Menu"
+      title={t.nav.menu}
       side="right"
-      headerContent={<Logo markClassName="size-9 ring-1 ring-gold/30" wordmarkClassName="text-[0.9375rem] font-semibold text-ink" onClick={onClose} />}
+      headerContent={<Logo markClassName="size-9 sm:size-10" wordmarkClassName="text-base font-bold text-ink" showTagline onClick={onClose} />}
       footer={
         <div className="flex flex-col gap-4 border-t border-line pt-4">
-          <WhatsAppButton fullWidth label="Order on WhatsApp" />
+          {isSwitchAllowed && (
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <span className="text-xs font-semibold text-muted">भाषा / Language</span>
+              <LanguageSwitcher variant="pill" />
+            </div>
+          )}
+          <WhatsAppButton fullWidth label={t.buttons.whatsappChat} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <a
               href={siteConfig.contact.phoneHref}
@@ -61,15 +75,15 @@ export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
         aria-haspopup="dialog"
       >
         <SearchIcon size={18} className="shrink-0 text-muted" />
-        <span className="truncate text-xs font-medium">Search sarees, fabrics or codes</span>
+        <span className="truncate text-xs font-medium">{t.search.placeholder}</span>
       </button>
 
-      <nav aria-label="Mobile Navigation" className="mt-4">
+      <nav aria-label={t.nav.menu} className="mt-4">
         <ul>
-          {mainNavigation.map((item) => {
+          {navItems.map((item) => {
             const isActive = item.href === activeHref;
             return (
-              <li key={item.href} className="border-b border-line/60">
+              <li key={`${item.href}-${item.label}`} className="border-b border-line/60">
                 <Link
                   href={item.href}
                   onClick={onClose}
@@ -104,7 +118,7 @@ export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
             aria-haspopup="dialog"
           >
             <span className="flex items-center gap-3">
-              <BagIcon size={18} className="text-maroon" /> Wholesale Order List
+              <BagIcon size={18} className="text-maroon" /> {t.orderList.title}
             </span>
             {summary.designCount > 0 ? (
               <span className="rounded-full bg-maroon px-2 py-0.5 text-[0.6875rem] font-bold text-white">
@@ -116,7 +130,7 @@ export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
         <li>
           <Link href="/wishlist" onClick={onClose} className={secondaryItemClass}>
             <span className="flex items-center gap-3">
-              <HeartIcon size={18} className="text-maroon" /> Saved Designs
+              <HeartIcon size={18} className="text-maroon" /> {t.wishlist.title}
             </span>
             {savedCount > 0 ? (
               <span className="rounded-full bg-gold px-2 py-0.5 text-[0.6875rem] font-bold text-white">
@@ -125,8 +139,48 @@ export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
             ) : null}
           </Link>
         </li>
+        {isAuthenticated && customer ? (
+          <>
+            <li>
+              <Link href="/account" onClick={onClose} className={secondaryItemClass}>
+                <span className="flex items-center gap-3">
+                  <UserIcon size={18} className="text-maroon" /> {t.account.title} ({customer.name})
+                </span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/account/orders" onClick={onClose} className={secondaryItemClass}>
+                <span className="flex items-center gap-3">
+                  <BagIcon size={18} className="text-maroon" /> {t.account.myOrders}
+                </span>
+              </Link>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  onClose();
+                }}
+                className="flex min-h-12 w-full items-center justify-between gap-3 text-left text-sm font-medium text-danger hover:bg-danger/5 px-1 py-2 rounded-xs"
+              >
+                <span className="flex items-center gap-3">
+                  <UserIcon size={18} className="text-danger" /> {t.account.logout}
+                </span>
+              </button>
+            </li>
+          </>
+        ) : (
+          <li>
+            <Link href="/login" onClick={onClose} className={secondaryItemClass}>
+              <span className="flex items-center gap-3">
+                <UserIcon size={18} className="text-maroon" /> {t.auth.loginButton}
+              </span>
+            </Link>
+          </li>
+        )}
       </ul>
+
     </Drawer>
   );
 }
-

@@ -8,30 +8,34 @@ import { ArrowRightIcon, BagIcon, ShieldCheckIcon } from "@/components/ui/Icons"
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
 import { useOrderList } from "@/hooks/use-order-list";
-import { formatPieces, formatPrice, pluralize } from "@/lib/format";
+import { formatPieces, formatPrice } from "@/lib/format";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { OrderCheckoutModal } from "./OrderCheckoutModal";
 import { OrderListLineItem } from "./OrderListLineItem";
 
 export function OrderListView() {
   const { lines, summary, hydrated, updateQuantity, removeItem, clear } = useOrderList();
+  const { t, language } = useLanguage();
+  const isHi = language === "hi";
+
   const [isClearOpen, setClearOpen] = useState(false);
   const [isCheckoutOpen, setCheckoutOpen] = useState(false);
 
   if (!hydrated) {
-    return <LoadingState variant="lines" count={3} label="Loading your order list" />;
+    return <LoadingState variant="lines" count={3} label={t.loading.default} />;
   }
 
   if (lines.length === 0) {
     return (
       <EmptyState
         icon={<BagIcon size={26} />}
-        title="Your order list is empty"
-        description="Shortlist saree designs with the set quantities you need. Your order list stays saved on this device while you browse."
+        title={t.orderList.emptyTitle}
+        description={t.orderList.emptySubtitle}
         action={
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button href="/products">Continue Shopping</Button>
+            <Button href="/products">{t.products.viewAllFull}</Button>
             <Button href="/collections" variant="secondary">
-              View Collections
+              {isHi ? "कलेक्शन देखें" : "View Collections"}
             </Button>
           </div>
         }
@@ -46,7 +50,7 @@ export function OrderListView() {
         <section aria-labelledby="order-items-heading" className="min-w-0 lg:col-span-7 xl:col-span-8">
           <div className="flex items-center justify-between gap-4 border-b border-line pb-4">
             <h2 id="order-items-heading" className="type-eyebrow text-muted">
-              Shortlisted Designs ({pluralize(summary.designCount, "design")})
+              {isHi ? `चुनी हुई साड़ियां (${summary.designCount})` : `Selected Sarees (${summary.designCount})`}
             </h2>
             <button
               type="button"
@@ -54,7 +58,7 @@ export function OrderListView() {
               className="min-h-10 text-xs font-semibold tracking-[0.14em] text-muted uppercase transition-colors hover:text-danger"
               aria-haspopup="dialog"
             >
-              Clear list
+              {t.orderList.clearList}
             </button>
           </div>
 
@@ -71,7 +75,7 @@ export function OrderListView() {
               href="/products"
               className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-muted transition-colors hover:text-ink"
             >
-              &larr; Continue Shopping
+              &larr; {isHi ? "और साड़ियां देखें" : "Browse More Sarees"}
             </Link>
           </div>
         </section>
@@ -80,46 +84,52 @@ export function OrderListView() {
         <aside aria-labelledby="order-summary-heading" className="lg:col-span-5 xl:col-span-4">
           <div className="card card__body lg:top-header lg:sticky">
             <h2 id="order-summary-heading" className="type-h4 text-ink">
-              Order Summary
+              {t.checkout.orderSummary}
             </h2>
 
             <dl className="mt-6 flex flex-col gap-3 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-muted">Total Products</dt>
-                <dd className="type-price text-ink">{summary.designCount} {summary.designCount === 1 ? "design" : "designs"}</dd>
+                <dt className="text-muted">{t.checkout.totalDesigns}</dt>
+                <dd className="type-price text-ink">
+                  {summary.designCount} {isHi ? "प्रकार" : "designs"}
+                </dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-muted">Total Quantity</dt>
+                <dt className="text-muted">{t.checkout.totalQuantity}</dt>
                 <dd className="type-price text-ink">{formatPieces(summary.totalPieces)}</dd>
               </div>
               <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-line pt-4">
-                <dt className="field-label">Estimated Subtotal</dt>
+                <dt className="field-label">{t.checkout.totalAmount}</dt>
                 <dd className="type-price text-2xl text-ink">{formatPrice(summary.estimatedValue)}</dd>
               </div>
             </dl>
 
             <p className="mt-3 text-xs leading-relaxed text-subtle">
-              Excludes GST and shipping. Our team confirms availability, final bulk pricing, and dispatch timelines before processing.
+              {isHi
+                ? "GST और डिलीवरी चार्ज अलग से। हमारी टीम उपलब्धता और डिलीवरी समय की पुष्टि करेगी।"
+                : "GST & transport calculated separately upon order confirmation via WhatsApp."}
             </p>
 
             <div className="mt-8 flex flex-col gap-3">
               <Button
+                href="/checkout"
                 size="lg"
                 fullWidth
-                onClick={() => setCheckoutOpen(true)}
                 trailingIcon={<ArrowRightIcon size={18} />}
               >
-                Proceed to Checkout
+                {t.orderList.proceedToCheckout}
               </Button>
 
               <Button href="/products" variant="secondary" fullWidth>
-                Continue Shopping
+                {t.products.viewAllFull}
               </Button>
             </div>
 
             <p className="mt-6 flex items-start gap-3 border-t border-line pt-6 text-xs leading-relaxed text-subtle">
               <ShieldCheckIcon size={18} className="shrink-0 text-accent" />
-              No online payment required. Sending your enquiry via WhatsApp does not auto-charge your store.
+              {isHi
+                ? "ऑनलाइन पेमेंट की तुरंत जरूरत नहीं। WhatsApp पर संपर्क करके ऑर्डर कन्फर्म करें।"
+                : "No instant online payment. Direct confirmation and wholesale invoice via WhatsApp."}
             </p>
           </div>
         </aside>
@@ -129,13 +139,17 @@ export function OrderListView() {
       <Modal
         open={isClearOpen}
         onClose={() => setClearOpen(false)}
-        title="Clear order list?"
-        description="This removes every shortlisted design and set quantity from the list on this device."
+        title={isHi ? "क्या आप ऑर्डर लिस्ट खाली करना चाहते हैं?" : "Clear your order list?"}
+        description={
+          isHi
+            ? "इससे इस डिवाइस पर चुनी गई सभी साड़ियां और मात्राएं हट जाएंगी।"
+            : "This will remove all selected sarees and quantities saved on this device."
+        }
         size="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setClearOpen(false)}>
-              Keep list
+              {isHi ? "लिस्ट रखें" : "Keep List"}
             </Button>
             <Button
               onClick={() => {
@@ -143,7 +157,7 @@ export function OrderListView() {
                 setClearOpen(false);
               }}
             >
-              Clear list
+              {isHi ? "लिस्ट खाली करें" : "Clear List"}
             </Button>
           </>
         }
@@ -159,3 +173,4 @@ export function OrderListView() {
     </>
   );
 }
+

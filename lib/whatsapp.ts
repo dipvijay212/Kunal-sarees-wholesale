@@ -136,14 +136,15 @@ export function buildWholesaleEnquiryMessage(details: WholesaleEnquiryDetails): 
 export function buildCheckoutWhatsAppMessage(
   formData: {
     fullName: string;
-    businessName: string;
-    customerType: string;
-    whatsappNumber: string;
     mobileNumber: string;
-    city: string;
-    state: string;
-    pincode: string;
+    whatsappNumber: string;
     fullAddress: string;
+    email?: string;
+    businessName?: string;
+    customerType?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     notes?: string;
   },
   lines: OrderListLine[],
@@ -152,51 +153,60 @@ export function buildCheckoutWhatsAppMessage(
   const messageLines: string[] = [
     `Hello ${getBusinessName()},`,
     "",
-    "I would like to place a wholesale order.",
+    "I would like to place an order.",
     "",
-    "Customer Details:",
-    `Name: ${formData.fullName}`,
-    `Business: ${formData.businessName}`,
-    `Customer Type: ${formData.customerType}`,
-    `WhatsApp: ${formData.whatsappNumber}`,
-    `Mobile: ${formData.mobileNumber}`,
-    `City: ${formData.city}`,
-    `State: ${formData.state}`,
-    `Pincode: ${formData.pincode}`,
-    `Address: ${formData.fullAddress}`,
-    "",
-    "Order:",
-    "",
+    "📋 *Customer Details:*",
+    `• Name: ${formData.fullName}`,
   ];
+
+  if (formData.businessName) {
+    messageLines.push(`• Business / Shop: ${formData.businessName}`);
+  }
+
+  messageLines.push(
+    `• Mobile: ${formData.mobileNumber}`,
+    `• WhatsApp: ${formData.whatsappNumber}`,
+  );
+
+  if (formData.email) {
+    messageLines.push(`• Email: ${formData.email}`);
+  }
+
+  messageLines.push(`• Delivery Address: ${formData.fullAddress}`);
+
+  messageLines.push("", "🛍️ *Selected Sarees:*", "");
 
   lines.forEach(({ product, item }, index) => {
     messageLines.push(`${index + 1}. ${product.name}`);
-    messageLines.push(`Code: ${product.productCode}`);
+    messageLines.push(`   Code: ${product.productCode}`);
 
     if (item.selectedColors) {
       const activeColors = Object.entries(item.selectedColors).filter(([, qty]) => qty > 0);
       if (activeColors.length > 0) {
         for (const [colorName, qty] of activeColors) {
-          messageLines.push(`${colorName}: ${qty}`);
+          messageLines.push(`   ${colorName}: ${qty} pcs`);
         }
       } else {
-        messageLines.push(`Quantity: ${item.quantity}`);
+        messageLines.push(`   Quantity: ${item.quantity} pcs`);
       }
     } else {
-      messageLines.push(`Quantity: ${item.quantity}`);
+      messageLines.push(`   Quantity: ${item.quantity} pcs`);
     }
 
     messageLines.push("");
   });
 
-  messageLines.push(`Total Quantity: ${summary.totalPieces} Pieces`);
+  messageLines.push(`📊 *Order Summary:*`);
+  messageLines.push(`• Total Designs: ${summary.designCount}`);
+  messageLines.push(`• Total Quantity: ${summary.totalPieces} Pieces`);
   if (summary.estimatedValue > 0) {
-    messageLines.push(`Estimated Value: ${formatPrice(summary.estimatedValue)} (excl. GST & shipping)`);
+    messageLines.push(`• Estimated Value: ${formatPrice(summary.estimatedValue)} (excl. GST & shipping)`);
   }
 
-  messageLines.push("");
-  messageLines.push("Notes:");
-  messageLines.push(formData.notes?.trim() || "Please confirm availability and final pricing.");
+  if (formData.notes?.trim()) {
+    messageLines.push("", `Notes: ${formData.notes.trim()}`);
+  }
+
   messageLines.push("", "Thank you.");
 
   return messageLines.join("\n");

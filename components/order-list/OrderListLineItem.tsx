@@ -6,6 +6,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { TrashIcon } from "@/components/ui/Icons";
 import { QuantitySelector } from "@/components/ui/QuantitySelector";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
 import { getQuantityRules } from "@/lib/quantity";
@@ -27,11 +28,15 @@ export function OrderListLineItem({
   density = "full",
   onNavigate,
 }: OrderListLineItemProps) {
+  const { t, getLocalized, language } = useLanguage();
   const { product, item, lineTotal } = line;
   const rules = getQuantityRules(product);
   const isCompact = density === "compact";
   const href = `/products/${product.slug}`;
   const image = product.images[0];
+
+  const displayName = getLocalized(product, "name") || product.name;
+  const displayFabric = getLocalized(product, "fabric") || product.fabric;
 
   // Colors breakdown if stored on item
   const selectedColors = item.selectedColors
@@ -59,23 +64,25 @@ export function OrderListLineItem({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold text-muted">{product.productCode}</span>
-              <Badge variant="outline" className="text-[0.625rem]">MOQ {rules.min} pcs</Badge>
+              <Badge variant="outline" className="text-[0.625rem]">
+                {t.products.moq} {rules.min} {t.products.pieces}
+              </Badge>
             </div>
 
             <h3 className={cn("font-display leading-snug text-ink mt-0.5", isCompact ? "text-base" : "text-lg sm:text-xl")}>
               <Link href={href} onClick={onNavigate} className="transition-colors hover:text-accent-strong">
-                {product.name}
+                {displayName}
               </Link>
             </h3>
 
             <p className="mt-1 text-xs text-muted">
-              {formatPrice(product.price)} / piece {!isCompact ? `· ${product.fabric} · ${product.design}` : ""}
+              {formatPrice(product.price)} {t.products.perPiece} {!isCompact ? `· ${displayFabric}` : ""}
             </p>
 
             {/* Selected Colors */}
             {selectedColors.length > 0 ? (
               <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-subtle">
-                <span className="font-medium text-ink">Colors:</span>
+                <span className="font-medium text-ink">{t.filters.color}:</span>
                 {selectedColors.map(([colorName, qty]) => {
                   const colorObj = product.colors.find((c) => c.name === colorName);
                   return (
@@ -88,14 +95,14 @@ export function OrderListLineItem({
                         />
                       ) : null}
                       <span className="text-ink font-medium">{colorName}</span>
-                      <span className="text-muted">({qty} pcs)</span>
+                      <span className="text-muted">({qty} {t.products.pieces})</span>
                     </span>
                   );
                 })}
               </div>
             ) : product.colors && product.colors.length > 0 ? (
               <div className="mt-1.5 flex items-center gap-1.5 text-xs text-subtle">
-                <span>Available Colors:</span>
+                <span>{language === "en" ? "Available colors:" : "उपलब्ध कलर:"}</span>
                 <div className="flex gap-1">
                   {product.colors.map((c) => (
                     <span
@@ -111,7 +118,7 @@ export function OrderListLineItem({
           </div>
 
           <IconButton
-            label={`Remove ${product.name} from order list`}
+            label={`${t.orderList.remove}: ${displayName}`}
             icon={<TrashIcon size={18} />}
             onClick={() => onRemove(product.id)}
             size="sm"
@@ -128,10 +135,10 @@ export function OrderListLineItem({
             max={rules.max}
             step={rules.step}
             size="sm"
-            label={`Quantity for ${product.name}`}
+            label={`${displayName} ${t.orderList.quantity}`}
           />
           <div className="text-right">
-            <span className="text-[0.6875rem] uppercase tracking-wider text-subtle block">Subtotal</span>
+            <span className="text-[0.6875rem] uppercase tracking-wider text-subtle block">{t.orderList.subtotal}</span>
             <span className="type-price text-base sm:text-lg text-ink">{formatPrice(lineTotal)}</span>
           </div>
         </div>

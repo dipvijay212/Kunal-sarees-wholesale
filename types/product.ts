@@ -74,13 +74,23 @@ export interface Product {
   /** Design code used by the business when confirming orders. */
   productCode: string;
   name: string;
+  name_en?: string;
+  name_hi?: string;
   slug: string;
   description: string;
+  description_en?: string;
+  description_hi?: string;
   /** One line used on cards, search results and meta descriptions. */
   shortDescription: string;
+  shortDescription_en?: string;
+  shortDescription_hi?: string;
   categoryId: string;
   collectionId: string;
-  fabric: Fabric;
+  fabric: Fabric | string;
+  fabric_en?: string;
+  fabric_hi?: string;
+  color_en?: string;
+  color_hi?: string;
   design: DesignType;
   /** Wholesale price per piece in INR, excluding GST. */
   price: number;
@@ -92,6 +102,7 @@ export interface Product {
   stock: number;
   colors: ProductColor[];
   images: ProductImage[];
+  videoUrl?: string;
   variants: ProductVariant[];
   specifications: ProductSpecifications;
   highlights: string[];

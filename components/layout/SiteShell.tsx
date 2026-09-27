@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { TopBar } from "@/components/layout/TopBar";
 import { OrderListDrawer } from "@/components/order-list/OrderListDrawer";
 import { SearchDialog } from "@/components/search/SearchDialog";
+import { IntroAnimation } from "@/components/ui/IntroAnimation";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { siteConfig } from "@/data/site";
 
@@ -19,6 +20,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <IntroAnimation />
       <TopBar />
       <Header />
       <main id="main-content" className="flex-1">

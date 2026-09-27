@@ -1,11 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRightIcon } from "@/components/ui/Icons";
 import { RemoteImage } from "@/components/ui/RemoteImage";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { cn } from "@/lib/cn";
-import type { CollectionWithCount } from "@/types";
+import type { Collection, CollectionWithCount } from "@/types";
+
 
 export interface CollectionCardProps {
-  collection: CollectionWithCount;
+  collection: Collection | CollectionWithCount;
   aspect?: "portrait" | "landscape";
   sizes?: string;
   eager?: boolean;
@@ -19,6 +23,17 @@ export function CollectionCard({
   eager = false,
   className,
 }: CollectionCardProps) {
+  const { t, getLocalized, language } = useLanguage();
+
+  const displayName = getLocalized(collection, "name") || collection.name;
+  const displayDescription = getLocalized(collection, "description") || collection.description;
+
+  const productCount = "productCount" in collection ? collection.productCount : undefined;
+  const countBadge = productCount
+    ? (language === "en" ? `${productCount}+ Sarees` : `${productCount}+ साड़ियां`)
+    : (language === "en" ? "Exclusive" : "खास कलेक्शन");
+
+
   return (
     <Link
       href={`/collections/${collection.slug}`}
@@ -31,7 +46,7 @@ export function CollectionCard({
       <div className={cn("media-frame bg-cream-warm", aspect === "portrait" ? "aspect-[4/5]" : "aspect-[16/10]")}>
         <RemoteImage
           src={collection.image.url}
-          alt={collection.image.alt}
+          alt={collection.image.alt || displayName}
           fill
           sizes={sizes}
           loading={eager ? "eager" : "lazy"}
@@ -48,23 +63,24 @@ export function CollectionCard({
         <div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-[0.6875rem] font-semibold tracking-[0.08em] text-gold uppercase">
-              {collection.productCount ? `${collection.productCount}+ Products` : "Wholesale Edit"}
+              {countBadge}
             </span>
           </div>
           <h3 className="font-display text-xl sm:text-[1.375rem] font-normal text-ink mt-1.5 transition-colors group-hover:text-maroon">
-            {collection.name}
+            {displayName}
           </h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted line-clamp-2">
-            {collection.description}
-          </p>
+          {displayDescription ? (
+            <p className="mt-1 text-xs leading-relaxed text-muted line-clamp-2">
+              {displayDescription}
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.08em] text-maroon">
-          <span>View Collection</span>
+          <span>{t.categories.exploreBtn}</span>
           <ArrowRightIcon size={14} className="transition-transform duration-300 group-hover:translate-x-1 text-maroon" />
         </div>
       </div>
     </Link>
   );
 }
-

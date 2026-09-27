@@ -20,25 +20,31 @@ export function WishlistButton({ productId, productName, variant = "overlay", cl
     <HeartIcon size={18} fill={saved ? "currentColor" : "none"} className={saved ? "text-ice-300" : undefined} />
   );
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggle(productId);
+  };
+
   if (variant === "inline") {
     return (
       <button
         type="button"
-        onClick={() => toggle(productId)}
+        onClick={handleClick}
         aria-pressed={saved}
         className={cn("btn btn--ghost btn--sm gap-2 px-3", className)}
       >
         {heart}
-        {saved ? "Saved" : "Save design"}
+        {saved ? "पसंद में जोड़ा" : "पसंद करें"}
       </button>
     );
   }
 
   return (
     <IconButton
-      label={`Save ${productName}`}
+      label={`${productName} को पसंद में जोड़ें`}
       icon={heart}
-      onClick={() => toggle(productId)}
+      onClick={handleClick}
       aria-pressed={saved}
       variant="overlay"
       size="sm"

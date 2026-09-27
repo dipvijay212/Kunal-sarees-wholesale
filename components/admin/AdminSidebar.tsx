@@ -11,7 +11,6 @@ import {
   HomeIcon,
   PackageIcon,
   SparkleIcon,
-  TagIcon,
 } from "@/components/ui/Icons";
 
 interface NavItem {
@@ -25,7 +24,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: <HomeIcon size={18} />, exact: true },
   { label: "Products", href: "/admin/products", icon: <PackageIcon size={18} /> },
   { label: "Categories", href: "/admin/categories", icon: <FilterIcon size={18} /> },
-  { label: "Collections", href: "/admin/collections", icon: <TagIcon size={18} /> },
   { label: "Orders", href: "/admin/orders", icon: <BagIcon size={18} /> },
   { label: "Customers", href: "/admin/customers", icon: <ChatIcon size={18} /> },
   { label: "Settings", href: "/admin/settings", icon: <SparkleIcon size={18} /> },

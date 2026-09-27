@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Development product photography (see data/images.ts).
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      // Cloudinary media uploads
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
+      { protocol: "https", hostname: "*.cloudinary.com", pathname: "/**" },
     ],
   },
 };

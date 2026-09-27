@@ -64,7 +64,17 @@ export function getProductsByCollection(collectionIdOrSlug: string, options?: Ge
 }
 
 function byNewest(a: Product, b: Product): number {
-  return b.createdAt.localeCompare(a.createdAt);
+  const isNewA = a.newArrival ? 1 : 0;
+  const isNewB = b.newArrival ? 1 : 0;
+  if (isNewA !== isNewB) {
+    return isNewB - isNewA;
+  }
+  const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+    return timeB - timeA;
+  }
+  return String(b.id).localeCompare(String(a.id));
 }
 
 export function getFeaturedProducts(limit = 4): Product[] {
@@ -192,16 +202,34 @@ function queryTokens(query: string): string[] {
 export function matchesQuery(product: Product, query: string): boolean {
   const tokens = queryTokens(query);
   if (tokens.length === 0) return true;
+  const category = getCategoryById(product.categoryId);
+  const collection = getCollectionById(product.collectionId);
+
   const searchableText = normalizeText(
     [
       product.name,
+      product.name_en ?? "",
+      product.name_hi ?? "",
       product.productCode,
       product.fabric,
+      product.fabric_en ?? "",
+      product.fabric_hi ?? "",
       product.design,
       product.shortDescription,
+      product.shortDescription_en ?? "",
+      product.shortDescription_hi ?? "",
+      product.description,
+      product.description_en ?? "",
+      product.description_hi ?? "",
+      product.color_en ?? "",
+      product.color_hi ?? "",
       product.colors.map((color) => color.name).join(" "),
-      getCategoryById(product.categoryId)?.name ?? "",
-      getCollectionById(product.collectionId)?.name ?? "",
+      category?.name ?? "",
+      category?.name_en ?? "",
+      category?.name_hi ?? "",
+      collection?.name ?? "",
+      collection?.name_en ?? "",
+      collection?.name_hi ?? "",
     ].join(" "),
   );
   return tokens.every((token) => searchableText.includes(token));
@@ -231,8 +259,8 @@ export function searchCatalogue(query: string, limit = 6): SearchResults {
 
   return {
     products: matchingProducts.slice(0, limit),
-    collections: collectionRepository.getAll().filter((collection) => matches(`${collection.name} ${collection.tagline}`)).slice(0, 3),
-    categories: categoryRepository.getAll().filter((category) => matches(category.name)).slice(0, 3),
+    collections: collectionRepository.getAll().filter((collection) => matches(`${collection.name} ${collection.name_en ?? ""} ${collection.name_hi ?? ""} ${collection.tagline}`)).slice(0, 3),
+    categories: categoryRepository.getAll().filter((category) => matches(`${category.name} ${category.name_en ?? ""} ${category.name_hi ?? ""}`)).slice(0, 3),
     totalProducts: matchingProducts.length,
   };
 }
@@ -242,11 +270,11 @@ export function searchCatalogue(query: string, limit = 6): SearchResults {
 /* -------------------------------------------------------------------------- */
 
 export const sortOptions: { value: CatalogueSort; label: string }[] = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest first" },
-  { value: "price-asc", label: "Price: low to high" },
-  { value: "price-desc", label: "Price: high to low" },
-  { value: "name-asc", label: "Name A-Z" },
+  { value: "featured", label: "खास साड़ियां" },
+  { value: "newest", label: "नई साड़ियां पहले" },
+  { value: "price-asc", label: "कम से ज्यादा कीमत" },
+  { value: "price-desc", label: "ज्यादा से कम कीमत" },
+  { value: "name-asc", label: "नाम (A से Z)" },
 ];
 
 const sortValues = new Set<string>(sortOptions.map((option) => option.value));
@@ -255,11 +283,11 @@ function isSort(value: string | null): value is CatalogueSort {
   return value !== null && sortValues.has(value);
 }
 
-export function getFabricOptions(source: Product[] = getProducts()): FilterOption<Fabric>[] {
-  const counts = new Map<Fabric, number>();
+export function getFabricOptions(source: Product[] = getProducts()): FilterOption<Fabric | string>[] {
+  const counts = new Map<string, number>();
   for (const product of source) counts.set(product.fabric, (counts.get(product.fabric) ?? 0) + 1);
   return [...counts.entries()]
-    .map(([value, count]) => ({ value, label: value, count }))
+    .map(([value, count]) => ({ value: value as Fabric, label: value, count }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
@@ -315,9 +343,9 @@ export function getAvailabilityOptions(source: Product[] = getProducts()): Filte
     counts[status] += 1;
   }
   const labels: Record<ProductAvailability, string> = {
-    "in-stock": "In Stock",
-    "low-stock": "Low Stock",
-    "out-of-stock": "Made to Order",
+    "in-stock": "स्टॉक में है",
+    "low-stock": "कम स्टॉक बचा है",
+    "out-of-stock": "ऑर्डर पर बनेगी",
   };
   return (["in-stock", "low-stock", "out-of-stock"] as ProductAvailability[])
     .map((value) => ({ value, label: labels[value], count: counts[value] }))
@@ -370,7 +398,7 @@ export function parseCatalogueFilters(params: SearchParamsReader): CatalogueFilt
     minPrice: minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : null,
     maxPrice: maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : null,
     availability: validAvailability,
-    sort: isSort(sort) ? sort : "featured",
+    sort: isSort(sort) ? sort : "newest",
     page,
   };
 }
@@ -398,8 +426,10 @@ export function filterProducts(source: Product[], filters: CatalogueFilters): Pr
       return [...filtered].sort((a, b) => b.price - a.price);
     case "name-asc":
       return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-    default:
+    case "featured":
       return [...filtered].sort((a, b) => Number(b.featured) - Number(a.featured));
+    default:
+      return [...filtered].sort(byNewest);
   }
 }
 
@@ -422,6 +452,17 @@ export async function fetchCategories(): Promise<CategoryWithCount[]> {
     ...cat,
     productCount: products.filter((p) => p.categoryId === cat.id).length,
   }));
+}
+
+export async function fetchFeaturedCategories(limit = 6): Promise<CategoryWithCount[]> {
+  const categories = await fetchCategories();
+  const sorted = [...categories].sort((a, b) => {
+    if ((b.productCount > 0) !== (a.productCount > 0)) {
+      return b.productCount > 0 ? 1 : -1;
+    }
+    return a.order - b.order;
+  });
+  return sorted.slice(0, limit);
 }
 
 export async function fetchCollections(): Promise<CollectionWithCount[]> {

@@ -1,38 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Container } from "@/components/ui/Container";
 import { MailIcon, MapPinIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { siteConfig } from "@/data/site";
 import { useSettings } from "@/hooks/use-settings";
 import { getDirectionsUrl } from "@/data/site";
 import { buildWhatsAppUrl, defaultWhatsAppMessage } from "@/lib/whatsapp";
+import { getFooterQuickLinks } from "@/data/navigation";
 import { Logo } from "./Logo";
 import { SocialLinks } from "./SocialLinks";
 
-const footerQuickLinks = [
-  { label: "Home", href: "/" },
-  { label: "Collections", href: "/collections" },
-  { label: "New Arrivals", href: "/new-arrivals" },
-  { label: "Wholesale Terms", href: "/wholesale" },
-  { label: "About Kunal Sarees", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-];
-
-const footerCollections = [
-  { label: "Banarasi Sarees", href: "/collections/premium-banarasi" },
-  { label: "Silk Sarees", href: "/collections/silk-collection" },
-  { label: "Georgette Sarees", href: "/products?category=georgette-sarees" },
-  { label: "Cotton Sarees", href: "/products?category=cotton-sarees" },
-  { label: "Organza Sarees", href: "/products?category=organza-sarees" },
-  { label: "Bridal Collection", href: "/collections/bridal-collection" },
-];
-
 export function Footer() {
+  const { t, language, isSwitchAllowed } = useLanguage();
   const settings = useSettings();
   const contact = settings.contact;
   const year = 2026;
+  const quickLinks = getFooterQuickLinks(t);
+
+  const footerCategories = language === "en" ? [
+    { label: "Banarasi Sarees", href: "/products?category=banarasi-sarees" },
+    { label: "Silk Sarees", href: "/products?category=silk-sarees" },
+    { label: "Georgette Sarees", href: "/products?category=georgette-sarees" },
+    { label: "Cotton Sarees", href: "/products?category=cotton-sarees" },
+    { label: "Organza Sarees", href: "/products?category=organza-sarees" },
+    { label: "Bridal Sarees", href: "/products?category=bridal-sarees" },
+  ] : [
+    { label: "बनारसी साड़ियां", href: "/products?category=banarasi-sarees" },
+    { label: "सिल्क साड़ियां", href: "/products?category=silk-sarees" },
+    { label: "जॉर्जेट साड़ियां", href: "/products?category=georgette-sarees" },
+    { label: "कॉटन साड़ियां", href: "/products?category=cotton-sarees" },
+    { label: "ऑर्गेंजा साड़ियां", href: "/products?category=organza-sarees" },
+    { label: "ब्राइडल साड़ियां", href: "/products?category=bridal-sarees" },
+  ];
 
   return (
     <footer className="border-t border-gold/30 bg-maroon-dark text-cream">
@@ -47,12 +50,23 @@ export function Footer() {
               showTagline
             />
             <p className="max-w-sm text-sm leading-relaxed text-cream/90 mt-1">
-              {siteConfig.description}
+              {t.brand.tagline}
             </p>
+            
+            {isSwitchAllowed && (
+              <div className="pt-2">
+                <span className="block text-xs text-gold-light/90 mb-2 font-semibold">
+                  {language === "en" ? "Website Language:" : "वेबसाइट की भाषा:"}
+                </span>
+                <LanguageSwitcher variant="pill" tone="dark" />
+              </div>
+            )}
+
+
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <WhatsAppButton
                 size="sm"
-                label="WhatsApp Enquiry"
+                label={t.footer.whatsappEnquiry}
                 className="bg-gold hover:bg-gold-light text-maroon-dark font-bold border-transparent shadow-sm"
               />
               <SocialLinks
@@ -65,11 +79,11 @@ export function Footer() {
           {/* Column 2: Quick Links (Span 2) */}
           <nav aria-labelledby="footer-quick-links" className="lg:col-span-2">
             <h2 id="footer-quick-links" className="type-eyebrow text-gold-light font-bold tracking-widest uppercase text-xs">
-              Quick Links
+              {t.footer.quickLinksTitle}
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
-              {footerQuickLinks.map((item) => (
-                <li key={item.href}>
+              {quickLinks.map((item) => (
+                <li key={item.label}>
                   <Link
                     href={item.href}
                     className="inline-flex py-0.5 text-sm text-cream/90 transition-colors hover:text-gold-light"
@@ -81,14 +95,14 @@ export function Footer() {
             </ul>
           </nav>
 
-          {/* Column 3: Collections (Span 3) */}
-          <nav aria-labelledby="footer-collections" className="lg:col-span-3">
-            <h2 id="footer-collections" className="type-eyebrow text-gold-light font-bold tracking-widest uppercase text-xs">
-              Collections
+          {/* Column 3: Categories (Span 3) */}
+          <nav aria-labelledby="footer-categories" className="lg:col-span-3">
+            <h2 id="footer-categories" className="type-eyebrow text-gold-light font-bold tracking-widest uppercase text-xs">
+              {t.footer.categoriesTitle}
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
-              {footerCollections.map((item) => (
-                <li key={item.href}>
+              {footerCategories.map((item) => (
+                <li key={item.label}>
                   <Link
                     href={item.href}
                     className="inline-flex py-0.5 text-sm text-cream/90 transition-colors hover:text-gold-light"
@@ -103,7 +117,7 @@ export function Footer() {
           {/* Column 4: Contact Details (Span 3) */}
           <div className="lg:col-span-3">
             <h2 className="type-eyebrow text-gold-light font-bold tracking-widest uppercase text-xs">
-              Contact
+              {t.footer.contactTitle}
             </h2>
             <ul className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-cream/90">
               <li className="flex items-start gap-2.5">
@@ -117,7 +131,7 @@ export function Footer() {
                     rel="noopener noreferrer"
                     className="mt-1 inline-block text-[0.6875rem] font-bold uppercase tracking-wider text-gold-light underline hover:text-white"
                   >
-                    Get Directions &rarr;
+                    {t.contact.getDirections} &rarr;
                   </a>
                 </address>
               </li>
@@ -155,12 +169,10 @@ export function Footer() {
       {/* Copyright Bar */}
       <div className="border-t border-gold/15 bg-black/25">
         <Container className="flex flex-col gap-2 py-4 pb-20 text-xs text-cream/80 sm:flex-row sm:items-center sm:justify-between lg:pb-4">
-          <p>&copy; {year} {siteConfig.name}. All Rights Reserved.</p>
-          <p className="text-gold-light font-medium">{siteConfig.positioning} &bull; Surat B2B Wholesale</p>
+          <p>&copy; {year} {t.brand.name}. {t.footer.copyright}</p>
+          <p className="text-gold-light font-medium">{t.footer.locationNote}</p>
         </Container>
       </div>
     </footer>
   );
 }
-
-

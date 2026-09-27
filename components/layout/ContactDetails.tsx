@@ -36,7 +36,7 @@ export function ContactDetails({ showHours = true, className }: ContactDetailsPr
 
   return (
     <ul className={cn("flex flex-col gap-5 text-sm leading-relaxed", className)}>
-      <DetailRow icon={<MapPinIcon size={18} />} label="Business address">
+      <DetailRow icon={<MapPinIcon size={18} />} label="दुकान का पता">
         <address className="text-muted not-italic">
           {contact.address.lines.map((line) => (
             <span key={line} className="block">
@@ -53,11 +53,11 @@ export function ContactDetails({ showHours = true, className }: ContactDetailsPr
           rel="noopener noreferrer"
           className="mt-1.5 inline-flex min-h-8 items-center text-xs font-semibold tracking-[0.14em] text-ink uppercase transition-colors hover:text-accent-strong"
         >
-          Get directions
+          गूगल मैप्स पर देखें
         </a>
       </DetailRow>
 
-      <DetailRow icon={<PhoneIcon size={18} />} label="Phone">
+      <DetailRow icon={<PhoneIcon size={18} />} label="फोन">
         <a href={contact.phoneHref} className={linkClass}>
           {contact.phoneDisplay}
         </a>
@@ -65,23 +65,23 @@ export function ContactDetails({ showHours = true, className }: ContactDetailsPr
 
       <DetailRow icon={<WhatsAppIcon size={18} />} label="WhatsApp">
         <a href={buildWhatsAppUrl(defaultWhatsAppMessage)} target="_blank" rel="noopener noreferrer" className={linkClass}>
-          Chat on WhatsApp
+          WhatsApp पर बात करें
         </a>
       </DetailRow>
 
-      <DetailRow icon={<MailIcon size={18} />} label="Email">
+      <DetailRow icon={<MailIcon size={18} />} label="ईमेल">
         <a href={`mailto:${contact.email}`} className={linkClass}>
           {contact.email}
         </a>
       </DetailRow>
 
       {showHours ? (
-        <DetailRow icon={<ClockIcon size={18} />} label="Business hours">
+        <DetailRow icon={<ClockIcon size={18} />} label="खुलने का समय">
           <dl className="flex flex-col gap-1 text-muted">
             {contact.hours.map((entry) => (
               <div key={entry.days} className="flex flex-wrap gap-x-2">
-                <dt>{entry.days}</dt>
-                <dd className="text-ink">{entry.hours}</dd>
+                <dt>{entry.days === "Monday – Saturday" ? "सोमवार – शनिवार" : entry.days === "Sunday" ? "रविवार" : entry.days}</dt>
+                <dd className="text-ink">{entry.hours === "By appointment" ? "पहले से समय लेकर" : entry.hours}</dd>
               </div>
             ))}
           </dl>

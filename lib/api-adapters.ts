@@ -86,33 +86,62 @@ function deriveSpecifications(product: BackendProduct): ProductSpecifications {
 }
 
 export function adaptProduct(backend: BackendProduct): Product {
-  const colors = parseColors(backend.color);
+  const colorString = backend.color_en || backend.color || backend.color_hi || 'Red';
+  const colors = parseColors(colorString);
   const images: ProductImage[] =
     backend.images && backend.images.length > 0
       ? backend.images.map((img) => ({
           url: img.imageUrl,
-          alt: img.altText || backend.name,
+          alt: img.altText || backend.name_hi || backend.name,
           width: 1200,
           height: 1600,
         }))
       : [DEFAULT_IMAGE];
 
-  const primaryCollection = backend.collections && backend.collections[0];
-  const collectionId = primaryCollection ? `col-${primaryCollection.id}` : 'col-silk';
   const categoryId = backend.categoryId ? `cat-${backend.categoryId}` : 'cat-silk';
+  const collectionId = categoryId;
 
   const price = typeof backend.price === 'string' ? parseFloat(backend.price) : backend.price;
+
+  const displayName = backend.name_hi || backend.nameHi || backend.name || backend.name_en || backend.nameEn || 'साड़ी';
+  const nameEn = backend.name_en || backend.nameEn || backend.name;
+  const nameHi = backend.name_hi || backend.nameHi || backend.name;
+
+  const displayDesc = backend.description_hi || backend.descriptionHi || backend.description || backend.description_en || backend.descriptionEn || displayName;
+  const descEn = backend.description_en || backend.descriptionEn || backend.description || displayName;
+  const descHi = backend.description_hi || backend.descriptionHi || backend.description || displayName;
+
+  const displayShort = backend.short_description_hi || backend.shortDescriptionHi || backend.shortDescription || backend.short_description_en || backend.shortDescriptionEn || displayDesc;
+  const shortEn = backend.short_description_en || backend.shortDescriptionEn || backend.shortDescription || displayDesc;
+  const shortHi = backend.short_description_hi || backend.shortDescriptionHi || backend.shortDescription || displayDesc;
+
+  const displayFabric = backend.fabric_hi || backend.fabricHi || backend.fabric || backend.fabric_en || backend.fabricEn || 'बनारसी सिल्क';
+  const fabricEn = backend.fabric_en || backend.fabricEn || backend.fabric || 'Banarasi Silk';
+  const fabricHi = backend.fabric_hi || backend.fabricHi || backend.fabric || 'बनारसी सिल्क';
+
+  const colorEn = backend.color_en || backend.colorEn || backend.color || 'Red';
+  const colorHi = backend.color_hi || backend.colorHi || backend.color || 'लाल';
 
   return {
     id: `prd-${backend.id}`,
     productCode: backend.productCode,
-    name: backend.name,
+    name: displayName,
+    name_en: nameEn,
+    name_hi: nameHi,
     slug: backend.slug,
-    description: backend.description || backend.shortDescription || backend.name,
-    shortDescription: backend.shortDescription || backend.description || backend.name,
+    description: displayDesc,
+    description_en: descEn,
+    description_hi: descHi,
+    shortDescription: displayShort,
+    shortDescription_en: shortEn,
+    shortDescription_hi: shortHi,
     categoryId,
     collectionId,
-    fabric: (backend.fabric as Fabric) || 'Banarasi Silk',
+    fabric: displayFabric,
+    fabric_en: fabricEn,
+    fabric_hi: fabricHi,
+    color_en: colorEn,
+    color_hi: colorHi,
     design: 'Zari Weave' as DesignType,
     price,
     moq: backend.minimumOrderQuantity || 2,
@@ -120,6 +149,7 @@ export function adaptProduct(backend: BackendProduct): Product {
     stock: backend.stockQuantity ?? 50,
     colors,
     images,
+    videoUrl: backend.videoUrl || backend.video_url || undefined,
     variants: colors.map((col, idx) => ({
       id: `var-${backend.id}-${idx}`,
       productId: `prd-${backend.id}`,
@@ -130,9 +160,9 @@ export function adaptProduct(backend: BackendProduct): Product {
     })),
     specifications: deriveSpecifications(backend),
     highlights: [
-      backend.fabric ? `Premium ${backend.fabric}` : 'Premium Handloom',
-      'Authentic Zari border with fine finish',
-      `Direct Surat Wholesale MOQ: ${backend.minimumOrderQuantity} pieces`,
+      displayFabric ? `प्रीमियम ${displayFabric}` : 'प्रीमियम हैंडलूम',
+      'बारीक जरी बॉर्डर और शानदार फिनिशिंग',
+      `सूरत डायरेक्ट होलसेल कम से कम ऑर्डर: ${backend.minimumOrderQuantity} पीस`,
     ],
     featured: Boolean(backend.isFeatured),
     newArrival: Boolean(backend.isNew),
@@ -141,33 +171,74 @@ export function adaptProduct(backend: BackendProduct): Product {
   };
 }
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  'banarasi-sarees': 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=85',
+  'silk-sarees': 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85',
+  'georgette-sarees': 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1200&q=85',
+  'organza-sarees': 'https://images.unsplash.com/photo-1610030469850-8b0d2a8ec490?auto=format&fit=crop&w=1200&q=85',
+  'cotton-sarees': 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&w=1200&q=85',
+  'bridal-sarees': 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=1200&q=85',
+  'chiffon-sarees': 'https://images.unsplash.com/photo-1596464716127-f2a829822301?auto=format&fit=crop&w=1200&q=85',
+  'embroidered-sarees': 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=1200&q=85',
+  'party-wear': 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=85',
+  'printed-sarees': 'https://images.unsplash.com/photo-1610030469668-93530c27b5ae?auto=format&fit=crop&w=1200&q=85',
+};
+
 export function adaptCategory(backend: BackendCategory, index = 0): Category {
+  const imageUrl =
+    CATEGORY_IMAGES[backend.slug] ||
+    'https://images.unsplash.com/photo-1619043518800-7f14be467dca?auto=format&fit=crop&w=1200&q=85';
+
+  const displayName = backend.name_hi || backend.nameHi || backend.name || backend.name_en || backend.nameEn || 'साड़ी';
+  const nameEn = backend.name_en || backend.nameEn || backend.name;
+  const nameHi = backend.name_hi || backend.nameHi || backend.name;
+
+  const displayDesc = backend.description_hi || backend.descriptionHi || backend.description || backend.description_en || backend.descriptionEn || `प्रीमियम होलसेल ${displayName} साड़ियों का खूबसूरत कलेक्शन।`;
+  const descEn = (backend.description_en || backend.descriptionEn || backend.description) ?? undefined;
+  const descHi = (backend.description_hi || backend.descriptionHi || backend.description) ?? undefined;
+
   return {
     id: `cat-${backend.id}`,
-    name: backend.name,
+    name: displayName,
+    name_en: nameEn ?? undefined,
+    name_hi: nameHi ?? undefined,
     slug: backend.slug,
-    description: backend.description || `Explore our premium wholesale ${backend.name} collection.`,
+    description: displayDesc,
+    description_en: descEn,
+    description_hi: descHi,
     image: {
-      url: 'https://images.unsplash.com/photo-1619043518800-7f14be467dca?auto=format&fit=crop&w=1200&q=85',
-      alt: backend.name,
+      url: imageUrl,
+      alt: displayName,
       width: 1200,
       height: 800,
     },
-    featured: index < 5,
+    featured: (backend.productCount ?? 0) > 0 || index < 6,
     order: index + 1,
   };
 }
 
 export function adaptCollection(backend: BackendCollection, index = 0): Collection {
+  const displayName = backend.name_hi || backend.nameHi || backend.name || backend.name_en || backend.nameEn || 'कलेक्शन';
+  const nameEn = backend.name_en || backend.nameEn || backend.name;
+  const nameHi = backend.name_hi || backend.nameHi || backend.name;
+
+  const displayDesc = backend.description_hi || backend.descriptionHi || backend.description || backend.description_en || backend.descriptionEn || `खास ${displayName} होलसेल साड़ियां।`;
+  const descEn = (backend.description_en || backend.descriptionEn || backend.description) ?? undefined;
+  const descHi = (backend.description_hi || backend.descriptionHi || backend.description) ?? undefined;
+
   return {
     id: `col-${backend.id}`,
-    name: backend.name,
+    name: displayName,
+    name_en: nameEn ?? undefined,
+    name_hi: nameHi ?? undefined,
     slug: backend.slug,
-    tagline: backend.description ? backend.description.slice(0, 45) : 'Direct Surat Wholesale',
-    description: backend.description || `Curated ${backend.name} wholesale sarees.`,
+    tagline: displayDesc ? displayDesc.slice(0, 45) : 'सूरत डायरेक्ट होलसेल',
+    description: displayDesc,
+    description_en: descEn,
+    description_hi: descHi,
     image: {
       url: backend.image || 'https://images.unsplash.com/photo-1641699862936-be9f49b1c38d?auto=format&fit=crop&w=1200&q=85',
-      alt: backend.name,
+      alt: displayName,
       width: 1200,
       height: 800,
     },
@@ -184,24 +255,28 @@ export function adaptOrder(backend: BackendOrder): PlacedOrder {
     id: `ord-${backend.id}`,
     orderNumber: backend.orderNumber,
     customerDetails: {
-      fullName: backend.customerName,
-      businessName: backend.businessName || '',
+      fullName: backend.customerNameSnapshot || backend.customerName || '',
+      businessName: backend.businessNameSnapshot || backend.businessName || '',
       customerType: 'Retailer',
-      whatsappNumber: backend.whatsappNumber,
-      mobileNumber: backend.phone,
-      city: backend.city,
-      state: backend.state,
-      pincode: backend.pincode,
-      fullAddress: backend.address,
+      whatsappNumber: backend.whatsappNumberSnapshot || backend.whatsappNumber || '',
+      mobileNumber: backend.phoneSnapshot || backend.phone || '',
+      city: backend.citySnapshot || backend.city || '',
+      state: backend.stateSnapshot || backend.state || '',
+      pincode: backend.pincodeSnapshot || backend.pincode || '',
+      fullAddress: backend.addressSnapshot || backend.address || '',
       notes: backend.notes || '',
     },
+
     items: (backend.items || []).map((item) => {
       const unitPrice = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice;
       const itemSubtotal = typeof item.subtotal === 'string' ? parseFloat(item.subtotal) : item.subtotal;
+      const displayName = item.productNameHi || item.productName || item.productNameEn || 'साड़ी';
       return {
         productId: `prd-${item.productId}`,
         productCode: item.productCode,
-        productName: item.productName,
+        productName: displayName,
+        productNameEn: item.productNameEn || undefined,
+        productNameHi: item.productNameHi || undefined,
         quantity: item.quantity,
         price: unitPrice,
         lineTotal: itemSubtotal,

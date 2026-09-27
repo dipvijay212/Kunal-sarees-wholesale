@@ -1,64 +1,97 @@
 "use client";
 
-import { Input, Select } from "@/components/ui/FormField";
-import type { CheckoutFormData, CustomerTypeOption } from "@/types";
+import Link from "next/link";
+import { useLanguage } from "@/components/providers/LanguageProvider";
+import { Input } from "@/components/ui/FormField";
+import { LockIcon, UserIcon } from "@/components/ui/Icons";
+import type { CheckoutFormData } from "@/types";
+import type { BackendCustomer } from "@/lib/api";
 
 interface CheckoutFormProps {
   formData: CheckoutFormData;
   onChange: (field: keyof CheckoutFormData, value: string) => void;
   errors: Partial<Record<keyof CheckoutFormData, string>>;
+  isAuthenticated?: boolean;
+  customer?: BackendCustomer | null;
+  onLogout?: () => void;
 }
 
-const CUSTOMER_TYPES: CustomerTypeOption[] = [
-  "Retailer",
-  "Boutique",
-  "Distributor",
-  "Reseller",
-  "Other",
-];
+export function CheckoutForm({
+  formData,
+  onChange,
+  errors,
+  isAuthenticated = false,
+  customer = null,
+  onLogout,
+}: CheckoutFormProps) {
+  const { t, language } = useLanguage();
+  const isHi = language === "hi";
 
-const STATES = [
-  "Andhra Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Delhi",
-  "Gujarat",
-  "Haryana",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Tamil Nadu",
-  "Telangana",
-  "Uttar Pradesh",
-  "West Bengal",
-  "Other State",
-];
+  const handleCopyMobileToWhatsapp = () => {
+    if (formData.mobileNumber) {
+      onChange("whatsappNumber", formData.mobileNumber);
+    }
+  };
 
-export function CheckoutForm({ formData, onChange, errors }: CheckoutFormProps) {
   return (
     <div className="flex flex-col gap-6 rounded-xs border border-line bg-canvas p-6 sm:p-8">
+      {/* Header & Login Status Banner */}
       <div>
-        <h2 className="type-h3 text-ink">Boutique & Retailer Details</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h2 className="type-h3 text-ink">{t.checkout.title}</h2>
+
+          {isAuthenticated && customer ? (
+            <div className="flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs text-ink">
+              <span className="flex h-2 w-2 rounded-full bg-success"></span>
+              <span>
+                {isHi ? "लॉगिन:" : "Logged in:"}{" "}
+                <strong>{customer.name}</strong>
+              </span>
+              {onLogout ? (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="ml-1 text-muted hover:text-danger hover:underline text-[11px]"
+                >
+                  ({isHi ? "लॉगआउट" : "Logout"})
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
         <p className="mt-1 text-xs text-muted">
-          Please provide your wholesale store details so our team can process your enquiry and issue accurate pricing.
+          {isHi
+            ? "ऑर्डर पूरा करने के लिए नीचे अपनी जानकारी भरें।"
+            : "Enter your personal details below to submit your order."}
         </p>
+
+        {!isAuthenticated ? (
+          <div className="mt-4 flex items-center justify-between rounded-xs border border-accent/20 bg-accent/5 p-3 text-xs text-ink">
+            <div className="flex items-center gap-2">
+              <UserIcon size={16} className="text-accent shrink-0" />
+              <span>{t.checkout.alreadyHaveAccount}</span>
+            </div>
+            <Link
+              href={`/login?redirect=/checkout${formData.mobileNumber ? `&phone=${formData.mobileNumber.replace(/\D/g, "")}` : ""}`}
+              className="font-medium text-accent hover:underline ml-2 shrink-0"
+            >
+              {t.checkout.loginHere} →
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* Full Name */}
         <div>
           <label htmlFor="fullName" className="field-label">
-            Full Name <span className="text-accent">*</span>
+            {t.checkout.name} <span className="text-accent">*</span>
           </label>
           <Input
             id="fullName"
             type="text"
-            placeholder="e.g. Rahul Patel"
+            placeholder={t.checkout.namePlaceholder}
             value={formData.fullName}
             onChange={(e) => onChange("fullName", e.target.value)}
             className={errors.fullName ? "border-danger" : ""}
@@ -69,13 +102,13 @@ export function CheckoutForm({ formData, onChange, errors }: CheckoutFormProps) 
         {/* Business / Shop Name */}
         <div>
           <label htmlFor="businessName" className="field-label">
-            Business / Shop Name <span className="text-accent">*</span>
+            {t.checkout.businessName} <span className="text-accent">*</span>
           </label>
           <Input
             id="businessName"
             type="text"
-            placeholder="e.g. Rahul Sarees & Fashions"
-            value={formData.businessName}
+            placeholder={t.checkout.businessNamePlaceholder}
+            value={formData.businessName || ""}
             onChange={(e) => onChange("businessName", e.target.value)}
             className={errors.businessName ? "border-danger" : ""}
           />
@@ -83,144 +116,165 @@ export function CheckoutForm({ formData, onChange, errors }: CheckoutFormProps) 
         </div>
       </div>
 
-      {/* Customer Type */}
-      <div>
-        <label htmlFor="customerType" className="field-label">
-          Customer Type <span className="text-accent">*</span>
-        </label>
-        <Select
-          id="customerType"
-          value={formData.customerType}
-          onChange={(e) => onChange("customerType", e.target.value as CustomerTypeOption)}
-          className={errors.customerType ? "border-danger" : ""}
-        >
-          {CUSTOMER_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </Select>
-        {errors.customerType ? <p className="mt-1 text-xs text-danger">{errors.customerType}</p> : null}
-      </div>
-
       <div className="grid gap-5 sm:grid-cols-2">
-        {/* WhatsApp Number */}
-        <div>
-          <label htmlFor="whatsappNumber" className="field-label">
-            WhatsApp Number <span className="text-accent">*</span>
-          </label>
-          <Input
-            id="whatsappNumber"
-            type="tel"
-            placeholder="e.g. 9876543210"
-            value={formData.whatsappNumber}
-            onChange={(e) => onChange("whatsappNumber", e.target.value)}
-            className={errors.whatsappNumber ? "border-danger" : ""}
-          />
-          {errors.whatsappNumber ? <p className="mt-1 text-xs text-danger">{errors.whatsappNumber}</p> : null}
-        </div>
-
         {/* Mobile Number */}
         <div>
           <label htmlFor="mobileNumber" className="field-label">
-            Mobile Number <span className="text-accent">*</span>
+            {t.checkout.phone} <span className="text-accent">*</span>
           </label>
           <Input
             id="mobileNumber"
             type="tel"
-            placeholder="e.g. 9876543210"
+            placeholder={t.checkout.phonePlaceholder}
             value={formData.mobileNumber}
-            onChange={(e) => onChange("mobileNumber", e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange("mobileNumber", val);
+              // If whatsapp was empty or matching previous mobile, keep in sync
+              if (!formData.whatsappNumber || formData.whatsappNumber === formData.mobileNumber) {
+                onChange("whatsappNumber", val);
+              }
+            }}
+            maxLength={10}
             className={errors.mobileNumber ? "border-danger" : ""}
           />
           {errors.mobileNumber ? <p className="mt-1 text-xs text-danger">{errors.mobileNumber}</p> : null}
         </div>
-      </div>
 
-      <div className="grid gap-5 sm:grid-cols-3">
-        {/* City */}
+        {/* WhatsApp Number */}
         <div>
-          <label htmlFor="city" className="field-label">
-            City <span className="text-accent">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="whatsappNumber" className="field-label">
+              {t.checkout.whatsappNumber} <span className="text-accent">*</span>
+            </label>
+            {formData.mobileNumber && formData.whatsappNumber !== formData.mobileNumber ? (
+              <button
+                type="button"
+                onClick={handleCopyMobileToWhatsapp}
+                className="text-[11px] text-accent hover:underline pb-1"
+              >
+                {isHi ? "मोबाइल जैसा ही" : "Same as mobile"}
+              </button>
+            ) : null}
+          </div>
           <Input
-            id="city"
-            type="text"
-            placeholder="e.g. Ahmedabad"
-            value={formData.city}
-            onChange={(e) => onChange("city", e.target.value)}
-            className={errors.city ? "border-danger" : ""}
+            id="whatsappNumber"
+            type="tel"
+            placeholder={t.checkout.whatsappPlaceholder}
+            value={formData.whatsappNumber}
+            onChange={(e) => onChange("whatsappNumber", e.target.value)}
+            maxLength={10}
+            className={errors.whatsappNumber ? "border-danger" : ""}
           />
-          {errors.city ? <p className="mt-1 text-xs text-danger">{errors.city}</p> : null}
-        </div>
-
-        {/* State */}
-        <div>
-          <label htmlFor="state" className="field-label">
-            State <span className="text-accent">*</span>
-          </label>
-          <Select
-            id="state"
-            value={formData.state}
-            onChange={(e) => onChange("state", e.target.value)}
-            className={errors.state ? "border-danger" : ""}
-          >
-            <option value="">Select State</option>
-            {STATES.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </Select>
-          {errors.state ? <p className="mt-1 text-xs text-danger">{errors.state}</p> : null}
-        </div>
-
-        {/* Pincode */}
-        <div>
-          <label htmlFor="pincode" className="field-label">
-            Pincode <span className="text-accent">*</span>
-          </label>
-          <Input
-            id="pincode"
-            type="text"
-            maxLength={6}
-            placeholder="e.g. 380001"
-            value={formData.pincode}
-            onChange={(e) => onChange("pincode", e.target.value)}
-            className={errors.pincode ? "border-danger" : ""}
-          />
-          {errors.pincode ? <p className="mt-1 text-xs text-danger">{errors.pincode}</p> : null}
+          {errors.whatsappNumber ? (
+            <p className="mt-1 text-xs text-danger">{errors.whatsappNumber}</p>
+          ) : null}
         </div>
       </div>
 
-      {/* Full Address */}
+      {/* Email */}
+      <div>
+        <label htmlFor="email" className="field-label">
+          {t.checkout.email}
+        </label>
+        <Input
+          id="email"
+          type="email"
+          placeholder={t.checkout.emailPlaceholder}
+          value={formData.email || ""}
+          onChange={(e) => onChange("email", e.target.value)}
+          className={errors.email ? "border-danger" : ""}
+        />
+        {errors.email ? <p className="mt-1 text-xs text-danger">{errors.email}</p> : null}
+      </div>
+
+      {/* Account Password Creation (For First-Time Unauthenticated Customer Only) */}
+      {!isAuthenticated ? (
+        <div className="rounded-xs border border-line/80 bg-canvas-subtle/50 p-4 sm:p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <LockIcon size={16} className="text-accent" />
+            <h3 className="text-sm font-semibold text-ink">
+              {isHi ? "खाता पासवर्ड बनाएं (भविष्य के लॉगिन के लिए)" : "Create Account Password (For Future Logins)"}
+            </h3>
+          </div>
+          <p className="mb-4 text-xs text-muted">
+            {t.checkout.passwordPolicyHint}
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="field-label">
+                {t.checkout.password} <span className="text-accent">*</span>
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder={t.checkout.passwordPlaceholder}
+                value={formData.password || ""}
+                onChange={(e) => onChange("password", e.target.value)}
+                className={errors.password ? "border-danger" : ""}
+              />
+              {errors.password ? <p className="mt-1 text-xs text-danger">{errors.password}</p> : null}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label htmlFor="confirmPassword" className="field-label">
+                {t.checkout.confirmPassword} <span className="text-accent">*</span>
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder={t.checkout.confirmPasswordPlaceholder}
+                value={formData.confirmPassword || ""}
+                onChange={(e) => onChange("confirmPassword", e.target.value)}
+                className={errors.confirmPassword ? "border-danger" : ""}
+              />
+              {errors.confirmPassword ? (
+                <p className="mt-1 text-xs text-danger">{errors.confirmPassword}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Full Delivery Address */}
       <div>
         <label htmlFor="fullAddress" className="field-label">
-          Full Address <span className="text-accent">*</span>
+          {t.checkout.address} <span className="text-accent">*</span>
         </label>
         <textarea
           id="fullAddress"
           rows={3}
-          placeholder="Shop / Building No., Street, Landmark, Area..."
+          placeholder={
+            isHi
+              ? "दुकान / घर का नंबर, गली / इलाका, शहर, राज्य और पिन कोड..."
+              : "House/Shop number, building, street, area, city, state and PIN code..."
+          }
           value={formData.fullAddress}
           onChange={(e) => onChange("fullAddress", e.target.value)}
-          className={`input w-full py-2.5 ${errors.fullAddress ? "border-danger" : ""}`}
+          className={`w-full rounded-xs border bg-canvas p-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none ${
+            errors.fullAddress ? "border-danger" : "border-line"
+          }`}
         />
-        {errors.fullAddress ? <p className="mt-1 text-xs text-danger">{errors.fullAddress}</p> : null}
+        {errors.fullAddress ? (
+          <p className="mt-1 text-xs text-danger">{errors.fullAddress}</p>
+        ) : null}
       </div>
 
-      {/* Order Notes */}
+      {/* Notes */}
       <div>
         <label htmlFor="notes" className="field-label">
-          Order Notes <span className="text-subtle">(Optional)</span>
+          {t.checkout.notes}
         </label>
         <textarea
           id="notes"
           rows={2}
-          placeholder="Please confirm availability and final pricing."
-          value={formData.notes}
+          placeholder={t.checkout.notesPlaceholder}
+          value={formData.notes || ""}
           onChange={(e) => onChange("notes", e.target.value)}
-          className="input w-full py-2"
+          className="w-full rounded-xs border border-line bg-canvas p-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
         />
       </div>
     </div>

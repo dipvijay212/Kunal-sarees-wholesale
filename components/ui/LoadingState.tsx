@@ -8,7 +8,7 @@ interface LoadingStateProps {
   className?: string;
 }
 
-export function LoadingState({ variant = "spinner", label = "Loading", count = 4, className }: LoadingStateProps) {
+export function LoadingState({ variant = "spinner", label = "लोड हो रहा है...", count = 4, className }: LoadingStateProps) {
   if (variant === "products") {
     return (
       <div role="status" aria-live="polite" className={className}>

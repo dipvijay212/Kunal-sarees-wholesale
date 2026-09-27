@@ -1,20 +1,24 @@
 import type { NavItem } from "@/types";
+import type { TranslationDictionary } from "@/lib/translations";
 
-export const mainNavigation: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Collections", href: "/collections" },
-  { label: "All Sarees", href: "/products" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
+export const getMainNavigation = (t?: TranslationDictionary): NavItem[] => [
+  { label: t ? t.nav.home : "होम", href: "/" },
+  { label: t ? t.nav.sarees : "साड़ियां", href: "/products" },
+  { label: t ? t.nav.categories : "कलेक्शन", href: "/collections" },
+  { label: t ? t.nav.about : "हमारे बारे में", href: "/about" },
+  { label: t ? t.nav.contact : "संपर्क", href: "/contact" },
 ];
 
-export const footerQuickLinks: NavItem[] = [
-  { label: "Full catalogue", href: "/products" },
-  { label: "New arrivals", href: "/new-arrivals" },
-  { label: "Wholesale terms", href: "/wholesale" },
-  { label: "Become a stockist", href: "/wholesale#enquiry" },
-  { label: "About us", href: "/about" },
-  { label: "Contact", href: "/contact" },
-  { label: "Order list", href: "/order" },
-  { label: "Saved designs", href: "/wishlist" },
+export const getFooterQuickLinks = (t?: TranslationDictionary): NavItem[] => [
+  { label: t ? t.nav.home : "होम", href: "/" },
+  { label: t ? t.nav.sarees : "साड़ियां", href: "/products" },
+  { label: t ? t.nav.categories : "कलेक्शन", href: "/collections" },
+  { label: t ? t.wholesale.title : "होलसेल नियम", href: "/wholesale" },
+  { label: t ? t.nav.about : "हमारे बारे में", href: "/about" },
+  { label: t ? t.nav.contact : "संपर्क", href: "/contact" },
+  { label: t ? t.nav.orderList : "ऑर्डर लिस्ट", href: "/order" },
+  { label: t ? t.nav.wishlist : "पसंद की साड़ियां", href: "/wishlist" },
 ];
+
+export const mainNavigation: NavItem[] = getMainNavigation();
+export const footerQuickLinks: NavItem[] = getFooterQuickLinks();

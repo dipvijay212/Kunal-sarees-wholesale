@@ -27,7 +27,7 @@ export function QuantitySelector({
   max = 999,
   step = 1,
   size = "md",
-  label = "Quantity",
+  label = "मात्रा",
   showLabel = false,
   disabled = false,
   className,
@@ -84,7 +84,7 @@ export function QuantitySelector({
           className={buttonClass}
           onClick={() => commit(value - step)}
           disabled={disabled || value <= min}
-          aria-label={`Decrease ${label.toLowerCase()} by ${step}`}
+          aria-label="मात्रा कम करें"
           aria-controls={inputId}
         >
           <MinusIcon size={isSmall ? 14 : 16} />
@@ -114,7 +114,7 @@ export function QuantitySelector({
           className={buttonClass}
           onClick={() => commit(value + step)}
           disabled={disabled || value + step > max}
-          aria-label={`Increase ${label.toLowerCase()} by ${step}`}
+          aria-label="मात्रा बढ़ाएं"
           aria-controls={inputId}
         >
           <PlusIcon size={isSmall ? 14 : 16} />

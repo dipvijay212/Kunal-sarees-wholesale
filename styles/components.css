@@ -12,26 +12,26 @@
 
   .type-display {
     font-family: var(--font-display);
-    font-size: clamp(2.5rem, 1.8rem + 3.2vw, 4.75rem); /* mobile: 40-48px, tablet: 48-60px, desktop: 64-76px */
-    font-weight: 400;
-    line-height: 1.0;
-    letter-spacing: -0.01em;
+    font-size: clamp(2.25rem, 1.75rem + 2.8vw, 4.25rem); /* mobile: 36-44px, desktop: 56-68px */
+    font-weight: 500;
+    line-height: 1.22;
+    letter-spacing: 0;
   }
 
   .type-h1 {
     font-family: var(--font-display);
-    font-size: clamp(2.25rem, 1.6rem + 2.5vw, 4rem);
-    font-weight: 400;
-    line-height: 1.05;
-    letter-spacing: -0.01em;
+    font-size: clamp(2rem, 1.5rem + 2.2vw, 3.5rem);
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0;
   }
 
   .type-h2 {
     font-family: var(--font-display);
-    font-size: clamp(2rem, 1.5rem + 1.8vw, 3.25rem); /* mobile: 32-38px, desktop: 42-52px */
-    font-weight: 400;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
+    font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.75rem); /* mobile: 28-34px, desktop: 38-44px */
+    font-weight: 500;
+    line-height: 1.28;
+    letter-spacing: 0;
   }
 
   .type-h3 {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useUI } from "@/components/providers/UIProvider";
+import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { BagIcon, CheckIcon, MinusIcon, PlusIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
@@ -14,15 +15,16 @@ import type { Product } from "@/types";
 import { WishlistButton } from "./WishlistButton";
 
 export function ProductPurchasePanel({ product }: { product: Product }) {
+  const { t, getLocalized, language } = useLanguage();
   const rules = getQuantityRules(product);
   const isOutOfStock = product.stock <= 0;
+  const displayName = getLocalized(product, "name") || product.name;
 
   // Initialize color quantities map
   const [colorQuantities, setColorQuantities] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
     if (product.variants && product.variants.length > 0) {
       product.variants.forEach((v, index) => {
-        // Set first colorway default to MOQ if in stock
         initial[v.color.name] = index === 0 && !isOutOfStock ? Math.max(rules.min, v.stock > 0 ? rules.min : 0) : 0;
       });
     } else if (product.colors && product.colors.length > 0) {
@@ -64,7 +66,6 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       if (current > 0) {
         return { ...prev, [colorName]: 0 };
       } else {
-        // If adding, add at least 1 or step/min if total is 0
         const addQty = totalQuantity === 0 ? Math.min(rules.min, maxStock) : Math.min(rules.step || 1, maxStock);
         return { ...prev, [colorName]: addQty };
       }
@@ -84,8 +85,10 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       {/* Color Selection Header */}
       <div>
         <div className="flex items-center justify-between">
-          <label className="type-eyebrow text-ink">Select Colorways</label>
-          <span className="text-xs text-muted">Click to select multiple colors</span>
+          <label className="type-eyebrow text-ink">{t.productDetails.colorLabel}</label>
+          <span className="text-xs text-muted">
+            {language === "en" ? "Select one or more colors" : "एक से ज्यादा कलर चुन सकते हैं"}
+          </span>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2.5">
@@ -130,7 +133,9 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
 
       {/* Selected Color Quantity Controls */}
       <div className="rounded-xs border border-line bg-canvas-deep p-4 flex flex-col gap-3">
-        <p className="type-eyebrow text-xs text-muted">Per-Color Quantities</p>
+        <p className="type-eyebrow text-xs text-muted">
+          {language === "en" ? "Quantity per Color" : "कलर अनुसार मात्रा"}
+        </p>
         <div className="flex flex-col gap-2.5 divide-y divide-line">
           {availableColors.map((color) => {
             const qty = colorQuantities[color.name] || 0;
@@ -145,7 +150,9 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
                     style={{ backgroundColor: color.hex }}
                   />
                   <span className="text-sm font-medium text-ink">{color.name}</span>
-                  <span className="text-xs text-subtle">(Max: {color.stock})</span>
+                  <span className="text-xs text-subtle">
+                    ({language === "en" ? "Stock" : "स्टॉक"}: {color.stock})
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -153,7 +160,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
                     type="button"
                     onClick={() => updateColorQty(color.name, -1, color.stock)}
                     className="flex size-7 items-center justify-center rounded-xs border border-line bg-canvas text-ink hover:border-accent"
-                    aria-label={`Decrease quantity for ${color.name}`}
+                    aria-label={`${color.name} - ${t.buttons.decrease}`}
                   >
                     <MinusIcon size={14} />
                   </button>
@@ -163,7 +170,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
                     disabled={qty >= color.stock}
                     onClick={() => updateColorQty(color.name, 1, color.stock)}
                     className="flex size-7 items-center justify-center rounded-xs border border-line bg-canvas text-ink hover:border-accent disabled:opacity-40"
-                    aria-label={`Increase quantity for ${color.name}`}
+                    aria-label={`${color.name} - ${t.buttons.increase}`}
                   >
                     <PlusIcon size={14} />
                   </button>
@@ -173,20 +180,28 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
           })}
 
           {totalQuantity === 0 ? (
-            <p className="py-2 text-xs italic text-muted">No colors selected yet. Click a color above to add pieces.</p>
+            <p className="py-2 text-xs italic text-muted">
+              {language === "en"
+                ? "No color selected yet. Click any color above to add pieces."
+                : "अभी कोई कलर नहीं चुना गया। ऊपर दिए गए कलर पर क्लिक करके मात्रा जोड़ें।"}
+            </p>
           ) : null}
         </div>
 
         {/* Total Summary */}
         <div className="mt-2 flex items-center justify-between border-t border-line pt-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Total Quantity</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+              {t.orderList.totalPieces}
+            </p>
             <p className="font-display text-lg text-ink">
-              {formatPieces(totalQuantity)}
+              {totalQuantity} {t.products.pieces}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">Estimated Subtotal</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+              {t.orderList.totalEstimated}
+            </p>
             <p className="type-price text-xl text-ink" aria-live="polite">
               {formatPrice(estimatedTotal)}
             </p>
@@ -197,22 +212,38 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       {/* MOQ & Stock Validation Alerts */}
       {isOutOfStock ? (
         <div className="rounded-xs border border-neutral-300 bg-neutral-100 p-3.5 text-xs text-neutral-800">
-          <p className="font-semibold">Currently Out of Stock</p>
-          <p className="mt-0.5">This design is made to order. Please contact us on WhatsApp to check production timelines.</p>
+          <p className="font-semibold">{t.products.outOfStock}</p>
+          <p className="mt-0.5">
+            {language === "en"
+              ? "This saree is made-to-order. Connect on WhatsApp to discuss delivery timelines."
+              : "यह साड़ी ऑर्डर पर तैयार की जाएगी। WhatsApp पर बात करके समय की जानकारी लें।"}
+          </p>
         </div>
       ) : isBelowMoq ? (
         <div className="rounded-xs border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900">
-          <p className="font-semibold">Minimum Order Quantity (MOQ) Requirement</p>
+          <p className="font-semibold">
+            {language === "en" ? "Minimum Order Requirement" : "कम से कम ऑर्डर की शर्त"}
+          </p>
           <p className="mt-0.5">
-            Minimum order for this design is <span className="font-bold">{rules.min} pieces</span>. Please add{" "}
-            <span className="font-bold">{moqDeficit} more piece(s)</span> across your selected colors.
+            {language === "en" ? (
+              <>
+                Minimum order for this saree is <span className="font-bold">{rules.min} pcs</span>. Please add{" "}
+                <span className="font-bold">{moqDeficit} more pcs</span>.
+              </>
+            ) : (
+              <>
+                इस साड़ी के लिए कम से कम <span className="font-bold">{rules.min} पीस</span> का ऑर्डर जरूरी है। कृपया{" "}
+                <span className="font-bold">{moqDeficit} पीस और जोड़ें</span>।
+              </>
+            )}
           </p>
         </div>
       ) : null}
 
       <p className="-mt-2 text-xs leading-relaxed text-subtle">
-        Minimum order {formatPieces(rules.min)}
-        {rules.step > 1 ? `, in sets of ${rules.step}` : ""}. Excludes GST and shipping.
+        {language === "en"
+          ? `Minimum order ${rules.min} pcs${rules.step > 1 ? ` in sets of ${rules.step}` : ""}. GST & freight extra.`
+          : `कम से कम ऑर्डर ${rules.min} पीस${rules.step > 1 ? `, ${rules.step} के सेट में` : ""}। GST और डिलीवरी चार्ज अलग से।`}
       </p>
 
       {/* Action Buttons */}
@@ -224,29 +255,34 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
           disabled={isOutOfStock || isBelowMoq}
           leadingIcon={<BagIcon size={18} />}
         >
-          {isOutOfStock ? "Out of Stock" : isBelowMoq ? `Add ${moqDeficit} more for MOQ (${rules.min} min)` : `Add ${totalQuantity} pcs to Order List`}
+          {isOutOfStock
+            ? t.products.outOfStock
+            : isBelowMoq
+              ? (language === "en" ? `Need at least ${rules.min} pcs (add ${moqDeficit} more)` : `कम से कम ${rules.min} पीस चाहिए (${moqDeficit} और जोड़ें)`)
+              : (language === "en" ? `Add to Order List (${totalQuantity} pcs)` : `ऑर्डर लिस्ट में जोड़ें (${totalQuantity} पीस)`)}
         </Button>
 
         <WhatsAppButton
           variant="secondary"
           size="lg"
           fullWidth
-          label="Order on WhatsApp"
+          label={t.productDetails.orderViaWhatsApp}
           message={buildMultiColorEnquiryMessage(product, colorQuantities, totalQuantity)}
         />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <WishlistButton productId={product.id} productName={product.name} variant="inline" className="-ml-3" />
+        <WishlistButton productId={product.id} productName={displayName} variant="inline" className="-ml-3" />
         {existingLine ? (
           <p className="text-sm text-muted">
-            {formatPieces(existingLine.item.quantity)} in your{" "}
+            {existingLine.item.quantity} {t.products.pieces}{" "}
             <Link
               href="/order-list"
               className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink"
             >
-              order list
-            </Link>
+              {t.nav.orderList}
+            </Link>{" "}
+            {language === "en" ? "are in your list" : "में हैं"}
           </p>
         ) : null}
       </div>
@@ -255,7 +291,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t border-line bg-canvas/95 p-3.5 backdrop-blur-md shadow-lg lg:hidden">
         <div>
           <p className="text-[0.625rem] font-semibold uppercase tracking-wider text-muted">
-            {formatPieces(totalQuantity)}
+            {totalQuantity} {t.products.pieces}
           </p>
           <p className="type-price text-lg text-ink">{formatPrice(estimatedTotal)}</p>
         </div>
@@ -266,7 +302,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
             onClick={handleAddToOrderList}
             leadingIcon={<CheckIcon size={16} />}
           >
-            Add ({totalQuantity})
+            {language === "en" ? `Add (${totalQuantity} pcs)` : `जोड़ें (${totalQuantity} पीस)`}
           </Button>
           <WhatsAppButton
             variant="secondary"
