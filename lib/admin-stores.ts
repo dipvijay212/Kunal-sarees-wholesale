@@ -143,7 +143,7 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         color_en: colorVal,
         price: productData.price,
         minimumOrderQuantity: productData.moq,
-        stockQuantity: productData.stock,
+        stockQuantity: productData.stock !== undefined && productData.stock !== null && !isNaN(Number(productData.stock)) ? Number(productData.stock) : (productData.status === "active" ? 100 : 0),
         isAvailable: productData.status === "active",
         isFeatured: Boolean(productData.featured),
         isNew: Boolean(productData.newArrival),
@@ -174,7 +174,7 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         color_en: colorVal,
         price: productData.price || 2500,
         minimumOrderQuantity: productData.moq || 2,
-        stockQuantity: productData.stock ?? 50,
+        stockQuantity: productData.stock !== undefined && productData.stock !== null && !isNaN(Number(productData.stock)) ? Number(productData.stock) : (productData.status ? (productData.status === "active" ? 100 : 0) : 100),
         isAvailable: productData.status ? productData.status === "active" : true,
         isFeatured: Boolean(productData.featured),
         isNew: Boolean(productData.newArrival),
@@ -241,32 +241,33 @@ export async function syncAdminCategories() {
 
 export async function saveAdminCategory(categoryData: Partial<Category>) {
   try {
-    const nameHi = categoryData.name_hi || categoryData.name || "साड़ी";
-    const nameEn = categoryData.name_en || categoryData.name || "Saree";
-    const descHi = categoryData.description_hi || categoryData.description || "";
-    const descEn = categoryData.description_en || categoryData.description || "";
+    const nameVal = (categoryData.name || categoryData.name_en || categoryData.name_hi || "Category").trim();
+    const descVal = (categoryData.description || categoryData.description_en || categoryData.description_hi || "").trim();
+    const slugVal = (categoryData.slug || nameVal)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
 
     if (categoryData.id) {
       const rawId = categoryData.id.replace(/^cat-/, "");
       await adminApi.categories.update(rawId, {
-        name: nameHi,
-        name_hi: nameHi,
-        name_en: nameEn,
-        slug: categoryData.slug,
-        description: descHi,
-        description_hi: descHi,
-        description_en: descEn,
+        name: nameVal,
+        name_hi: nameVal,
+        name_en: nameVal,
+        slug: slugVal,
+        description: descVal,
+        description_hi: descVal,
+        description_en: descVal,
       });
     } else {
-      const slug = (categoryData.name_en || categoryData.name || "category").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       await adminApi.categories.create({
-        name: nameHi,
-        name_hi: nameHi,
-        name_en: nameEn,
-        slug: categoryData.slug || slug,
-        description: descHi,
-        description_hi: descHi,
-        description_en: descEn,
+        name: nameVal,
+        name_hi: nameVal,
+        name_en: nameVal,
+        slug: slugVal,
+        description: descVal,
+        description_hi: descVal,
+        description_en: descVal,
       });
     }
     await syncAdminCategories();

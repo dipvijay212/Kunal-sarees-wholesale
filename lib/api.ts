@@ -256,7 +256,7 @@ export const authApi = {
   },
 
   forgotPassword: async (email: string) => {
-    return request<{ message?: string }>('/auth/forgot-password', {
+    return request<{ email?: string; maskedEmail?: string; message?: string }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
@@ -433,7 +433,7 @@ export const customerAuthApi = {
   },
 
   forgotPassword: async (email: string) => {
-    return request<{ message?: string }>('/customer/auth/forgot-password', {
+    return request<{ email?: string; maskedEmail?: string; message?: string }>('/customer/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });

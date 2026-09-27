@@ -21,6 +21,7 @@ function ForgotPasswordContent() {
   const isHi = language === "hi";
 
   const [email, setEmail] = useState(initialEmail);
+  const [sentToEmail, setSentToEmail] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,23 +40,29 @@ function ForgotPasswordContent() {
     e.preventDefault();
     setError(null);
 
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !/\S+@\S+\.\S+/.test(cleanEmail)) {
+    const input = email.trim();
+    const isEmail = /\S+@\S+\.\S+/.test(input);
+    const digits = input.replace(/\D/g, "");
+    const isMobile = !isAdmin && digits.length === 10;
+
+    if (!isEmail && !isMobile) {
       setError(
-        isHi
-          ? "कृपया एक वैध ईमेल पता दर्ज करें।"
-          : "Please enter a valid email address."
+        isAdmin
+          ? (isHi ? "कृपया एक वैध ईमेल पता दर्ज करें।" : "Please enter a valid email address.")
+          : (isHi ? "कृपया एक वैध ईमेल पता या 10 अंकों का मोबाइल नंबर दर्ज करें।" : "Please enter a valid email address or 10-digit mobile number.")
       );
       return;
     }
 
     setIsSubmitting(true);
     try {
+      let res;
       if (isAdmin) {
-        await authApi.forgotPassword(cleanEmail);
+        res = await authApi.forgotPassword(input.toLowerCase());
       } else {
-        await customerAuthApi.forgotPassword(cleanEmail);
+        res = await customerAuthApi.forgotPassword(isMobile ? digits : input.toLowerCase());
       }
+      setSentToEmail(res?.maskedEmail || res?.email || input);
       setIsSuccess(true);
       setCooldown(60);
     } catch (err: unknown) {
@@ -85,10 +92,9 @@ function ForgotPasswordContent() {
               {t.auth.checkYourEmail || (isHi ? "अपना ईमेल चेक करें" : "Check Your Email")}
             </h2>
             <p className="mt-2 text-xs text-muted leading-relaxed">
-              {t.auth.resetEmailSentDesc ||
-                (isHi
-                  ? `यदि इस ईमेल से कोई अकाउंट जुड़ा है (${email}), तो हमने पासवर्ड रीसेट लिंक भेज दिया है।`
-                  : `If an active account is registered with ${email}, we have sent instructions to reset your password.`)}
+              {isHi
+                ? `हमने पासवर्ड रीसेट लिंक ${sentToEmail || email} पर भेज दिया है। कृपया अपना इनबॉक्स (और स्पैम/प्रमोशन फ़ोल्डर) चेक करें।`
+                : `We have sent password reset instructions to ${sentToEmail || email}. Please check your inbox and spam folder.`}
             </p>
 
             <div className="mt-5 rounded-xs border border-accent/20 bg-accent/5 p-3.5 text-xs text-ink/80 text-left">
@@ -142,8 +148,8 @@ function ForgotPasswordContent() {
               <p className="mt-1 text-xs text-muted">
                 {t.auth.forgotPasswordSubtitle ||
                   (isHi
-                    ? "अपना रजिस्टर्ड ईमेल पता डालें, हम आपको पासवर्ड रीसेट करने का सुरक्षित लिंक भेजेंगे।"
-                    : "Enter your registered email address and we will send you a password reset link.")}
+                    ? (isAdmin ? "अपना रजिस्टर्ड ईमेल पता डालें, हम आपको पासवर्ड रीसेट करने का लिंक भेजेंगे।" : "अपना रजिस्टर्ड ईमेल या मोबाइल नंबर डालें, हम आपको पासवर्ड रीसेट लिंक भेजेंगे।")
+                    : (isAdmin ? "Enter your registered admin email address to receive a password reset link." : "Enter your registered email address or mobile number to receive a password reset link."))}
               </p>
             </div>
 
@@ -157,12 +163,19 @@ function ForgotPasswordContent() {
               <div>
                 <label htmlFor="reset-email" className="field-label flex items-center gap-1.5">
                   <MailIcon size={14} className="text-muted" />
-                  {t.auth.email || (isHi ? "ईमेल पता" : "Email Address")} <span className="text-accent">*</span>
+                  {isAdmin
+                    ? (t.auth.email || (isHi ? "ईमेल पता" : "Email Address"))
+                    : (isHi ? "ईमेल पता या मोबाइल नंबर" : "Email Address or Mobile Number")}{" "}
+                  <span className="text-accent">*</span>
                 </label>
                 <Input
                   id="reset-email"
-                  type="email"
-                  placeholder={t.auth.emailPlaceholder || (isHi ? "उदा. name@example.com" : "e.g. name@example.com")}
+                  type={isAdmin ? "email" : "text"}
+                  placeholder={
+                    isAdmin
+                      ? (t.auth.emailPlaceholder || (isHi ? "उदा. admin@kunalsarees.com" : "e.g. admin@kunalsarees.com"))
+                      : (isHi ? "उदा. name@example.com या 9876543210" : "e.g. name@example.com or 9876543210")
+                  }
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);

@@ -189,11 +189,11 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
     CATEGORY_IMAGES[backend.slug] ||
     'https://images.unsplash.com/photo-1619043518800-7f14be467dca?auto=format&fit=crop&w=1200&q=85';
 
-  const displayName = backend.name_hi || backend.nameHi || backend.name || backend.name_en || backend.nameEn || 'साड़ी';
+  const displayName = backend.name || backend.name_en || backend.nameEn || backend.name_hi || backend.nameHi || 'साड़ी';
   const nameEn = backend.name_en || backend.nameEn || backend.name;
   const nameHi = backend.name_hi || backend.nameHi || backend.name;
 
-  const displayDesc = backend.description_hi || backend.descriptionHi || backend.description || backend.description_en || backend.descriptionEn || `प्रीमियम होलसेल ${displayName} साड़ियों का खूबसूरत कलेक्शन।`;
+  const displayDesc = backend.description || backend.description_en || backend.descriptionEn || backend.description_hi || backend.descriptionHi || `प्रीमियम होलसेल ${displayName} साड़ियों का खूबसूरत कलेक्शन।`;
   const descEn = (backend.description_en || backend.descriptionEn || backend.description) ?? undefined;
   const descHi = (backend.description_hi || backend.descriptionHi || backend.description) ?? undefined;
 

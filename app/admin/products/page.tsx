@@ -11,7 +11,7 @@ import {
   toggleAdminProductStatus,
 } from "@/lib/admin-stores";
 import { adminApi } from "@/lib/api";
-import { formatPieces, formatPrice } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import type { Product, Fabric, DesignType, ProductStatus } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { PlusIcon, SearchIcon, CloseIcon } from "@/components/ui/Icons";
@@ -340,7 +340,7 @@ export default function AdminProductsPage() {
       design: "" as DesignType,
       price: "" as unknown as number,
       moq: "" as unknown as number,
-      stock: "" as unknown as number,
+      stock: 100,
       categoryId: categories[0]?.id || "",
       color_en: "",
       color_hi: "",
@@ -540,11 +540,15 @@ export default function AdminProductsPage() {
     saveSpecsHistory(updatedHistory);
     setSpecsHistory(updatedHistory);
 
+    const inStock = editingProduct.status !== "draft" && (editingProduct.stock === undefined || Number(editingProduct.stock) > 0);
+
     await saveAdminProduct({
       ...editingProduct,
       name: primaryName,
       price: Number(editingProduct.price),
       categoryId: editingProduct.categoryId || categories[0]?.id || "",
+      status: inStock ? "active" : "draft",
+      stock: inStock ? (editingProduct.stock && Number(editingProduct.stock) > 0 ? Number(editingProduct.stock) : 100) : 0,
     });
     setIsModalOpen(false);
     setEditingProduct(null);
@@ -557,7 +561,7 @@ export default function AdminProductsPage() {
         <div>
           <h2 className="type-h4 text-ink font-serif">Saree Catalogue ({filteredProducts.length})</h2>
           <p className="text-xs text-muted">
-            Manage saree wholesale prices, minimum order quantities (MOQ), stock levels, and media.
+            Manage saree wholesale prices, minimum order quantities (MOQ), availability, and media.
           </p>
         </div>
 
@@ -589,7 +593,7 @@ export default function AdminProductsPage() {
           <option value="all">All Categories (सभी श्रेणियां)</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name_hi || c.name} {c.name_en ? `(${c.name_en})` : ""}
+              {c.name || c.name_en || c.name_hi}
             </option>
           ))}
         </select>
@@ -600,9 +604,9 @@ export default function AdminProductsPage() {
           onChange={(e) => setSelectedStatus(e.target.value)}
           className="rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
         >
-          <option value="all">All Statuses</option>
-          <option value="active">Active (Available for Wholesale)</option>
-          <option value="draft">Draft (Hidden)</option>
+          <option value="all">All Statuses (सभी)</option>
+          <option value="active">In Stock (स्टॉक उपलब्ध)</option>
+          <option value="draft">Out of Stock (स्टॉक खत्म)</option>
         </select>
       </div>
 
@@ -615,7 +619,6 @@ export default function AdminProductsPage() {
               <th className="px-4 py-3">Saree Title & Category</th>
               <th className="px-4 py-3">Fabric & Work</th>
               <th className="px-4 py-3">Wholesale Rate & MOQ</th>
-              <th className="px-4 py-3">Stock</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -662,7 +665,7 @@ export default function AdminProductsPage() {
                       {product.name || product.name_hi || product.name_en}
                     </div>
                     <div className="text-xs text-accent font-medium">
-                      {category?.name_hi || category?.name || "No Category"}
+                      {category?.name || category?.name_en || category?.name_hi || "No Category"}
                     </div>
                   </td>
 
@@ -682,32 +685,18 @@ export default function AdminProductsPage() {
                     <div className="text-xs text-muted">MOQ: {product.moq} pcs</div>
                   </td>
 
-                  {/* Stock */}
-                  <td className="px-4 py-3">
-                    <span
-                      className={`font-semibold ${
-                        product.stock <= 0
-                          ? "text-alert"
-                          : product.stock < 15
-                            ? "text-warning"
-                            : "text-ink"
-                      }`}
-                    >
-                      {formatPieces(product.stock)}
-                    </span>
-                  </td>
-
-                  {/* Status */}
+                  {/* Status / Availability */}
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggleAdminProductStatus(product.id)}
-                      className={`inline-flex items-center rounded-xs px-2 py-0.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                      title="Click to toggle In Stock / Out of Stock"
+                      className={`inline-flex items-center rounded-xs px-2.5 py-1 text-xs font-semibold uppercase tracking-wider transition-colors ${
                         product.status === "active"
                           ? "bg-success/15 text-success hover:bg-success/25"
-                          : "bg-muted/15 text-muted hover:bg-muted/25"
+                          : "bg-muted/20 text-muted hover:bg-muted/30"
                       }`}
                     >
-                      {product.status}
+                      {product.status === "active" ? "In Stock" : "Out of Stock"}
                     </button>
                   </td>
 
@@ -1094,7 +1083,7 @@ export default function AdminProductsPage() {
                       >
                         {categories.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.name_hi || c.name} {c.name_en ? `(${c.name_en})` : ""}
+                            {c.name || c.name_en || c.name_hi}
                           </option>
                         ))}
                       </select>
@@ -1162,22 +1151,27 @@ export default function AdminProductsPage() {
                       />
                     </div>
 
-                    {/* Stock Quantity */}
-                    <div className="sm:col-span-2">
-                      <label className="font-semibold text-ink block">Stock Available (कुल स्टॉक pcs/sets) *</label>
-                      <input
-                        type="number"
-                        required
-                        placeholder="e.g. 60"
-                        value={editingProduct.stock ?? ""}
-                        onChange={(e) =>
-                          setEditingProduct({
-                            ...editingProduct,
-                            stock: e.target.value === "" ? ("" as unknown as number) : Number(e.target.value),
-                          })
-                        }
-                        className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-                      />
+                    {/* In Stock Checkmark */}
+                    <div className="sm:col-span-2 pt-2 border-t border-line/60">
+                      <label className="flex items-center gap-2.5 cursor-pointer text-ink font-semibold select-none">
+                        <input
+                          type="checkbox"
+                          checked={editingProduct.status !== "draft" && (editingProduct.stock === undefined || Number(editingProduct.stock) > 0)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setEditingProduct({
+                              ...editingProduct,
+                              status: checked ? "active" : "draft",
+                              stock: checked ? (editingProduct.stock && Number(editingProduct.stock) > 0 ? editingProduct.stock : 100) : 0,
+                            });
+                          }}
+                          className="size-4 rounded-xs accent-accent cursor-pointer"
+                        />
+                        <span className="text-sm">In Stock (स्टॉक उपलब्ध है)</span>
+                      </label>
+                      <p className="text-[11px] text-muted ml-6.5 mt-0.5">
+                        Uncheck if this saree is currently out of stock or unavailable.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1449,29 +1443,6 @@ export default function AdminProductsPage() {
                         className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
                       />
                     </div>
-                  </div>
-
-                  {/* Highlights & Badges */}
-                  <div className="flex items-center gap-6 pt-2 border-t border-line">
-                    <label className="flex items-center gap-2 cursor-pointer text-ink font-semibold">
-                      <input
-                        type="checkbox"
-                        checked={editingProduct.featured || false}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, featured: e.target.checked })}
-                        className="accent-accent"
-                      />
-                      Featured Design (विशेष डिज़ाइन)
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer text-ink font-semibold">
-                      <input
-                        type="checkbox"
-                        checked={editingProduct.newArrival || false}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, newArrival: e.target.checked })}
-                        className="accent-accent"
-                      />
-                      New Arrival (नया स्टॉक)
-                    </label>
                   </div>
                 </div>
               </div>
