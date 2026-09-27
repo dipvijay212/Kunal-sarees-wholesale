@@ -430,11 +430,57 @@ export function saveAdminOrder(order: PlacedOrder) {
   adminOrdersStore.set((orders) => [adminRecord, ...orders]);
 }
 
+/* 7. Admin Customers Store (Live from Database) -------------------------- */
+
+export interface AdminCustomerRecord {
+  id: string;
+  dbId: number;
+  name: string;
+  business: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  city: string;
+  state: string;
+  pincode: string;
+  address: string;
+  type: string;
+  isActive: boolean;
+  totalOrders: number;
+  totalPieces: number;
+  totalSpent: number;
+  lastOrderDate: string;
+  createdAt: string;
+}
+
+function isCustomerList(val: unknown): val is AdminCustomerRecord[] {
+  return Array.isArray(val);
+}
+
+export const adminCustomersStore = createLocalStore<AdminCustomerRecord[]>({
+  key: "ks:admin:customers:v2",
+  initialValue: [],
+  validate: isCustomerList,
+});
+
+export async function syncAdminCustomers() {
+  try {
+    const res = await adminApi.customers.getAll({ limit: 100 });
+    adminCustomersStore.set(res.customers);
+    return res.customers;
+  } catch (err) {
+    console.error("Failed to sync admin customers:", err);
+    return adminCustomersStore.getSnapshot();
+  }
+}
+
 export async function syncAdminData() {
   if (typeof window === "undefined") return;
   await Promise.allSettled([
     syncAdminProducts(),
     syncAdminCategories(),
     syncAdminOrders(),
+    syncAdminCustomers(),
   ]);
 }
+

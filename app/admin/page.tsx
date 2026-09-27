@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useLocalStore } from "@/hooks/use-local-store";
-import { adminOrdersStore, adminProductsStore } from "@/lib/admin-stores";
+import { adminOrdersStore, adminProductsStore, adminCustomersStore } from "@/lib/admin-stores";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { ArrowRightIcon, BagIcon, ChatIcon, PackageIcon, SparkleIcon } from "@/components/ui/Icons";
 
 export default function AdminDashboardPage() {
   const products = useLocalStore(adminProductsStore);
   const orders = useLocalStore(adminOrdersStore);
+  const customers = useLocalStore(adminCustomersStore);
 
   // Derive metrics
   const totalProducts = products.length;
@@ -19,11 +20,11 @@ export default function AdminDashboardPage() {
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.orderStatus === "New" || o.orderStatus === "Confirmed").length;
 
-  // Extract unique customers
-  const uniqueCustomers = Array.from(
-    new Set(orders.map((o) => o.customerDetails.whatsappNumber || o.customerDetails.fullName)),
+  // Live database customer count
+  const totalCustomers = Math.max(
+    customers.length,
+    new Set(orders.map((o) => o.customerDetails.whatsappNumber || o.customerDetails.fullName)).size
   );
-  const totalCustomers = uniqueCustomers.length;
 
   return (
     <AdminLayout title="Dashboard Analytics">

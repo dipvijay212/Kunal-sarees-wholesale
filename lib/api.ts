@@ -687,6 +687,49 @@ export const adminApi = {
     },
   },
 
+  customers: {
+    getAll: async (params: {
+      search?: string;
+      page?: number;
+      limit?: number;
+    } = {}) => {
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          query.append(key, String(value));
+        }
+      });
+      const qs = query.toString();
+      return request<{
+        customers: {
+          id: string;
+          dbId: number;
+          name: string;
+          business: string;
+          phone: string;
+          whatsapp: string;
+          email: string;
+          city: string;
+          state: string;
+          pincode: string;
+          address: string;
+          type: string;
+          isActive: boolean;
+          totalOrders: number;
+          totalPieces: number;
+          totalSpent: number;
+          lastOrderDate: string;
+          createdAt: string;
+        }[];
+        pagination: PaginationMeta;
+      }>(`/admin/customers${qs ? `?${qs}` : ''}`);
+    },
+
+    getById: async (id: number | string) => {
+      return request<{ customer: unknown }>(`/admin/customers/${id}`);
+    },
+  },
+
   settings: {
     getLanguage: async () => {
       return request<{
