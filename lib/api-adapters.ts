@@ -172,7 +172,7 @@ export function adaptProduct(backend: BackendProduct): Product {
 }
 
 const CATEGORY_IMAGES: Record<string, string> = {
-  'banarasi-sarees': 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1200&q=85',
+  'banarasi-sarees': 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85',
   'silk-sarees': 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85',
   'georgette-sarees': 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1200&q=85',
   'organza-sarees': 'https://images.unsplash.com/photo-1610030469850-8b0d2a8ec490?auto=format&fit=crop&w=1200&q=85',
@@ -186,8 +186,10 @@ const CATEGORY_IMAGES: Record<string, string> = {
 
 export function adaptCategory(backend: BackendCategory, index = 0): Category {
   const imageUrl =
+    backend.imageUrl ||
+    backend.image ||
     CATEGORY_IMAGES[backend.slug] ||
-    'https://images.unsplash.com/photo-1619043518800-7f14be467dca?auto=format&fit=crop&w=1200&q=85';
+    'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85';
 
   const displayName = backend.name || backend.name_en || backend.nameEn || backend.name_hi || backend.nameHi || 'साड़ी';
   const nameEn = backend.name_en || backend.nameEn || backend.name;

@@ -122,15 +122,36 @@ function countProducts(predicate: (product: Product) => boolean): number {
   return getProducts().filter(predicate).length;
 }
 
+function resolveCategoryImageUrl(categoryImage?: { url: string }, productsInCategory: Product[] = []): string {
+  const currentUrl = categoryImage?.url;
+  const isGenericDummy =
+    !currentUrl ||
+    currentUrl.includes("photo-1619043518800") ||
+    currentUrl.includes("photo-1610030469983");
+
+  if (isGenericDummy && productsInCategory.length > 0 && productsInCategory[0].images?.[0]?.url) {
+    return productsInCategory[0].images[0].url;
+  }
+  return currentUrl || productsInCategory[0]?.images?.[0]?.url || "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85";
+}
+
 export function getCategories(): CategoryWithCount[] {
+  const allProducts = getProducts();
   return categoryRepository
     .getAll()
     .slice()
     .sort((a, b) => a.order - b.order)
-    .map((category) => ({
-      ...category,
-      productCount: countProducts((product) => product.categoryId === category.id),
-    }));
+    .map((category) => {
+      const catProducts = allProducts.filter((product) => product.categoryId === category.id);
+      return {
+        ...category,
+        image: {
+          ...category.image,
+          url: resolveCategoryImageUrl(category.image, catProducts),
+        },
+        productCount: catProducts.length,
+      };
+    });
 }
 
 export function getFeaturedCategories(limit = 6): CategoryWithCount[] {
@@ -448,10 +469,17 @@ export async function fetchProductBySlug(slug: string): Promise<Product | undefi
 export async function fetchCategories(): Promise<CategoryWithCount[]> {
   const categories = await categoryRepository.fetchAll();
   const products = await productRepository.fetchAll();
-  return categories.map((cat) => ({
-    ...cat,
-    productCount: products.filter((p) => p.categoryId === cat.id).length,
-  }));
+  return categories.map((cat) => {
+    const catProducts = products.filter((p) => p.categoryId === cat.id);
+    return {
+      ...cat,
+      image: {
+        ...cat.image,
+        url: resolveCategoryImageUrl(cat.image, catProducts),
+      },
+      productCount: catProducts.length,
+    };
+  });
 }
 
 export async function fetchFeaturedCategories(limit = 6): Promise<CategoryWithCount[]> {

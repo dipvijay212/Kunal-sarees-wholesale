@@ -9,6 +9,7 @@ import {
   deleteAdminProduct,
   saveAdminProduct,
   toggleAdminProductStatus,
+  syncAdminCategories,
 } from "@/lib/admin-stores";
 import { adminApi } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
@@ -257,6 +258,14 @@ export default function AdminProductsPage() {
   const [whatsAppText, setWhatsAppText] = useState("");
   const [isWhatsAppPanelOpen, setIsWhatsAppPanelOpen] = useState(false);
 
+  // Category Cover Image option state
+  const [setAsCategoryCover, setSetAsCategoryCover] = useState<boolean>(true);
+  const [selectedCategoryCoverUrl, setSelectedCategoryCoverUrl] = useState<string>("");
+
+  // Saving state & Error banner
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   // Helper to detect best matching Category from text
   const detectCategory = (text: string): string => {
     if (!text || categories.length === 0) return categories[0]?.id || "";
@@ -329,8 +338,11 @@ export default function AdminProductsPage() {
 
   const handleOpenAddModal = () => {
     setUploadError(null);
+    setSaveError(null);
     setWhatsAppText("");
     setIsWhatsAppPanelOpen(false);
+    setSetAsCategoryCover(true);
+    setSelectedCategoryCoverUrl("");
     const codeDigits = Math.floor(1000 + Math.random() * 9000);
     setEditingProduct({
       name: "",
@@ -362,8 +374,11 @@ export default function AdminProductsPage() {
 
   const handleOpenEditModal = (product: Product) => {
     setUploadError(null);
+    setSaveError(null);
     setWhatsAppText("");
     setIsWhatsAppPanelOpen(false);
+    setSetAsCategoryCover(false);
+    setSelectedCategoryCoverUrl(product.images?.[0]?.url || "");
     setEditingProduct({
       ...product,
       images: product.images ? [...product.images] : [],
@@ -521,38 +536,94 @@ export default function AdminProductsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProduct) return;
+    if (!editingProduct || isSaving) return;
+
+    setSaveError(null);
+    setUploadError(null);
 
     const primaryName = (editingProduct.name || "").trim();
-    if (!primaryName || !editingProduct.price) {
-      setUploadError("Product Name and Wholesale Price are required.");
+    if (!primaryName) {
+      setSaveError("Product Name (साड़ी का नाम) is required.");
       return;
     }
 
-    // Persist newly entered values to history so they automatically become dynamic suggestions next time
-    const updatedHistory: SpecsHistory = {
-      fabrics: Array.from(new Set([editingProduct.fabric?.trim() || "", ...specsHistory.fabrics])).filter(Boolean).slice(0, 30),
-      works: Array.from(new Set([editingProduct.design?.trim() || "", ...specsHistory.works])).filter(Boolean).slice(0, 30),
-      sareeCuts: Array.from(new Set([editingProduct.specifications?.sareeLength?.trim() || "", ...specsHistory.sareeCuts])).filter(Boolean).slice(0, 20),
-      blouseCuts: Array.from(new Set([editingProduct.specifications?.blousePiece?.trim() || "", ...specsHistory.blouseCuts])).filter(Boolean).slice(0, 20),
-      colorSets: Array.from(new Set([editingProduct.color_en?.trim() || editingProduct.color_hi?.trim() || "", ...specsHistory.colorSets])).filter(Boolean).slice(0, 20),
-    };
-    saveSpecsHistory(updatedHistory);
-    setSpecsHistory(updatedHistory);
+    const numPrice = Number(editingProduct.price);
+    if (editingProduct.price === undefined || editingProduct.price === null || isNaN(numPrice) || numPrice <= 0) {
+      setSaveError("Valid Wholesale Price (थोक दर ₹) is required.");
+      return;
+    }
 
-    const inStock = editingProduct.status !== "draft" && (editingProduct.stock === undefined || Number(editingProduct.stock) > 0);
+    const numMoq = Number(editingProduct.moq);
+    const validMoq = !isNaN(numMoq) && numMoq > 0 ? numMoq : 1;
 
-    await saveAdminProduct({
-      ...editingProduct,
-      name: primaryName,
-      price: Number(editingProduct.price),
-      categoryId: editingProduct.categoryId || categories[0]?.id || "",
-      status: inStock ? "active" : "draft",
-      stock: inStock ? (editingProduct.stock && Number(editingProduct.stock) > 0 ? Number(editingProduct.stock) : 100) : 0,
-    });
-    setIsModalOpen(false);
-    setEditingProduct(null);
+    setIsSaving(true);
+
+    try {
+      // Persist newly entered values to history so they automatically become dynamic suggestions next time
+      const updatedHistory: SpecsHistory = {
+        fabrics: Array.from(new Set([editingProduct.fabric?.trim() || "", ...specsHistory.fabrics])).filter(Boolean).slice(0, 30),
+        works: Array.from(new Set([editingProduct.design?.trim() || "", ...specsHistory.works])).filter(Boolean).slice(0, 30),
+        sareeCuts: Array.from(new Set([editingProduct.specifications?.sareeLength?.trim() || "", ...specsHistory.sareeCuts])).filter(Boolean).slice(0, 20),
+        blouseCuts: Array.from(new Set([editingProduct.specifications?.blousePiece?.trim() || "", ...specsHistory.blouseCuts])).filter(Boolean).slice(0, 20),
+        colorSets: Array.from(new Set([editingProduct.color_en?.trim() || editingProduct.color_hi?.trim() || "", ...specsHistory.colorSets])).filter(Boolean).slice(0, 20),
+      };
+      saveSpecsHistory(updatedHistory);
+      setSpecsHistory(updatedHistory);
+
+      const inStock = editingProduct.status !== "draft" && (editingProduct.stock === undefined || Number(editingProduct.stock) > 0);
+      const chosenCatId = editingProduct.categoryId || categories[0]?.id || "";
+
+      await saveAdminProduct({
+        ...editingProduct,
+        name: primaryName,
+        price: numPrice,
+        moq: validMoq,
+        categoryId: chosenCatId,
+        status: inStock ? "active" : "draft",
+        stock: inStock ? (editingProduct.stock && Number(editingProduct.stock) > 0 ? Number(editingProduct.stock) : 100) : 0,
+      });
+
+      // Update Category image if option is enabled
+      // Whichever product is saved with this checkbox enabled will set the latest category cover
+      if (setAsCategoryCover && chosenCatId) {
+        const coverPhotoUrl = selectedCategoryCoverUrl || editingProduct.images?.[0]?.url;
+        if (coverPhotoUrl) {
+          const rawCatId = chosenCatId.replace(/^cat-/, "");
+          try {
+            await adminApi.categories.update(rawCatId, {
+              imageUrl: coverPhotoUrl,
+            });
+            // Update local adminCategoriesStore immediately
+            adminCategoriesStore.set((cats) =>
+              cats.map((c) =>
+                c.id === chosenCatId || c.id === `cat-${rawCatId}`
+                  ? { ...c, image: { url: coverPhotoUrl, alt: c.name, width: 1200, height: 1600 } }
+                  : c
+              )
+            );
+            await syncAdminCategories();
+          } catch (catErr) {
+            console.error("Failed to update category image:", catErr);
+          }
+        }
+      }
+
+      setIsModalOpen(false);
+      setEditingProduct(null);
+    } catch (err: unknown) {
+      console.error("Failed to save product:", err);
+      const msg = err instanceof Error ? err.message : "Failed to save product details. Please check the details and try again.";
+      setSaveError(msg);
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const currentCategory = categories.find(
+    (c) => c.id === (editingProduct?.categoryId || categories[0]?.id)
+  );
+  const currentCategoryName =
+    currentCategory?.name || currentCategory?.name_hi || currentCategory?.name_en || "Category";
 
   return (
     <AdminLayout title="Product Management">
@@ -902,6 +973,12 @@ export default function AdminProductsPage() {
                                 </span>
                               )}
 
+                              {((selectedCategoryCoverUrl ? selectedCategoryCoverUrl === img.url : idx === 0) && setAsCategoryCover) && (
+                                <span className="absolute top-1 right-1 rounded-xs bg-accent px-1.5 py-0.5 text-[8px] font-bold text-white shadow-xs">
+                                  🏷️ CAT COVER
+                                </span>
+                              )}
+
                               {img.url.includes("cloudinary") && (
                                 <span className="absolute bottom-6 left-1 rounded-xs bg-ink/75 px-1 py-0.5 text-[7px] font-medium text-white shadow-xs">
                                   ☁️ CDN
@@ -922,6 +999,24 @@ export default function AdminProductsPage() {
                                 ) : (
                                   <span className="px-1 text-[9px] font-semibold text-accent-light">Cover</span>
                                 )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCategoryCoverUrl(img.url);
+                                    setSetAsCategoryCover(true);
+                                  }}
+                                  className={`px-1.5 py-0.5 rounded-xs font-semibold text-[9px] ${
+                                    ((selectedCategoryCoverUrl ? selectedCategoryCoverUrl === img.url : idx === 0) && setAsCategoryCover)
+                                      ? "text-accent-light bg-accent/20"
+                                      : "hover:bg-white/20 text-cream"
+                                  }`}
+                                  title={`Set this photo as Category Cover for ${currentCategoryName}`}
+                                >
+                                  {((selectedCategoryCoverUrl ? selectedCategoryCoverUrl === img.url : idx === 0) && setAsCategoryCover)
+                                    ? "✓ Cat"
+                                    : "Cat"}
+                                </button>
 
                                 <div className="flex items-center gap-1">
                                   {idx > 0 && (
@@ -956,6 +1051,52 @@ export default function AdminProductsPage() {
                               </div>
                             </div>
                           ))}
+                        </div>
+
+                        {/* Option to keep this product image as Category Image */}
+                        <div className="mt-3 rounded-xs border border-accent/40 bg-accent/5 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <label className="flex items-start gap-2.5 cursor-pointer select-none flex-1">
+                            <input
+                              type="checkbox"
+                              id="set-as-category-cover-checkbox"
+                              checked={setAsCategoryCover}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setSetAsCategoryCover(checked);
+                                if (checked && !selectedCategoryCoverUrl && editingProduct.images?.[0]?.url) {
+                                  setSelectedCategoryCoverUrl(editingProduct.images[0].url);
+                                }
+                              }}
+                              className="mt-0.5 size-4 accent-accent rounded cursor-pointer"
+                            />
+                            <div>
+                              <span className="font-semibold text-xs text-ink flex items-center gap-1.5">
+                                <span>🏷️</span> Keep as Category Display Image (कैटेगरी मुख्य फोटो बनाएं)
+                              </span>
+                              <span className="text-[11px] text-muted block mt-0.5">
+                                Show this saree photo in the &quot;Saree Categories&quot; section on homepage for &ldquo;{currentCategoryName}&rdquo; (replaces dummy image). Whichever product has this checked will keep the latest image.
+                              </span>
+                            </div>
+                          </label>
+
+                          {setAsCategoryCover && (
+                            <div className="flex items-center gap-2 shrink-0 bg-canvas px-2.5 py-1.5 rounded-xs border border-line">
+                              <span className="text-[10px] font-semibold text-muted">Category Photo:</span>
+                              <img
+                                src={selectedCategoryCoverUrl || editingProduct.images[0]?.url}
+                                alt="Category preview"
+                                className="size-8 object-cover rounded-xs border border-accent shadow-xs"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-semibold text-accent truncate max-w-[120px]">
+                                  Active for {currentCategoryName}
+                                </span>
+                                <span className="text-[9px] text-muted">
+                                  (Latest set image)
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -1120,6 +1261,8 @@ export default function AdminProductsPage() {
                       <label className="font-semibold text-ink block">Wholesale Rate / Price (₹ दर) *</label>
                       <input
                         type="number"
+                        step="any"
+                        min="0"
                         required
                         placeholder="e.g. 500"
                         value={editingProduct.price ?? ""}
@@ -1138,6 +1281,8 @@ export default function AdminProductsPage() {
                       <label className="font-semibold text-ink block">Minimum Order Quantity (MOQ / सेट) *</label>
                       <input
                         type="number"
+                        step="1"
+                        min="1"
                         required
                         placeholder="e.g. 6"
                         value={editingProduct.moq ?? ""}
@@ -1448,11 +1593,48 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Sticky Footer */}
-              <div className="flex items-center justify-end gap-3 border-t border-line bg-canvas-deep px-5 py-3.5 shrink-0">
-                <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save Saree Product</Button>
+              <div className="border-t border-line bg-canvas-deep px-5 py-3.5 shrink-0 flex flex-col gap-2.5">
+                {saveError ? (
+                  <div className="flex items-center justify-between rounded-xs bg-alert/10 border border-alert/30 px-3 py-2 text-xs text-alert font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">⚠️</span>
+                      <span>{saveError}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSaveError(null)}
+                      className="text-alert hover:opacity-80 font-bold ml-2 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-[11px] text-muted truncate">
+                    {setAsCategoryCover ? (
+                      <span className="text-accent font-medium flex items-center gap-1">
+                        <span>🏷️</span> Will set &ldquo;{currentCategoryName}&rdquo; category cover on save
+                      </span>
+                    ) : (
+                      <span>Existing category cover image will be kept</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 shrink-0">
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      disabled={isSaving}
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSaving}>
+                      {isSaving ? "Saving Product..." : "Save Saree Product"}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </form>
           </div>

@@ -121,7 +121,7 @@ export async function saveAdminProduct(productData: Partial<Product>) {
     }));
 
     if (productData.id) {
-      const rawId = productData.id.replace(/^prd-/, "");
+      const rawId = String(productData.id).replace(/^prd-/, "");
       await adminApi.products.update(rawId, {
         name: rawName,
         name_hi: nameHi,
@@ -141,8 +141,8 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         color: colorVal,
         color_hi: colorVal,
         color_en: colorVal,
-        price: productData.price,
-        minimumOrderQuantity: productData.moq,
+        price: Number(productData.price) || 0,
+        minimumOrderQuantity: Number(productData.moq) || 1,
         stockQuantity: productData.stock !== undefined && productData.stock !== null && !isNaN(Number(productData.stock)) ? Number(productData.stock) : (productData.status === "active" ? 100 : 0),
         isAvailable: productData.status === "active",
         isFeatured: Boolean(productData.featured),
@@ -172,8 +172,8 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         color: colorVal,
         color_hi: colorVal,
         color_en: colorVal,
-        price: productData.price || 2500,
-        minimumOrderQuantity: productData.moq || 2,
+        price: Number(productData.price) || 2500,
+        minimumOrderQuantity: Number(productData.moq) || 2,
         stockQuantity: productData.stock !== undefined && productData.stock !== null && !isNaN(Number(productData.stock)) ? Number(productData.stock) : (productData.status ? (productData.status === "active" ? 100 : 0) : 100),
         isAvailable: productData.status ? productData.status === "active" : true,
         isFeatured: Boolean(productData.featured),
@@ -185,6 +185,7 @@ export async function saveAdminProduct(productData: Partial<Product>) {
     await syncAdminProducts();
   } catch (err) {
     console.error("Error saving admin product:", err);
+    throw err;
   }
 }
 
@@ -248,8 +249,10 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
+    const imageUrlVal = categoryData.image?.url || (categoryData as any).imageUrl || (categoryData as any).image || undefined;
+
     if (categoryData.id) {
-      const rawId = categoryData.id.replace(/^cat-/, "");
+      const rawId = String(categoryData.id).replace(/^cat-/, "");
       await adminApi.categories.update(rawId, {
         name: nameVal,
         name_hi: nameVal,
@@ -258,6 +261,7 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
         description: descVal,
         description_hi: descVal,
         description_en: descVal,
+        imageUrl: imageUrlVal,
       });
     } else {
       await adminApi.categories.create({
@@ -268,11 +272,13 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
         description: descVal,
         description_hi: descVal,
         description_en: descVal,
+        imageUrl: imageUrlVal,
       });
     }
     await syncAdminCategories();
   } catch (err) {
     console.error("Error saving admin category:", err);
+    throw err;
   }
 }
 

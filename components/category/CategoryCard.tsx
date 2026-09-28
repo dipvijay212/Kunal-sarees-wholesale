@@ -32,6 +32,14 @@ export function CategoryCard({
     ? (language === "en" ? `${category.productCount} Designs Available` : `${category.productCount} डिजाइन उपलब्ध हैं`)
     : (language === "en" ? "Wholesale Sarees" : "होलसेल साड़ियां");
 
+  const isDummyUrl =
+    !category.image?.url ||
+    category.image.url.includes("photo-1619043518800") ||
+    category.image.url.includes("photo-1610030469983");
+  const displayImageUrl = isDummyUrl
+    ? "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85"
+    : category.image.url;
+
   return (
     <Link
       href={href}
@@ -43,8 +51,8 @@ export function CategoryCard({
       {/* Image Frame */}
       <div className={cn("media-frame bg-cream-warm", aspect === "portrait" ? "aspect-[4/5]" : "aspect-[16/10]")}>
         <RemoteImage
-          src={category.image.url}
-          alt={category.image.alt || displayName}
+          src={displayImageUrl}
+          alt={category.image?.alt || displayName}
           fill
           sizes={sizes}
           loading={eager ? "eager" : "lazy"}

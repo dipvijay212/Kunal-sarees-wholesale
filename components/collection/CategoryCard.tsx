@@ -19,6 +19,14 @@ export function CategoryCard({
   eager = false,
   className,
 }: CategoryCardProps) {
+  const isDummyUrl =
+    !category.image?.url ||
+    category.image.url.includes("photo-1619043518800") ||
+    category.image.url.includes("photo-1610030469983");
+  const displayImageUrl = isDummyUrl
+    ? "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85"
+    : category.image.url;
+
   return (
     <Link
       href={`/products?category=${category.slug}`}
@@ -26,8 +34,8 @@ export function CategoryCard({
     >
       <div className="media-frame aspect-[16/10]">
         <RemoteImage
-          src={category.image.url}
-          alt={category.image.alt}
+          src={displayImageUrl}
+          alt={category.image?.alt || category.name}
           fill
           sizes={sizes}
           loading={eager ? "eager" : "lazy"}

@@ -8,6 +8,7 @@ import {
   deleteAdminCategory,
   saveAdminCategory,
 } from "@/lib/admin-stores";
+import { adminApi } from "@/lib/api";
 import type { Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { PlusIcon, CloseIcon } from "@/components/ui/Icons";
@@ -17,6 +18,7 @@ export default function AdminCategoriesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleOpenAddModal = () => {
     setEditingCategory({
@@ -37,6 +39,53 @@ export default function AdminCategoriesPage() {
       description: catDesc,
     });
     setIsModalOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingCategory) return;
+    e.target.value = "";
+
+    setIsUploadingImage(true);
+    try {
+      const res = await adminApi.media.uploadImages([file]);
+      if (res && res.urls && res.urls[0]) {
+        setEditingCategory({
+          ...editingCategory,
+          image: {
+            url: res.urls[0],
+            alt: editingCategory.name || "Category Image",
+            width: 1200,
+            height: 800,
+          },
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn("Category image upload failed, falling back to local data URL:", err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          setEditingCategory((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  image: {
+                    url: dataUrl,
+                    alt: prev.name || "Category Image",
+                    width: 1200,
+                    height: 800,
+                  },
+                }
+              : prev
+          );
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -86,6 +135,7 @@ export default function AdminCategoriesPage() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-line bg-canvas-deep text-xs uppercase tracking-wider text-muted font-semibold">
             <tr>
+              <th className="px-4 py-3">Photo</th>
               <th className="px-4 py-3">Category Name</th>
               <th className="px-4 py-3">Slug</th>
               <th className="px-4 py-3">Description</th>
@@ -96,6 +146,19 @@ export default function AdminCategoriesPage() {
           <tbody className="divide-y divide-line">
             {categories.map((cat) => (
               <tr key={cat.id} className="hover:bg-canvas-deep/50 transition-colors">
+                <td className="px-4 py-3">
+                  {cat.image?.url ? (
+                    <img
+                      src={cat.image.url}
+                      alt={cat.name || "Category"}
+                      className="size-12 rounded-xs object-cover border border-line"
+                    />
+                  ) : (
+                    <div className="size-12 rounded-xs border border-dashed border-line bg-canvas-deep flex items-center justify-center text-[10px] text-muted">
+                      No Photo
+                    </div>
+                  )}
+                </td>
                 <td className="px-4 py-3 font-semibold text-ink">
                   <div>{cat.name || cat.name_en || cat.name_hi}</div>
                 </td>
@@ -200,6 +263,45 @@ export default function AdminCategoriesPage() {
                     }
                     className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
                   />
+                </div>
+
+                {/* Category Display Photo */}
+                <div>
+                  <label className="font-semibold text-ink block">
+                    Category Display Photo (कैटेगरी मुख्य फोटो)
+                  </label>
+                  <p className="text-[11px] text-muted mb-2">
+                    This photo will show in the &quot;Saree Categories&quot; section on the homepage and collections.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    {editingCategory.image?.url ? (
+                      <div className="relative size-16 rounded-xs overflow-hidden border border-line shrink-0">
+                        <img
+                          src={editingCategory.image.url}
+                          alt="Category preview"
+                          className="size-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setEditingCategory({ ...editingCategory, image: undefined })}
+                          className="absolute top-0 right-0 bg-alert text-white text-[10px] size-4 flex items-center justify-center hover:bg-alert-deep"
+                          title="Remove Photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : null}
+                    <label className="cursor-pointer inline-flex items-center gap-2 rounded-xs border border-line bg-canvas px-3 py-2 text-xs font-semibold text-ink hover:border-accent">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingImage}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <span>{isUploadingImage ? "Uploading to CDN..." : "Upload Category Photo"}</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 

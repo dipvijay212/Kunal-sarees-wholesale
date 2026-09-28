@@ -41,6 +41,8 @@ export interface BackendCategory {
   description_hi?: string | null;
   descriptionHi?: string | null;
   productCount?: number;
+  image?: string | null;
+  imageUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -58,7 +60,8 @@ export interface BackendCollection {
   descriptionEn?: string | null;
   description_hi?: string | null;
   descriptionHi?: string | null;
-  image: string | null;
+  image?: string | null;
+  imageUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -607,6 +610,8 @@ export const adminApi = {
       description?: string;
       description_en?: string;
       description_hi?: string;
+      imageUrl?: string | null;
+      image?: string | null;
     }) => {
       return request<{ category: BackendCategory }>('/admin/categories', {
         method: 'POST',
@@ -625,6 +630,8 @@ export const adminApi = {
         description_en?: string;
         description_hi?: string;
         isActive?: boolean;
+        imageUrl?: string | null;
+        image?: string | null;
       }
     ) => {
       return request<{ category: BackendCategory }>(`/admin/categories/${id}`, {
