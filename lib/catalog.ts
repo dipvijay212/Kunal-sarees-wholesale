@@ -129,9 +129,20 @@ function resolveCategoryImageUrl(categoryImage?: { url: string }, productsInCate
     currentUrl.includes("photo-1619043518800") ||
     currentUrl.includes("photo-1610030469983");
 
-  if (isGenericDummy && productsInCategory.length > 0 && productsInCategory[0].images?.[0]?.url) {
-    return productsInCategory[0].images[0].url;
+  const imageBelongsToCategory = Boolean(
+    currentUrl &&
+    productsInCategory.some((p) => p.images?.some((img) => img.url === currentUrl))
+  );
+
+  if (productsInCategory.length > 0) {
+    if (isGenericDummy || !imageBelongsToCategory) {
+      const validProdImg = productsInCategory.find((p) => p.images && p.images.length > 0)?.images?.[0]?.url;
+      if (validProdImg) {
+        return validProdImg;
+      }
+    }
   }
+
   return currentUrl || productsInCategory[0]?.images?.[0]?.url || "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85";
 }
 

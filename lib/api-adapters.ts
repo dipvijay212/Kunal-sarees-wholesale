@@ -76,9 +76,13 @@ function deriveSpecifications(product: BackendProduct): ProductSpecifications {
   const isSilk = fabric.toLowerCase().includes('silk');
   const isCotton = fabric.toLowerCase().includes('cotton');
 
+  const desc = product.description || product.description_en || product.description_hi || '';
+  const sareeCutMatch = desc.match(/Saree Cut:\s*([^|\n]+)/i);
+  const blouseMatch = desc.match(/Blouse:\s*([^|\n]+)/i);
+
   return {
-    sareeLength: '5.5 m + 0.8 m blouse piece',
-    blousePiece: '0.8 m, unstitched',
+    sareeLength: sareeCutMatch ? sareeCutMatch[1].trim() : (isSilk ? '5.5 m + 0.8 m blouse piece' : '5.50 Meters'),
+    blousePiece: blouseMatch ? blouseMatch[1].trim() : '0.80 Mtr Unstitched',
     weight: isSilk ? 'Approx. 750 g' : isCotton ? 'Approx. 500 g' : 'Approx. 450 g',
     washCare: isSilk ? 'Dry clean only' : isCotton ? 'Gentle hand wash in cold water' : 'Dry clean recommended',
     origin: isSilk ? 'Varanasi / Kanchipuram' : 'Surat, Gujarat',
@@ -88,15 +92,46 @@ function deriveSpecifications(product: BackendProduct): ProductSpecifications {
 export function adaptProduct(backend: BackendProduct): Product {
   const colorString = backend.color_en || backend.color || backend.color_hi || 'Red';
   const colors = parseColors(colorString);
+
+  // Sort images strictly by displayOrder so the primary cover image is guaranteed to be at index 0
   const images: ProductImage[] =
     backend.images && backend.images.length > 0
-      ? backend.images.map((img) => ({
-          url: img.imageUrl,
-          alt: img.altText || backend.name_hi || backend.name,
-          width: 1200,
-          height: 1600,
-        }))
+      ? backend.images
+          .slice()
+          .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+          .map((img) => ({
+            url: img.imageUrl,
+            alt: img.altText || backend.name_hi || backend.name,
+            width: 1200,
+            height: 1600,
+          }))
       : [DEFAULT_IMAGE];
+
+  // Parse multiple video URLs (supports JSON array string, array, or comma/newline separated URLs)
+  let videoUrls: string[] = [];
+  const rawVideo = backend.videoUrls || backend.videoUrl || backend.video_url;
+  if (Array.isArray(rawVideo)) {
+    videoUrls = rawVideo.filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  } else if (rawVideo && typeof rawVideo === 'string') {
+    const trimmed = rawVideo.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          videoUrls = parsed.filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
+        }
+      } catch {
+        videoUrls = [trimmed];
+      }
+    } else if (trimmed.includes('\n')) {
+      videoUrls = trimmed.split('\n').map((u) => u.trim()).filter(Boolean);
+    } else if (trimmed.includes(',')) {
+      videoUrls = trimmed.split(',').map((u) => u.trim()).filter(Boolean);
+    } else {
+      videoUrls = [trimmed];
+    }
+  }
+  const primaryVideoUrl = videoUrls[0] || (typeof rawVideo === 'string' ? rawVideo : undefined);
 
   const categoryId = backend.categoryId ? `cat-${backend.categoryId}` : 'cat-silk';
   const collectionId = categoryId;
@@ -122,6 +157,10 @@ export function adaptProduct(backend: BackendProduct): Product {
   const colorEn = backend.color_en || backend.colorEn || backend.color || 'Red';
   const colorHi = backend.color_hi || backend.colorHi || backend.color || 'लाल';
 
+  // Extract design if noted in description or fallback
+  const designMatch = displayDesc.match(/(?:Work|Design|काम):\s*([^|\n]+)/i);
+  const designVal = designMatch ? designMatch[1].trim() : 'Zari Weave';
+
   return {
     id: `prd-${backend.id}`,
     productCode: backend.productCode,
@@ -142,14 +181,15 @@ export function adaptProduct(backend: BackendProduct): Product {
     fabric_hi: fabricHi,
     color_en: colorEn,
     color_hi: colorHi,
-    design: 'Zari Weave' as DesignType,
+    design: designVal as DesignType,
     price,
     moq: backend.minimumOrderQuantity || 2,
     orderMultiple: backend.minimumOrderQuantity || 1,
     stock: backend.stockQuantity ?? 50,
     colors,
     images,
-    videoUrl: backend.videoUrl || backend.video_url || undefined,
+    videoUrl: primaryVideoUrl,
+    videoUrls,
     variants: colors.map((col, idx) => ({
       id: `var-${backend.id}-${idx}`,
       productId: `prd-${backend.id}`,

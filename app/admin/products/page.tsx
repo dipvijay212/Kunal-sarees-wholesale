@@ -346,6 +346,7 @@ export default function AdminProductsPage() {
     const codeDigits = Math.floor(1000 + Math.random() * 9000);
     setEditingProduct({
       name: "",
+      slug: "",
       productCode: `KS-BNS-${codeDigits}`,
       description: "",
       fabric: "" as Fabric,
@@ -368,6 +369,7 @@ export default function AdminProductsPage() {
       status: "active" as ProductStatus,
       images: [],
       videoUrl: "",
+      videoUrls: [],
     });
     setIsModalOpen(true);
   };
@@ -378,11 +380,18 @@ export default function AdminProductsPage() {
     setWhatsAppText("");
     setIsWhatsAppPanelOpen(false);
     setSetAsCategoryCover(false);
-    setSelectedCategoryCoverUrl(product.images?.[0]?.url || "");
+
+    const currentImages = product.images ? [...product.images] : [];
+    const currentVideoList = product.videoUrls && product.videoUrls.length > 0
+      ? [...product.videoUrls]
+      : (product.videoUrl ? [product.videoUrl] : []);
+
+    setSelectedCategoryCoverUrl(currentImages[0]?.url || "");
     setEditingProduct({
       ...product,
-      images: product.images ? [...product.images] : [],
-      videoUrl: product.videoUrl || "",
+      images: currentImages,
+      videoUrl: product.videoUrl || currentVideoList[0] || "",
+      videoUrls: currentVideoList,
       specifications: product.specifications || {
         sareeLength: "5.50 Meters",
         blousePiece: "0.80 Mtr Unstitched",
@@ -416,9 +425,13 @@ export default function AdminProductsPage() {
 
         setEditingProduct((prev) => {
           if (!prev) return prev;
+          const updated = [...(prev.images || []), ...newImages];
+          if (!selectedCategoryCoverUrl && updated[0]?.url) {
+            setSelectedCategoryCoverUrl(updated[0].url);
+          }
           return {
             ...prev,
-            images: [...(prev.images || []), ...newImages],
+            images: updated,
           };
         });
         return;
@@ -440,17 +453,21 @@ export default function AdminProductsPage() {
           if (dataUrl) {
             setEditingProduct((prev) => {
               if (!prev) return prev;
+              const updated = [
+                ...(prev.images || []),
+                {
+                  url: dataUrl,
+                  alt: file.name.replace(/\.[^/.]+$/, "") || prev.name || "Saree Photo",
+                  width: 1200,
+                  height: 1600,
+                },
+              ];
+              if (!selectedCategoryCoverUrl && updated[0]?.url) {
+                setSelectedCategoryCoverUrl(updated[0].url);
+              }
               return {
                 ...prev,
-                images: [
-                  ...(prev.images || []),
-                  {
-                    url: dataUrl,
-                    alt: file.name.replace(/\.[^/.]+$/, "") || prev.name || "Saree Photo",
-                    width: 1200,
-                    height: 1600,
-                  },
-                ],
+                images: updated,
               };
             });
           }
@@ -466,6 +483,11 @@ export default function AdminProductsPage() {
     if (!editingProduct) return;
     const updatedImages = (editingProduct.images || []).filter((_, i) => i !== indexToRemove);
     setEditingProduct({ ...editingProduct, images: updatedImages });
+    if (updatedImages[0]?.url) {
+      setSelectedCategoryCoverUrl(updatedImages[0].url);
+    } else {
+      setSelectedCategoryCoverUrl("");
+    }
   };
 
   const handleMakeCoverImage = (indexToCover: number) => {
@@ -475,6 +497,7 @@ export default function AdminProductsPage() {
     if (selected) {
       images.unshift(selected);
       setEditingProduct({ ...editingProduct, images });
+      setSelectedCategoryCoverUrl(selected.url);
     }
   };
 
@@ -488,22 +511,54 @@ export default function AdminProductsPage() {
     images[index] = images[targetIndex];
     images[targetIndex] = temp;
     setEditingProduct({ ...editingProduct, images });
+    if (images[0]?.url) {
+      setSelectedCategoryCoverUrl(images[0].url);
+    }
   };
 
-  // Video Management Handlers
+  // Multi-Video Management Handlers
   const handleVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !editingProduct) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0 || !editingProduct) return;
+    const files = Array.from(fileList);
     e.target.value = "";
 
     setIsUploadingVideo(true);
     setUploadError(null);
 
     try {
-      // 1. Upload video directly to Cloudinary via backend API
-      const uploadRes = await adminApi.media.uploadVideo(file);
-      if (uploadRes && uploadRes.url) {
-        setEditingProduct((prev) => (prev ? { ...prev, videoUrl: uploadRes.url } : prev));
+      // 1. Try batch video upload via uploadVideos API
+      let newUrls: string[] = [];
+      try {
+        const uploadRes = await adminApi.media.uploadVideos(files);
+        if (uploadRes && Array.isArray(uploadRes.urls) && uploadRes.urls.length > 0) {
+          newUrls = uploadRes.urls;
+        }
+      } catch {
+        // Fallback to uploading individually if bulk endpoint fails
+        const settled = await Promise.allSettled(
+          files.map((file) => adminApi.media.uploadVideo(file))
+        );
+        for (const res of settled) {
+          if (res.status === "fulfilled" && res.value?.url) {
+            newUrls.push(res.value.url);
+          }
+        }
+      }
+
+      if (newUrls.length > 0) {
+        setEditingProduct((prev) => {
+          if (!prev) return prev;
+          const currentVideos = prev.videoUrls && prev.videoUrls.length > 0
+            ? prev.videoUrls
+            : (prev.videoUrl ? [prev.videoUrl] : []);
+          const updated = [...currentVideos, ...newUrls];
+          return {
+            ...prev,
+            videoUrls: updated,
+            videoUrl: updated[0] || "",
+          };
+        });
         return;
       }
     } catch (err: unknown) {
@@ -515,23 +570,78 @@ export default function AdminProductsPage() {
         setUploadError(`${errMsg} (Loaded as local preview)`);
       }
 
-      // 2. Client-side Data URL Fallback
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const videoDataUrl = event.target?.result as string;
-        if (videoDataUrl) {
-          setEditingProduct((prev) => (prev ? { ...prev, videoUrl: videoDataUrl } : prev));
-        }
-      };
-      reader.readAsDataURL(file);
+      // 2. Client-side Data URL Fallback for multiple files
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const videoDataUrl = event.target?.result as string;
+          if (videoDataUrl) {
+            setEditingProduct((prev) => {
+              if (!prev) return prev;
+              const currentVideos = prev.videoUrls && prev.videoUrls.length > 0
+                ? prev.videoUrls
+                : (prev.videoUrl ? [prev.videoUrl] : []);
+              const updated = [...currentVideos, videoDataUrl];
+              return {
+                ...prev,
+                videoUrls: updated,
+                videoUrl: updated[0] || "",
+              };
+            });
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     } finally {
       setIsUploadingVideo(false);
     }
   };
 
-  const handleRemoveVideo = () => {
+  const handleRemoveVideo = (indexToRemove: number) => {
     if (!editingProduct) return;
-    setEditingProduct({ ...editingProduct, videoUrl: "" });
+    const currentVideos = editingProduct.videoUrls && editingProduct.videoUrls.length > 0
+      ? editingProduct.videoUrls
+      : (editingProduct.videoUrl ? [editingProduct.videoUrl] : []);
+    const updated = currentVideos.filter((_, i) => i !== indexToRemove);
+    setEditingProduct({
+      ...editingProduct,
+      videoUrls: updated,
+      videoUrl: updated[0] || "",
+    });
+  };
+
+  const handleMakePrimaryVideo = (indexToPrimary: number) => {
+    if (!editingProduct) return;
+    const currentVideos = editingProduct.videoUrls && editingProduct.videoUrls.length > 0
+      ? [...editingProduct.videoUrls]
+      : (editingProduct.videoUrl ? [editingProduct.videoUrl] : []);
+    const [selected] = currentVideos.splice(indexToPrimary, 1);
+    if (selected) {
+      currentVideos.unshift(selected);
+      setEditingProduct({
+        ...editingProduct,
+        videoUrls: currentVideos,
+        videoUrl: currentVideos[0] || "",
+      });
+    }
+  };
+
+  const handleMoveVideo = (index: number, direction: "left" | "right") => {
+    if (!editingProduct) return;
+    const currentVideos = editingProduct.videoUrls && editingProduct.videoUrls.length > 0
+      ? [...editingProduct.videoUrls]
+      : (editingProduct.videoUrl ? [editingProduct.videoUrl] : []);
+    const targetIndex = direction === "left" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= currentVideos.length) return;
+
+    const temp = currentVideos[index];
+    currentVideos[index] = currentVideos[targetIndex];
+    currentVideos[targetIndex] = temp;
+    setEditingProduct({
+      ...editingProduct,
+      videoUrls: currentVideos,
+      videoUrl: currentVideos[0] || "",
+    });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -586,7 +696,10 @@ export default function AdminProductsPage() {
       // Update Category image if option is enabled
       // Whichever product is saved with this checkbox enabled will set the latest category cover
       if (setAsCategoryCover && chosenCatId) {
-        const coverPhotoUrl = selectedCategoryCoverUrl || editingProduct.images?.[0]?.url;
+        const coverPhotoUrl =
+          (selectedCategoryCoverUrl && editingProduct.images?.some((img) => img.url === selectedCategoryCoverUrl))
+            ? selectedCategoryCoverUrl
+            : editingProduct.images?.[0]?.url;
         if (coverPhotoUrl) {
           const rawCatId = chosenCatId.replace(/^cat-/, "");
           try {
@@ -601,12 +714,13 @@ export default function AdminProductsPage() {
                   : c
               )
             );
-            await syncAdminCategories();
           } catch (catErr) {
             console.error("Failed to update category image:", catErr);
           }
         }
       }
+
+      await syncAdminCategories();
 
       setIsModalOpen(false);
       setEditingProduct(null);
@@ -697,6 +811,9 @@ export default function AdminProductsPage() {
           <tbody className="divide-y divide-line">
             {filteredProducts.map((product) => {
               const category = categories.find((c) => c.id === product.categoryId);
+              const pVideos = product.videoUrls && product.videoUrls.length > 0
+                ? product.videoUrls
+                : (product.videoUrl ? [product.videoUrl] : []);
 
               return (
                 <tr key={product.id} className="hover:bg-canvas-deep/50 transition-colors">
@@ -713,9 +830,9 @@ export default function AdminProductsPage() {
                         ) : (
                           <div className="size-full flex items-center justify-center text-[10px] text-muted">No photo</div>
                         )}
-                        {product.videoUrl ? (
-                          <span className="absolute bottom-0 inset-x-0 bg-accent text-[8px] font-bold text-white text-center py-0.5 leading-none tracking-tighter">
-                            ▶ VIDEO
+                        {pVideos.length > 0 ? (
+                          <span className="absolute bottom-0 inset-x-0 bg-accent text-[7.5px] font-bold text-white text-center py-0.5 leading-none tracking-tighter">
+                            ▶ {pVideos.length > 1 ? `${pVideos.length} REELS` : "VIDEO"}
                           </span>
                         ) : null}
                       </div>
@@ -901,7 +1018,12 @@ export default function AdminProductsPage() {
                     </div>
                     <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2.5 py-0.5 rounded-xs">
                       {(editingProduct.images || []).length} Photo{(editingProduct.images || []).length === 1 ? "" : "s"}
-                      {editingProduct.videoUrl ? " • 1 Video" : ""}
+                      {(() => {
+                        const count = (editingProduct.videoUrls && editingProduct.videoUrls.length > 0)
+                          ? editingProduct.videoUrls.length
+                          : (editingProduct.videoUrl ? 1 : 0);
+                        return count > 0 ? ` • ${count} Video${count === 1 ? "" : "s"}` : "";
+                      })()}
                     </span>
                   </div>
 
@@ -1106,89 +1228,178 @@ export default function AdminProductsPage() {
                     )}
                   </div>
 
-                  {/* Video Section */}
-                  <div className="border-t border-line pt-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="font-semibold text-ink block text-xs">
-                        Product Video (उत्पाद वीडियो / लाइव रील / MP4)
-                      </label>
-                      {editingProduct.videoUrl ? (
-                        <span className="text-[10px] font-semibold text-success bg-success/15 px-2 py-0.5 rounded-xs">
-                          ✓ Video Attached {editingProduct.videoUrl.includes("cloudinary") ? "(Cloudinary)" : ""}
-                        </span>
-                      ) : null}
-                    </div>
+                  {/* Video Section: Multi-Video Upload & Management */}
+                  {(() => {
+                    const videoList = (editingProduct.videoUrls && editingProduct.videoUrls.length > 0)
+                      ? editingProduct.videoUrls
+                      : (editingProduct.videoUrl ? [editingProduct.videoUrl] : []);
 
-                    {/* Video File Upload Dropzone */}
-                    <label
-                      className={`flex items-center gap-4 rounded-xs border-2 border-dashed border-line bg-canvas p-4 transition-colors group ${
-                        isUploadingVideo ? "opacity-60 cursor-not-allowed border-accent" : "hover:border-accent hover:bg-canvas-deep/50 cursor-pointer"
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        accept="video/*"
-                        disabled={isUploadingVideo}
-                        onChange={handleVideoFileUpload}
-                        className="hidden"
-                      />
-                      <div className="size-10 rounded-full bg-accent/10 group-hover:bg-accent group-hover:text-white text-accent flex items-center justify-center shrink-0 transition-colors">
-                        {isUploadingVideo ? (
-                          <svg className="size-5 animate-spin text-accent" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                          </svg>
-                        ) : (
-                          <svg className="size-5 fill-current ml-0.5" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-sm font-semibold text-ink block truncate">
-                          {isUploadingVideo ? "Uploading Video to Cloudinary..." : "Upload Saree Video"}
-                        </span>
-                        <span className="text-xs text-muted block truncate mt-0.5">
-                          {isUploadingVideo ? "Streaming to Cloudinary CDN..." : "Click to select product video file (MP4, WebM, MOV)"}
-                        </span>
-                      </div>
-                    </label>
+                    return (
+                      <div className="border-t border-line pt-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <label className="font-semibold text-ink block text-xs">
+                              Product Video Demonstration (उत्पाद वीडियो / लाइव रील)
+                            </label>
+                            <p className="text-[11px] text-muted">
+                              Upload multiple video clips to showcase fabric drape, sheen, and border work.
+                            </p>
+                          </div>
+                          {videoList.length > 0 ? (
+                            <span className="text-[10px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-xs shrink-0">
+                              ✓ {videoList.length} Video{videoList.length === 1 ? "" : "s"} Attached
+                            </span>
+                          ) : null}
+                        </div>
 
-                    {/* Video Player Preview */}
-                    {editingProduct.videoUrl ? (
-                      <div className="mt-2 rounded-xs border border-line bg-canvas p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
-                            <span>▶</span> Attached Video Preview
+                        {/* Video File Upload Dropzone (Supports Multiple Videos) */}
+                        <label
+                          className={`flex items-center gap-4 rounded-xs border-2 border-dashed border-line bg-canvas p-4 transition-colors group ${
+                            isUploadingVideo ? "opacity-60 cursor-not-allowed border-accent" : "hover:border-accent hover:bg-canvas-deep/50 cursor-pointer"
+                          }`}
+                        >
+                          <input
+                            type="file"
+                            accept="video/*"
+                            multiple
+                            disabled={isUploadingVideo}
+                            onChange={handleVideoFileUpload}
+                            className="hidden"
+                          />
+                          <div className="size-10 rounded-full bg-accent/10 group-hover:bg-accent group-hover:text-white text-accent flex items-center justify-center shrink-0 transition-colors">
+                            {isUploadingVideo ? (
+                              <svg className="size-5 animate-spin text-accent" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                              </svg>
+                            ) : (
+                              <svg className="size-5 fill-current ml-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-sm font-semibold text-ink block truncate">
+                              {isUploadingVideo ? "Uploading Videos to Cloudinary..." : "Upload Saree Videos (एक या अधिक वीडियो चुनें)"}
+                            </span>
+                            <span className="text-xs text-muted block truncate mt-0.5">
+                              {isUploadingVideo ? "Streaming & encoding video reels..." : "Click to select 1 or more video files (MP4, WebM, MOV) • Select multiple at once"}
+                            </span>
+                          </div>
+                          <span className="hidden sm:inline-block rounded-xs bg-accent/10 text-accent font-semibold px-2.5 py-1 text-[11px] shrink-0">
+                            + Select Videos
                           </span>
-                          <button
-                            type="button"
-                            onClick={handleRemoveVideo}
-                            className="text-xs font-semibold text-alert hover:underline"
-                          >
-                            Remove Video
-                          </button>
-                        </div>
-                        <div className="aspect-video max-h-52 w-full rounded-xs bg-black overflow-hidden flex items-center justify-center">
-                          {editingProduct.videoUrl.includes("youtube.com") || editingProduct.videoUrl.includes("youtu.be") ? (
-                            <iframe
-                              src={getEmbedVideoUrl(editingProduct.videoUrl) || editingProduct.videoUrl}
-                              title="Video Preview"
-                              className="size-full border-0"
-                              allowFullScreen
-                            />
-                          ) : (
-                            <video
-                              src={editingProduct.videoUrl}
-                              controls
-                              playsInline
-                              className="size-full object-contain"
-                            />
-                          )}
-                        </div>
+                        </label>
+
+                        {/* Multi-Video Preview List */}
+                        {videoList.length > 0 ? (
+                          <div className="space-y-2 mt-3">
+                            <span className="text-[11px] font-semibold text-muted uppercase tracking-wider block">
+                              Attached Videos ({videoList.length}) — First video is Primary:
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                              {videoList.map((vUrl, vIdx) => {
+                                const isPrimary = vIdx === 0;
+                                const isCloudinary = vUrl.includes("cloudinary");
+                                const isYouTube = vUrl.includes("youtube.com") || vUrl.includes("youtu.be");
+
+                                return (
+                                  <div
+                                    key={`${vUrl}-${vIdx}`}
+                                    className={`rounded-xs border bg-canvas p-2.5 flex flex-col justify-between gap-2 transition-all ${
+                                      isPrimary ? "border-accent ring-1 ring-accent/30 shadow-xs" : "border-line"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-1.5">
+                                        <span
+                                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-xs ${
+                                            isPrimary
+                                              ? "bg-accent text-white"
+                                              : "bg-ink/10 text-ink"
+                                          }`}
+                                        >
+                                          {isPrimary ? "★ PRIMARY VIDEO" : `VIDEO ${vIdx + 1}`}
+                                        </span>
+                                        {isCloudinary && (
+                                          <span className="text-[8px] bg-canvas-deep border border-line text-muted px-1 py-0.5 rounded-xs">
+                                            ☁️ CDN
+                                          </span>
+                                        )}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveVideo(vIdx)}
+                                        className="text-[11px] font-semibold text-alert hover:underline"
+                                        title="Delete this video"
+                                      >
+                                        ✕ Remove
+                                      </button>
+                                    </div>
+
+                                    <div className="aspect-video w-full rounded-xs bg-black overflow-hidden flex items-center justify-center">
+                                      {isYouTube ? (
+                                        <iframe
+                                          src={getEmbedVideoUrl(vUrl) || vUrl}
+                                          title={`Video Preview ${vIdx + 1}`}
+                                          className="size-full border-0"
+                                          allowFullScreen
+                                        />
+                                      ) : (
+                                        <video
+                                          src={vUrl}
+                                          controls
+                                          playsInline
+                                          className="size-full object-contain"
+                                        />
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1 border-t border-line/60 text-[10px]">
+                                      {!isPrimary ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleMakePrimaryVideo(vIdx)}
+                                          className="text-accent font-semibold hover:underline flex items-center gap-1"
+                                        >
+                                          <span>★</span> Make Primary
+                                        </button>
+                                      ) : (
+                                        <span className="text-muted font-medium">Plays first on product page</span>
+                                      )}
+
+                                      <div className="flex items-center gap-1 ml-auto">
+                                        {vIdx > 0 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMoveVideo(vIdx, "left")}
+                                            className="p-1 hover:bg-canvas-deep rounded-xs text-muted hover:text-ink font-bold text-xs"
+                                            title="Move Left"
+                                          >
+                                            ◀
+                                          </button>
+                                        )}
+                                        {vIdx < videoList.length - 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMoveVideo(vIdx, "right")}
+                                            className="p-1 hover:bg-canvas-deep rounded-xs text-muted hover:text-ink font-bold text-xs"
+                                            title="Move Right"
+                                          >
+                                            ▶
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
+                    );
+                  })()}
                 </div>
 
                 {/* 2. PRODUCT BASICS */}
@@ -1208,7 +1419,15 @@ export default function AdminProductsPage() {
                         required
                         placeholder="e.g. Sonal Trendy Mal Cotton Saree with Zari Border"
                         value={editingProduct.name || ""}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditingProduct({
+                            ...editingProduct,
+                            name: val,
+                            name_en: val,
+                            name_hi: val,
+                          });
+                        }}
                         className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
                       />
                     </div>

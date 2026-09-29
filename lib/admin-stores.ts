@@ -76,26 +76,29 @@ export async function syncAdminProducts() {
 
 export async function saveAdminProduct(productData: Partial<Product>) {
   try {
-    const rawName = productData.name || productData.name_hi || productData.name_en || "साड़ी";
-    const nameHi = productData.name_hi || rawName;
-    const nameEn = productData.name_en || rawName;
+    const rawName = (productData.name || productData.name_hi || productData.name_en || "साड़ी").trim();
+    const nameHi = rawName;
+    const nameEn = rawName;
 
-    // Combine specifications with description for complete clarity
-    let fullDescription = productData.description || "";
-    if (productData.specifications?.sareeLength || productData.specifications?.blousePiece) {
-      const specsSummary = [
-        productData.specifications.sareeLength ? `Saree Cut: ${productData.specifications.sareeLength}` : "",
-        productData.specifications.blousePiece ? `Blouse: ${productData.specifications.blousePiece}` : "",
-      ].filter(Boolean).join(" | ");
+    // Combine specifications with description cleanly without repeating previous cut summaries
+    let fullDescription = (productData.description || "")
+      .replace(/^Saree Cut:[^\n]+\n*/gi, "")
+      .replace(/Blouse:[^\n]+\n*/gi, "")
+      .trim();
 
-      if (specsSummary && !fullDescription.includes(specsSummary)) {
-        fullDescription = fullDescription ? `${specsSummary}\n\n${fullDescription}` : specsSummary;
-      }
+    const specsSummary = [
+      productData.specifications?.sareeLength ? `Saree Cut: ${productData.specifications.sareeLength}` : "",
+      productData.specifications?.blousePiece ? `Blouse: ${productData.specifications.blousePiece}` : "",
+      productData.design ? `Work: ${productData.design}` : "",
+    ].filter(Boolean).join(" | ");
+
+    if (specsSummary) {
+      fullDescription = fullDescription ? `${specsSummary}\n\n${fullDescription}` : specsSummary;
     }
 
-    const descHi = productData.description_hi || fullDescription;
-    const descEn = productData.description_en || fullDescription;
-    const shortDesc = productData.shortDescription || productData.shortDescription_hi || productData.shortDescription_en || (fullDescription ? fullDescription.slice(0, 120) : rawName);
+    const descHi = fullDescription;
+    const descEn = fullDescription;
+    const shortDesc = productData.shortDescription || (fullDescription ? fullDescription.slice(0, 120) : rawName);
     const shortHi = shortDesc;
     const shortEn = shortDesc;
 
@@ -105,12 +108,24 @@ export async function saveAdminProduct(productData: Partial<Product>) {
                      (productData.colors || []).map((c) => c.name).join(", ") ||
                      "Multi / Matching Set";
 
-    // Extract raw Category ID number if in string format (e.g. "cat-1" -> 1 or "1" -> 1)
+    // Extract raw Category ID number if in string format (e.g. "cat-1" -> 1 or "1" -> 1 or by slug)
     let categoryIdNum: number | undefined = undefined;
     if (productData.categoryId) {
-      const parsedId = Number(String(productData.categoryId).replace(/^cat-/, ""));
+      const strCat = String(productData.categoryId);
+      const parsedId = Number(strCat.replace(/^cat-/, ""));
       if (!isNaN(parsedId) && parsedId > 0) {
         categoryIdNum = parsedId;
+      } else {
+        const allCats = adminCategoriesStore.getSnapshot();
+        const matched = allCats.find(
+          (c) => c.id === strCat || c.slug === strCat || `cat-${c.slug}` === strCat || c.name.toLowerCase() === strCat.toLowerCase()
+        );
+        if (matched) {
+          const mId = Number(String(matched.id).replace(/^cat-/, ""));
+          if (!isNaN(mId) && mId > 0) {
+            categoryIdNum = mId;
+          }
+        }
       }
     }
 
@@ -120,9 +135,17 @@ export async function saveAdminProduct(productData: Partial<Product>) {
       displayOrder: idx + 1,
     }));
 
+    // Multi-video payload support
+    const finalVideoUrls = (productData.videoUrls && productData.videoUrls.length > 0)
+      ? productData.videoUrls.filter(Boolean)
+      : (productData.videoUrl ? [productData.videoUrl.trim()] : []);
+    const videoUrlPayload = finalVideoUrls.length > 1
+      ? JSON.stringify(finalVideoUrls)
+      : (finalVideoUrls[0] || null);
+
     if (productData.id) {
       const rawId = String(productData.id).replace(/^prd-/, "");
-      await adminApi.products.update(rawId, {
+      const res = await adminApi.products.update(rawId, {
         name: rawName,
         name_hi: nameHi,
         name_en: nameEn,
@@ -147,17 +170,29 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         isAvailable: productData.status === "active",
         isFeatured: Boolean(productData.featured),
         isNew: Boolean(productData.newArrival),
-        videoUrl: productData.videoUrl || null,
+        videoUrl: videoUrlPayload,
         images: productImages,
       });
+
+      if (res && res.product) {
+        const adapted = adaptProduct(res.product);
+        adminProductsStore.set((prev) =>
+          prev.map((p) => (p.id === productData.id || p.id === `prd-${rawId}` ? adapted : p))
+        );
+      }
     } else {
-      const slug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "saree";
+      const cleanSlug = rawName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
       const codeDigits = Math.floor(1000 + Math.random() * 9000);
-      await adminApi.products.create({
+      const generatedSlug = cleanSlug ? `${cleanSlug}-${codeDigits}` : `saree-${codeDigits}`;
+
+      const res = await adminApi.products.create({
         name: rawName,
         name_hi: nameHi,
         name_en: nameEn,
-        slug: productData.slug || slug,
+        slug: generatedSlug,
         productCode: productData.productCode || `KS-NEW-${codeDigits}`,
         categoryId: categoryIdNum,
         description: fullDescription,
@@ -178,9 +213,14 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         isAvailable: productData.status ? productData.status === "active" : true,
         isFeatured: Boolean(productData.featured),
         isNew: Boolean(productData.newArrival),
-        videoUrl: productData.videoUrl || null,
+        videoUrl: videoUrlPayload,
         images: productImages,
       });
+
+      if (res && res.product) {
+        const adapted = adaptProduct(res.product);
+        adminProductsStore.set((prev) => [adapted, ...prev.filter((p) => p.id !== adapted.id)]);
+      }
     }
     await syncAdminProducts();
   } catch (err) {

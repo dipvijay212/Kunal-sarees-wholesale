@@ -66,7 +66,7 @@ export function ProductPageContent({
       >
         <div className="lg:col-span-7">
           <div className="lg:top-header lg:sticky">
-            <ProductImageGallery images={product.images} videoUrl={product.videoUrl} productName={displayName} />
+            <ProductImageGallery images={product.images} videoUrl={product.videoUrl} videoUrls={product.videoUrls} productName={displayName} />
           </div>
         </div>
 

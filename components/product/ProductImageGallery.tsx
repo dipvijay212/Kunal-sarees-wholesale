@@ -11,6 +11,7 @@ import type { ProductImage } from "@/types";
 interface ProductImageGalleryProps {
   images: ProductImage[];
   videoUrl?: string;
+  videoUrls?: string[];
   productName: string;
   className?: string;
 }
@@ -30,34 +31,49 @@ function getEmbedVideoUrl(url: string): string | null {
   return null;
 }
 
-export function ProductImageGallery({ images, videoUrl, productName, className }: ProductImageGalleryProps) {
+export function ProductImageGallery({ images, videoUrl, videoUrls, productName, className }: ProductImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isVideoSelected, setIsVideoSelected] = useState(false);
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
   const [isZoomOpen, setZoomOpen] = useState(false);
   const pointerStartX = useRef<number | null>(null);
 
+  const allVideos = (videoUrls && videoUrls.length > 0)
+    ? videoUrls
+    : (videoUrl ? [videoUrl] : []);
+
+  const isVideoSelected = selectedVideoIndex !== null;
+  const activeVideoUrl = selectedVideoIndex !== null ? allVideos[selectedVideoIndex] : null;
+
   const total = images.length;
-  const hasMultiple = total > 1 || Boolean(videoUrl);
+  const hasMultiple = total > 1 || allVideos.length > 0;
   const activeImage = images[activeIndex] || images[0];
 
-  if (!activeImage && !videoUrl) return null;
+  if (!activeImage && allVideos.length === 0) return null;
 
   const goTo = (index: number) => {
-    setIsVideoSelected(false);
+    setSelectedVideoIndex(null);
     setActiveIndex((index + total) % total);
   };
   const previous = () => {
     if (isVideoSelected) {
-      setIsVideoSelected(false);
-      setActiveIndex(total - 1);
+      if (selectedVideoIndex !== null && selectedVideoIndex > 0) {
+        setSelectedVideoIndex(selectedVideoIndex - 1);
+      } else {
+        setSelectedVideoIndex(null);
+        setActiveIndex(total - 1);
+      }
     } else {
       goTo(activeIndex - 1);
     }
   };
   const next = () => {
     if (isVideoSelected) {
-      setIsVideoSelected(false);
-      setActiveIndex(0);
+      if (selectedVideoIndex !== null && selectedVideoIndex < allVideos.length - 1) {
+        setSelectedVideoIndex(selectedVideoIndex + 1);
+      } else {
+        setSelectedVideoIndex(null);
+        setActiveIndex(0);
+      }
     } else {
       goTo(activeIndex + 1);
     }
@@ -90,7 +106,7 @@ export function ProductImageGallery({ images, videoUrl, productName, className }
     else previous();
   };
 
-  const embedUrl = videoUrl ? getEmbedVideoUrl(videoUrl) : null;
+  const embedUrl = activeVideoUrl ? getEmbedVideoUrl(activeVideoUrl) : null;
 
   return (
     <section
@@ -109,7 +125,7 @@ export function ProductImageGallery({ images, videoUrl, productName, className }
             pointerStartX.current = null;
           }}
         >
-          {isVideoSelected && videoUrl ? (
+          {isVideoSelected && activeVideoUrl ? (
             <div className="size-full flex items-center justify-center bg-black rounded-xs overflow-hidden">
               {embedUrl ? (
                 <iframe
@@ -121,7 +137,8 @@ export function ProductImageGallery({ images, videoUrl, productName, className }
                 />
               ) : (
                 <video
-                  src={videoUrl}
+                  key={activeVideoUrl}
+                  src={activeVideoUrl}
                   controls
                   autoPlay
                   playsInline
@@ -161,16 +178,16 @@ export function ProductImageGallery({ images, videoUrl, productName, className }
           />
         ) : null}
 
-        {videoUrl && !isVideoSelected ? (
+        {allVideos.length > 0 && !isVideoSelected ? (
           <button
             type="button"
-            onClick={() => setIsVideoSelected(true)}
+            onClick={() => setSelectedVideoIndex(0)}
             className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-md hover:bg-accent-deep transition-transform hover:scale-105"
           >
             <svg className="size-3.5 fill-current" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
-            Watch Video
+            Watch Video {allVideos.length > 1 ? `(${allVideos.length})` : ""}
           </button>
         ) : null}
 
@@ -225,28 +242,33 @@ export function ProductImageGallery({ images, videoUrl, productName, className }
             );
           })}
 
-          {/* Video Thumbnail Button */}
-          {videoUrl ? (
-            <li className="w-20 shrink-0 lg:w-full">
-              <button
-                type="button"
-                onClick={() => setIsVideoSelected(true)}
-                aria-label="प्रोडक्ट वीडियो देखें"
-                aria-current={isVideoSelected ? "true" : undefined}
-                className={cn(
-                  "media-frame relative flex flex-col items-center justify-center aspect-[3/4] w-full rounded-xs border bg-canvas-deep transition-[border-color,opacity] duration-300",
-                  isVideoSelected ? "border-accent ring-1 ring-accent opacity-100 bg-accent/10" : "border-line opacity-75 hover:opacity-100",
-                )}
-              >
-                <div className="size-7 rounded-full bg-accent text-white flex items-center justify-center shadow-xs">
-                  <svg className="size-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-bold mt-1 text-ink">Video</span>
-              </button>
-            </li>
-          ) : null}
+          {/* Multiple Video Thumbnail Buttons */}
+          {allVideos.map((_vUrl, vIdx) => {
+            const isThisVideoActive = selectedVideoIndex === vIdx;
+            return (
+              <li key={`vid-${vIdx}`} className="w-20 shrink-0 lg:w-full">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVideoIndex(vIdx)}
+                  aria-label={`वीडियो ${vIdx + 1} देखें`}
+                  aria-current={isThisVideoActive ? "true" : undefined}
+                  className={cn(
+                    "media-frame relative flex flex-col items-center justify-center aspect-[3/4] w-full rounded-xs border bg-canvas-deep transition-[border-color,opacity] duration-300",
+                    isThisVideoActive ? "border-accent ring-1 ring-accent opacity-100 bg-accent/10" : "border-line opacity-75 hover:opacity-100",
+                  )}
+                >
+                  <div className="size-7 rounded-full bg-accent text-white flex items-center justify-center shadow-xs">
+                    <svg className="size-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                  <span className="text-[9px] font-bold mt-1 text-ink text-center px-1 truncate max-w-full">
+                    {allVideos.length > 1 ? `Reel ${vIdx + 1}` : "Video"}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
 

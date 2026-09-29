@@ -1,19 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { loginAdmin } from "@/lib/admin-stores";
+import { adminAuthStore, loginAdmin } from "@/lib/admin-stores";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@kunalsarees.com");
-  const [password, setPassword] = useState("Admin@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // If already logged in, redirect to admin
+    const token = typeof window !== "undefined" ? localStorage.getItem("ks:admin:jwt:v1") : null;
+    const session = adminAuthStore.getSnapshot();
+    if (session.isAuthenticated || token) {
+      router.replace("/admin");
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,21 +54,8 @@ export default function AdminLoginPage() {
             </div>
             <h1 className="type-h3 mt-4 font-serif text-ink">Kunal Sarees Admin</h1>
             <p className="mt-1 text-xs text-muted">
-              Enter your demo credentials to access the wholesale admin management portal.
+              Enter your credentials to access the wholesale admin management portal.
             </p>
-          </div>
-
-          {/* Credentials Info Box */}
-          <div className="mt-6 rounded-xs border border-accent/30 bg-accent/5 p-3 text-xs text-ink">
-            <p className="font-semibold text-accent uppercase tracking-wider text-[0.625rem]">Demo Login Credentials</p>
-            <div className="mt-1 flex justify-between">
-              <span className="text-muted">Email:</span>
-              <strong className="font-mono text-ink">admin@kunalsarees.com</strong>
-            </div>
-            <div className="mt-0.5 flex justify-between">
-              <span className="text-muted">Password:</span>
-              <strong className="font-mono text-ink">Admin@123</strong>
-            </div>
           </div>
 
           {/* Error Message */}
@@ -77,6 +72,7 @@ export default function AdminLoginPage() {
               <input
                 type="email"
                 required
+                placeholder="admin@kunalsarees.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1.5 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
@@ -96,6 +92,7 @@ export default function AdminLoginPage() {
               <input
                 type="password"
                 required
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"

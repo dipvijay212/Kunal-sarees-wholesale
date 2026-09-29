@@ -103,6 +103,7 @@ export interface Product {
   colors: ProductColor[];
   images: ProductImage[];
   videoUrl?: string;
+  videoUrls?: string[];
   variants: ProductVariant[];
   specifications: ProductSpecifications;
   highlights: string[];

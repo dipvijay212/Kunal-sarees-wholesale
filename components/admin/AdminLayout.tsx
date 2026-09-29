@@ -20,20 +20,45 @@ export function AdminLayout({
   const router = useRouter();
   const session = useLocalStore(adminAuthStore);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isClientReady, setIsClientReady] = useState(false);
 
   useEffect(() => {
-    if (pathname !== "/admin/login" && !session.isAuthenticated) {
+    setIsClientReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClientReady) return;
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("ks:admin:jwt:v1") : null;
+    const isAuthed = session.isAuthenticated || Boolean(token);
+
+    if (pathname !== "/admin/login" && !isAuthed) {
       router.replace("/admin/login");
-    } else if (session.isAuthenticated) {
-      syncAdminData();
+    } else if (isAuthed) {
+      if (!session.isAuthenticated && token) {
+        adminAuthStore.set({
+          isAuthenticated: true,
+          email: session.email || "admin@kunalsarees.com",
+          name: session.name || "Kunal Sarees Admin",
+          loginAt: Date.now(),
+        });
+      }
+      if (pathname === "/admin/login") {
+        router.replace("/admin");
+      } else {
+        syncAdminData();
+      }
     }
-  }, [pathname, session.isAuthenticated, router]);
+  }, [pathname, session.isAuthenticated, session.email, session.name, isClientReady, router]);
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
   }
 
-  if (!session.isAuthenticated) {
+  const hasToken = typeof window !== "undefined" ? Boolean(localStorage.getItem("ks:admin:jwt:v1")) : false;
+  const isAuthed = session.isAuthenticated || hasToken;
+
+  if (!isClientReady || !isAuthed) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-canvas p-6">
         <LoadingState variant="lines" count={3} label="Authenticating admin session..." />

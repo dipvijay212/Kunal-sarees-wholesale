@@ -118,6 +118,7 @@ export interface BackendProduct {
   isNew: boolean;
   videoUrl?: string | null;
   video_url?: string | null;
+  videoUrls?: string[] | null;
   images?: BackendProductImage[];
   collections?: { id: number; name: string; slug: string; image?: string }[];
   createdAt: string;
@@ -791,6 +792,20 @@ export const adminApi = {
         format?: string;
         bytes?: number;
       }>('/admin/upload/video', {
+        method: 'POST',
+        body: formData,
+      });
+    },
+
+    uploadVideos: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('videos', file);
+      });
+      return request<{
+        urls: string[];
+        videos: { url: string; publicId: string; duration?: number; format?: string; bytes?: number }[];
+      }>('/admin/upload/videos', {
         method: 'POST',
         body: formData,
       });
