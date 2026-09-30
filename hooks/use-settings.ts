@@ -1,12 +1,9 @@
 "use client";
 
-import { useLocalStore } from "@/hooks/use-local-store";
-import { adminSettingsStore } from "@/lib/admin-stores";
-import { businessSettings as staticSettings } from "@/data/business";
+import { useBusinessSettings } from "@/components/providers/SettingsProvider";
 import type { BusinessSettings } from "@/types";
 
+/** Business settings saved in Admin → Settings (database), with built-in fallbacks. */
 export function useSettings(): BusinessSettings {
-  const storeSettings = useLocalStore(adminSettingsStore);
-  if (typeof window === "undefined") return staticSettings;
-  return storeSettings;
+  return useBusinessSettings();
 }

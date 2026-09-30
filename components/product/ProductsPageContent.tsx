@@ -5,13 +5,14 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { CatalogueBrowser } from "@/components/product/CatalogueBrowser";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import type { Product } from "@/types";
+import type { Category, Product } from "@/types";
 
 interface ProductsPageContentProps {
   products: Product[];
+  categories?: Category[];
 }
 
-export function ProductsPageContent({ products }: ProductsPageContentProps) {
+export function ProductsPageContent({ products, categories }: ProductsPageContentProps) {
   const { t, language } = useLanguage();
   const isHi = language === "hi";
 
@@ -42,7 +43,7 @@ export function ProductsPageContent({ products }: ProductsPageContentProps) {
               />
             }
           >
-            <CatalogueBrowser products={products} />
+            <CatalogueBrowser products={products} categories={categories} />
           </Suspense>
         </div>
       </section>

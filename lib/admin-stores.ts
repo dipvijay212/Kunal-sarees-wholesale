@@ -76,8 +76,8 @@ export async function syncAdminProducts() {
 
 export async function saveAdminProduct(productData: Partial<Product>) {
   try {
-    const rawName = (productData.name || productData.name_hi || productData.name_en || "साड़ी").trim();
-    const nameHi = rawName;
+    // Catalogue data is saved in English only (the backend rejects Hindi and clears *_hi).
+    const rawName = (productData.name_en || productData.name || "Saree").trim();
     const nameEn = rawName;
 
     // Combine specifications with description cleanly without repeating previous cut summaries
@@ -96,15 +96,12 @@ export async function saveAdminProduct(productData: Partial<Product>) {
       fullDescription = fullDescription ? `${specsSummary}\n\n${fullDescription}` : specsSummary;
     }
 
-    const descHi = fullDescription;
     const descEn = fullDescription;
     const shortDesc = productData.shortDescription || (fullDescription ? fullDescription.slice(0, 120) : rawName);
-    const shortHi = shortDesc;
     const shortEn = shortDesc;
 
-    const fabricVal = typeof productData.fabric === "string" ? productData.fabric : (productData.fabric_hi || productData.fabric_en || "Banarasi Silk");
-    const colorVal = (typeof productData.color_hi === "string" ? productData.color_hi : "") ||
-                     (typeof productData.color_en === "string" ? productData.color_en : "") ||
+    const fabricVal = typeof productData.fabric === "string" ? productData.fabric : (productData.fabric_en || "Banarasi Silk");
+    const colorVal = (typeof productData.color_en === "string" ? productData.color_en : "") ||
                      (productData.colors || []).map((c) => c.name).join(", ") ||
                      "Multi / Matching Set";
 
@@ -148,22 +145,17 @@ export async function saveAdminProduct(productData: Partial<Product>) {
       const rawId = String(productData.id).replace(/^prd-/, "");
       const res = await adminApi.products.update(rawId, {
         name: rawName,
-        name_hi: nameHi,
         name_en: nameEn,
         slug: productData.slug,
         productCode: productData.productCode,
         categoryId: categoryIdNum,
         description: fullDescription,
-        description_hi: descHi,
         description_en: descEn,
         shortDescription: shortDesc,
-        short_description_hi: shortHi,
         short_description_en: shortEn,
         fabric: fabricVal,
-        fabric_hi: fabricVal,
         fabric_en: fabricVal,
         color: colorVal,
-        color_hi: colorVal,
         color_en: colorVal,
         price: Number(productData.price) || 0,
         minimumOrderQuantity: Number(productData.moq) || 1,
@@ -191,22 +183,17 @@ export async function saveAdminProduct(productData: Partial<Product>) {
 
       const res = await adminApi.products.create({
         name: rawName,
-        name_hi: nameHi,
         name_en: nameEn,
         slug: generatedSlug,
         productCode: productData.productCode || `KS-NEW-${codeDigits}`,
         categoryId: categoryIdNum,
         description: fullDescription,
-        description_hi: descHi,
         description_en: descEn,
         shortDescription: shortDesc,
-        short_description_hi: shortHi,
         short_description_en: shortEn,
         fabric: fabricVal,
-        fabric_hi: fabricVal,
         fabric_en: fabricVal,
         color: colorVal,
-        color_hi: colorVal,
         color_en: colorVal,
         price: Number(productData.price) || 2500,
         minimumOrderQuantity: Number(productData.moq) || 2,
@@ -305,11 +292,9 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
       const rawId = String(categoryData.id).replace(/^cat-/, "");
       await adminApi.categories.update(rawId, {
         name: nameVal,
-        name_hi: nameVal,
         name_en: nameVal,
         slug: slugVal,
         description: descVal,
-        description_hi: descVal,
         description_en: descVal,
         imageUrl: imageUrlVal,
         seoTitle: seoTitleVal,
@@ -318,11 +303,9 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
     } else {
       await adminApi.categories.create({
         name: nameVal,
-        name_hi: nameVal,
         name_en: nameVal,
         slug: slugVal,
         description: descVal,
-        description_hi: descVal,
         description_en: descVal,
         imageUrl: imageUrlVal,
         seoTitle: seoTitleVal,

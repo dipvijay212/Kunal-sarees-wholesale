@@ -31,11 +31,10 @@ function normaliseSiteUrl(value: string | undefined): string {
 const whatsappNumber = normaliseWhatsAppNumber(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER);
 
 /**
- * Single source of truth for business identity, contact details and wholesale
- * policy. data/site.ts derives the storefront `siteConfig` from this.
- *
- * TODO: the GSTIN, email, street address, hours and social URLs are mock
- * placeholders — replace them with the confirmed business details.
+ * Built-in fallbacks for business identity and wholesale policy. Contact details,
+ * address, hours and social links are managed in Admin → Settings and stored in the
+ * database (see lib/business-settings.ts); only confirmed values are kept here, and
+ * anything unset stays empty so the site never shows made-up details.
  */
 export const businessSettings: BusinessSettings = {
   id: "biz-kunal-sarees",
@@ -46,23 +45,20 @@ export const businessSettings: BusinessSettings = {
     "Kunal Sarees से बुटीक, दुकानदारों और रीसेलर्स को बनारसी, सिल्क, ऑर्गेंजा और ब्राइडल साड़ियों का बेहतरीन होलसेल कलेक्शन मिलता है।",
   currency: "INR",
   locale: "hi_IN",
-  gstin: "24ABCDE1234F1Z5",
+  gstin: "",
   contact: {
     whatsappNumber,
     phoneDisplay: `+${whatsappNumber.slice(0, 2)} ${whatsappNumber.slice(2, 7)} ${whatsappNumber.slice(7)}`,
     phoneHref: `tel:+${whatsappNumber}`,
-    email: "wholesale@kunalsarees.com",
+    email: "",
     address: {
-      lines: ["Shop 214, Second Floor, Textile Market", "Ring Road"],
+      lines: [],
       city: "Surat",
       region: "Gujarat",
-      postalCode: "395002",
+      postalCode: "",
       country: "India",
     },
-    hours: [
-      { days: "Monday – Saturday", hours: "10:00 AM – 7:30 PM" },
-      { days: "Sunday", hours: "By appointment" },
-    ],
+    hours: [],
   },
   wholesale: {
     gstRate: 5,
@@ -78,9 +74,6 @@ export const businessSettings: BusinessSettings = {
   seo: {
     siteUrl: normaliseSiteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   },
-  social: [
-    { platform: "instagram", label: "Instagram", href: "https://www.instagram.com/kunalsarees" },
-    { platform: "facebook", label: "Facebook", href: "https://www.facebook.com/kunalsarees" },
-    { platform: "youtube", label: "YouTube", href: "https://www.youtube.com/@kunalsarees" },
-  ],
+  // Social links are set in Admin → Settings.
+  social: [],
 };

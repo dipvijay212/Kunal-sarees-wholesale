@@ -6,10 +6,11 @@ import { HeartIcon } from "@/components/ui/Icons";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import type { Product } from "@/types";
 import { ProductGrid } from "./ProductGrid";
 
-export function WishlistView() {
-  const { products, hydrated } = useWishlist();
+export function WishlistView({ products: catalogue }: { products?: Product[] }) {
+  const { products, hydrated } = useWishlist(catalogue);
   const { t, language } = useLanguage();
   const isHi = language === "hi";
 

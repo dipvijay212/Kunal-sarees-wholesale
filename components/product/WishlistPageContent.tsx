@@ -3,8 +3,9 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WishlistView } from "@/components/product/WishlistView";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import type { Product } from "@/types";
 
-export function WishlistPageContent() {
+export function WishlistPageContent({ products }: { products: Product[] }) {
   const { t, language } = useLanguage();
   const isHi = language === "hi";
 
@@ -25,7 +26,7 @@ export function WishlistPageContent() {
       />
       <section className="section-y-sm">
         <div className="container-page">
-          <WishlistView />
+          <WishlistView products={products} />
         </div>
       </section>
     </>

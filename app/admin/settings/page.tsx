@@ -2,36 +2,52 @@
 
 import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { useRouter } from "next/navigation";
+import { useSettingsSavedInDatabase } from "@/components/providers/SettingsProvider";
 import { useLocalStore } from "@/hooks/use-local-store";
-import { adminSettingsStore, updateAdminSettings } from "@/lib/admin-stores";
+import { useSettings } from "@/hooks/use-settings";
+import { businessSettings as defaultSettings } from "@/data/business";
+import { adminSettingsStore } from "@/lib/admin-stores";
+import type { BusinessSettings } from "@/types";
 import { adminApi } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { DEFAULT_LANGUAGE_SETTINGS, type Language, type WebsiteLanguageSettings } from "@/lib/translations";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export default function AdminSettingsPage() {
-  const settings = useLocalStore(adminSettingsStore);
+  // Current values from the database (loaded by the root layout).
+  const settings = useSettings();
+  const router = useRouter();
+  const [isSavingBusiness, setIsSavingBusiness] = useState(false);
   const { refreshSettings } = useLanguage();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSavingLang, setIsSavingLang] = useState(false);
 
   // Business settings form
-  const [form, setForm] = useState({
-    businessName: settings.businessName,
-    whatsappNumber: settings.contact.whatsappNumber,
-    phoneDisplay: settings.contact.phoneDisplay,
-    email: settings.contact.email,
-    lines: settings.contact.address.lines.join("\n"),
-    city: settings.contact.address.city,
-    region: settings.contact.address.region,
-    postalCode: settings.contact.address.postalCode,
-    hoursWeekday: settings.contact.hours[0]?.hours || "10:00 AM – 7:30 PM",
-    hoursSunday: settings.contact.hours[1]?.hours || "By appointment",
-    instagram: settings.social.find((s) => s.platform === "instagram")?.href || "",
-    facebook: settings.social.find((s) => s.platform === "facebook")?.href || "",
-    youtube: settings.social.find((s) => s.platform === "youtube")?.href || "",
+  const toForm = (source: BusinessSettings) => ({
+    businessName: source.businessName,
+    whatsappNumber: source.contact.whatsappNumber,
+    phoneDisplay: source.contact.phoneDisplay,
+    email: source.contact.email,
+    lines: source.contact.address.lines.join("\n"),
+    city: source.contact.address.city,
+    region: source.contact.address.region,
+    postalCode: source.contact.address.postalCode,
+    hoursWeekday: source.contact.hours[0]?.hours || "",
+    hoursSunday: source.contact.hours[1]?.hours || "",
+    instagram: source.social.find((s) => s.platform === "instagram")?.href || "",
+    facebook: source.social.find((s) => s.platform === "facebook")?.href || "",
+    youtube: source.social.find((s) => s.platform === "youtube")?.href || "",
   });
+  const [form, setForm] = useState(() => toForm(settings));
+
+  // Older versions of this page saved contact details only in this browser. Until the
+  // database has settings, offer to load those so they can be saved properly.
+  const savedInDatabase = useSettingsSavedInDatabase();
+  const browserSaved = useLocalStore(adminSettingsStore);
+  const hasBrowserOnlyDetails =
+    !savedInDatabase && browserSaved !== defaultSettings && Boolean(browserSaved?.contact?.address);
 
   // Website language settings state
   const [langSettings, setLangSettings] = useState<WebsiteLanguageSettings>(DEFAULT_LANGUAGE_SETTINGS);
@@ -125,37 +141,46 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleBusinessSubmit = (e: React.FormEvent) => {
+  const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSavingBusiness(true);
+    setErrorMessage(null);
 
-    updateAdminSettings({
-      businessName: form.businessName,
-      contact: {
-        whatsappNumber: form.whatsappNumber,
-        phoneDisplay: form.phoneDisplay,
-        email: form.email,
-        phoneHref: `tel:+${form.whatsappNumber}`,
-        address: {
-          lines: form.lines.split("\n").filter(Boolean),
-          city: form.city,
-          region: form.region,
-          postalCode: form.postalCode,
-          country: "India",
+    try {
+      // Saved to the database so every visitor sees it (not just this browser).
+      await adminApi.settings.updateBusiness({
+        businessName: form.businessName,
+        contact: {
+          whatsappNumber: form.whatsappNumber,
+          phoneDisplay: form.phoneDisplay,
+          email: form.email,
+          address: {
+            lines: form.lines.split("\n").filter(Boolean),
+            city: form.city,
+            region: form.region,
+            postalCode: form.postalCode,
+            country: "India",
+          },
+          hours: [
+            { days: "Monday – Saturday", hours: form.hoursWeekday },
+            { days: "Sunday", hours: form.hoursSunday },
+          ],
         },
-        hours: [
-          { days: "Monday – Saturday", hours: form.hoursWeekday },
-          { days: "Sunday", hours: form.hoursSunday },
-        ],
-      },
-      social: [
-        { platform: "instagram", label: "Instagram", href: form.instagram },
-        { platform: "facebook", label: "Facebook", href: form.facebook },
-        { platform: "youtube", label: "YouTube", href: form.youtube },
-      ],
-    });
+        social: [
+          { platform: "instagram", label: "Instagram", href: form.instagram },
+          { platform: "facebook", label: "Facebook", href: form.facebook },
+          { platform: "youtube", label: "YouTube", href: form.youtube },
+        ].filter((link) => link.href.trim() !== "") as { platform: "instagram" | "facebook" | "youtube"; label: string; href: string }[],
+      });
 
-    setSuccessMessage("Business & Store contact settings saved successfully!");
-    setTimeout(() => setSuccessMessage(null), 4000);
+      setSuccessMessage("Contact settings saved. The website shows the new details within about 30 seconds.");
+      setTimeout(() => setSuccessMessage(null), 5000);
+      router.refresh();
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to save contact settings.");
+    } finally {
+      setIsSavingBusiness(false);
+    }
   };
 
   return (
@@ -350,6 +375,17 @@ export default function AdminSettingsPage() {
         {/* 2. BUSINESS CONTACT & IDENTITY FORM                               */}
         {/* ================================================================= */}
         <form onSubmit={handleBusinessSubmit} className="space-y-6">
+          {hasBrowserOnlyDetails ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border border-gold/50 bg-gold/10 p-4 text-xs text-ink">
+              <p>
+                Contact details you entered earlier were saved only in this browser, not in the database, so
+                visitors don&apos;t see them. Load them into this form, check them, then press Save Contact Settings.
+              </p>
+              <Button type="button" size="sm" variant="secondary" onClick={() => setForm(toForm(browserSaved))}>
+                Use details saved in this browser
+              </Button>
+            </div>
+          ) : null}
           <div className="rounded-xs border border-line bg-canvas p-6 shadow-xs">
             <h3 className="type-h4 text-ink font-serif border-b border-line pb-3">Business Identity</h3>
             <div className="mt-4 grid gap-4 text-xs sm:grid-cols-2">
@@ -497,8 +533,8 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" size="lg">
-              Save Contact Settings
+            <Button type="submit" size="lg" disabled={isSavingBusiness}>
+              {isSavingBusiness ? "Saving to Database..." : "Save Contact Settings"}
             </Button>
           </div>
         </form>

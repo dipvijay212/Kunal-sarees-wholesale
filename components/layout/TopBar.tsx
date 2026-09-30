@@ -2,11 +2,12 @@
 
 import { Container } from "@/components/ui/Container";
 import { MailIcon, PhoneIcon } from "@/components/ui/Icons";
-import { siteConfig } from "@/data/site";
+import { useSettings } from "@/hooks/use-settings";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { SocialLinks } from "./SocialLinks";
 
 export function TopBar() {
+  const settings = useSettings();
   const { t } = useLanguage();
 
   return (
@@ -29,20 +30,24 @@ export function TopBar() {
         {/* Right: Direct Contact & Social */}
         <div className="hidden shrink-0 items-center gap-4 lg:flex">
           <a
-            href={siteConfig.contact.phoneHref}
+            href={settings.contact.phoneHref}
             className="inline-flex items-center gap-1.5 font-sans font-medium text-cream/90 transition-colors hover:text-gold-light"
           >
             <PhoneIcon size={13} className="text-gold-light" />
-            <span>{siteConfig.contact.phoneDisplay}</span>
+            <span>{settings.contact.phoneDisplay}</span>
           </a>
-          <span aria-hidden="true" className="text-gold-light/40">|</span>
-          <a
-            href={`mailto:${siteConfig.contact.email}`}
-            className="inline-flex items-center gap-1.5 font-sans font-medium text-cream/90 transition-colors hover:text-gold-light"
-          >
-            <MailIcon size={13} className="text-gold-light" />
-            <span>{siteConfig.contact.email}</span>
-          </a>
+          {settings.contact.email ? (
+            <>
+              <span aria-hidden="true" className="text-gold-light/40">|</span>
+              <a
+                href={`mailto:${settings.contact.email}`}
+                className="inline-flex items-center gap-1.5 font-sans font-medium text-cream/90 transition-colors hover:text-gold-light"
+              >
+                <MailIcon size={13} className="text-gold-light" />
+                <span>{settings.contact.email}</span>
+              </a>
+            </>
+          ) : null}
           <span aria-hidden="true" className="text-gold-light/40">|</span>
           <div className="flex items-center text-cream">
             <SocialLinks size="sm" variant="ghost" itemClassName="text-cream/90 hover:text-gold-light hover:bg-white/10" />

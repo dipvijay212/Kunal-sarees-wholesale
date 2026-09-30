@@ -27,6 +27,9 @@ import type {
 
 const MAX_QUERY_LENGTH = 80;
 
+/** Fired by the header search dialog so an already-open catalogue shows the new search text. */
+export const CATALOGUE_SEARCH_EVENT = "ks:catalogue-search";
+
 interface GetProductsOptions {
   /** Include draft and discontinued designs (for admin views). Default false. */
   includeInactive?: boolean;
@@ -231,47 +234,82 @@ function queryTokens(query: string): string[] {
   return normalizeText(query.slice(0, MAX_QUERY_LENGTH)).split(/\s+/).filter(Boolean);
 }
 
+interface MatchOptions {
+  /** Also search short and long descriptions. Default true. */
+  includeDescriptions?: boolean;
+  /** Categories from the API; the client-side category store is empty on the storefront. */
+  categories?: Category[];
+}
+
 /** True when every word of the query appears in the product's searchable text. */
-export function matchesQuery(product: Product, query: string): boolean {
+export function matchesQuery(
+  product: Product,
+  query: string,
+  { includeDescriptions = true, categories }: MatchOptions = {},
+): boolean {
   const tokens = queryTokens(query);
   if (tokens.length === 0) return true;
-  const category = getCategoryById(product.categoryId);
+  const category = categories
+    ? categories.find((candidate) => candidate.id === product.categoryId)
+    : getCategoryById(product.categoryId);
   const collection = getCollectionById(product.collectionId);
 
-  const searchableText = normalizeText(
-    [
-      product.name,
-      product.name_en ?? "",
-      product.name_hi ?? "",
-      product.productCode,
-      product.fabric,
-      product.fabric_en ?? "",
-      product.fabric_hi ?? "",
-      product.design,
+  // `design` is omitted: the API adapter fills a default ("Zari Weave") when it's unknown,
+  // which made every product match searches like "zari".
+  const fields = [
+    product.name,
+    product.name_en ?? "",
+    product.name_hi ?? "",
+    product.productCode,
+    product.fabric,
+    product.fabric_en ?? "",
+    product.fabric_hi ?? "",
+    product.color_en ?? "",
+    product.color_hi ?? "",
+    product.colors.map((color) => color.name).join(" "),
+    category?.name ?? "",
+    category?.name_en ?? "",
+    category?.name_hi ?? "",
+    collection?.name ?? "",
+    collection?.name_en ?? "",
+    collection?.name_hi ?? "",
+  ];
+  if (includeDescriptions) {
+    fields.push(
       product.shortDescription,
       product.shortDescription_en ?? "",
       product.shortDescription_hi ?? "",
       product.description,
       product.description_en ?? "",
       product.description_hi ?? "",
-      product.color_en ?? "",
-      product.color_hi ?? "",
-      product.colors.map((color) => color.name).join(" "),
-      category?.name ?? "",
-      category?.name_en ?? "",
-      category?.name_hi ?? "",
-      collection?.name ?? "",
-      collection?.name_en ?? "",
-      collection?.name_hi ?? "",
-    ].join(" "),
-  );
+    );
+  }
+
+  const searchableText = normalizeText(fields.join(" "));
   return tokens.every((token) => searchableText.includes(token));
 }
 
-/** Products matching a free-text query, across name, code, fabric, design and colours. */
+/**
+ * Products matching a free-text query. Name, design code, fabric, colour and category are
+ * searched first; descriptions are only used when nothing matches those. This keeps
+ * "fandy satin" from returning other sarees whose description mentions a fandy satin blouse.
+ * Results whose name contains the whole query come first.
+ */
+export function searchProductList(source: Product[], query: string, categories?: Category[]): Product[] {
+  if (queryTokens(query).length === 0) return source;
+  const primary = source.filter((product) => matchesQuery(product, query, { includeDescriptions: false, categories }));
+  const matches = primary.length > 0 ? primary : source.filter((product) => matchesQuery(product, query, { categories }));
+
+  const phrase = normalizeText(query.trim());
+  const nameHasPhrase = (product: Product) =>
+    [product.name, product.name_en ?? "", product.name_hi ?? ""].some((name) => normalizeText(name).includes(phrase));
+  return [...matches.filter(nameHasPhrase), ...matches.filter((product) => !nameHasPhrase(product))];
+}
+
+/** Products matching a free-text query, across name, code, fabric, colours and category. */
 export function searchProducts(query: string, limit?: number): Product[] {
   if (queryTokens(query).length === 0) return [];
-  const results = getProducts().filter((product) => matchesQuery(product, query));
+  const results = searchProductList(getProducts(), query);
   return limit ? results.slice(0, limit) : results;
 }
 
@@ -324,8 +362,10 @@ export function getFabricOptions(source: Product[] = getProducts()): FilterOptio
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-export function getCategoryOptions(source: Product[] = getProducts()): FilterOption[] {
-  return getCategories()
+/** Pass `categories` (fetched from the API) on the storefront, where the client-side category store is empty. */
+export function getCategoryOptions(source: Product[] = getProducts(), categories?: Category[]): FilterOption[] {
+  const list = categories ? [...categories].sort((a, b) => a.order - b.order) : getCategories();
+  return list
     .map((category) => ({
       value: category.id,
       label: category.name,
@@ -392,8 +432,9 @@ interface SearchParamsReader {
 /**
  * Reads catalogue filters from URL search params, ignoring unknown values.
  * Category and collection accept either an id or a slug in the URL.
+ * Pass `categories` (fetched from the API) on the storefront, where the client-side category store is empty.
  */
-export function parseCatalogueFilters(params: SearchParamsReader): CatalogueFilters {
+export function parseCatalogueFilters(params: SearchParamsReader, categories?: Category[]): CatalogueFilters {
   const query = params.get("q")?.trim().slice(0, MAX_QUERY_LENGTH) ?? "";
   const categoryParam = params.get("category");
   const collectionParam = params.get("collection");
@@ -406,7 +447,9 @@ export function parseCatalogueFilters(params: SearchParamsReader): CatalogueFilt
   const pageParam = params.get("page");
 
   const category = categoryParam
-    ? (getCategoryById(categoryParam) ?? getCategoryBySlug(categoryParam))
+    ? categories
+      ? categories.find((c) => c.id === categoryParam || c.slug === categoryParam)
+      : (getCategoryById(categoryParam) ?? getCategoryBySlug(categoryParam))
     : undefined;
   const collection = collectionParam
     ? (getCollectionById(collectionParam) ?? getCollectionBySlug(collectionParam))
@@ -436,9 +479,9 @@ export function parseCatalogueFilters(params: SearchParamsReader): CatalogueFilt
   };
 }
 
-export function filterProducts(source: Product[], filters: CatalogueFilters): Product[] {
-  const filtered = source.filter((product) => {
-    if (filters.query && !matchesQuery(product, filters.query)) return false;
+/** Pass `categories` (fetched from the API) so category names are searchable on the storefront. */
+export function filterProducts(source: Product[], filters: CatalogueFilters, categories?: Category[]): Product[] {
+  const narrowed = source.filter((product) => {
     if (filters.categoryId && product.categoryId !== filters.categoryId) return false;
     if (filters.collectionId && product.collectionId !== filters.collectionId) return false;
     if (filters.fabric && product.fabric !== filters.fabric) return false;
@@ -449,6 +492,7 @@ export function filterProducts(source: Product[], filters: CatalogueFilters): Pr
     if (filters.availability && getAvailability(product) !== filters.availability) return false;
     return true;
   });
+  const filtered = filters.query ? searchProductList(narrowed, filters.query, categories) : narrowed;
 
   switch (filters.sort) {
     case "newest":

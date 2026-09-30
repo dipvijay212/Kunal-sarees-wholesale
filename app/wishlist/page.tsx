@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { WishlistPageContent } from "@/components/product/WishlistPageContent";
+import { fetchProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Saved Sarees",
@@ -7,7 +8,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function WishlistPage() {
-  return <WishlistPageContent />;
+export default async function WishlistPage() {
+  // Saved ids are resolved against the live catalogue (same cached request as other pages).
+  const products = await fetchProducts();
+  return <WishlistPageContent products={products} />;
 }
 

@@ -6,6 +6,7 @@ import { WholesaleHighlights } from "@/components/home/WholesaleHighlights";
 import { WhyKunalSarees } from "@/components/home/WhyKunalSarees";
 import { AboutKunalSarees } from "@/components/home/AboutKunalSarees";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { fetchBusinessSettings } from "@/lib/business-settings";
 import {
   fetchCategories,
   fetchFeaturedCategories,
@@ -35,15 +36,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [products, featuredCategories, newArrivals] = await Promise.all([
+  const [products, featuredCategories, newArrivals, business] = await Promise.all([
     fetchProducts(),
     fetchFeaturedCategories(6),
     fetchNewArrivals(6),
+    fetchBusinessSettings(),
   ]);
 
   return (
     <>
-      <JsonLd data={jsonLdGraph(organizationJsonLd(), websiteJsonLd())} />
+      <JsonLd data={jsonLdGraph(organizationJsonLd(business), websiteJsonLd())} />
 
       {/* 1. HERO SECTION */}
       <HomeHero />

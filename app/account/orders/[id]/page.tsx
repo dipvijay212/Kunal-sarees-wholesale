@@ -12,7 +12,6 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCustomer } from "@/hooks/use-customer";
 import { customerOrdersApi, type BackendOrder } from "@/lib/api";
 import { formatPieces, formatPrice } from "@/lib/format";
-import { businessSettings } from "@/data/business";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 interface PageProps {
@@ -91,7 +90,7 @@ export default function CustomerOrderDetailPage({ params }: PageProps) {
     const itemsLines = (order.items || [])
       .map(
         (it, idx) =>
-          `${idx + 1}. ${isHi ? (it.productNameHi || it.productName) : (it.productNameEn || it.productName)} (${it.productCode || "KS"}) - ${it.quantity} pcs @ ₹${it.unitPrice} = ₹${it.subtotal}`
+          `${idx + 1}. ${it.productNameEn || it.productName} (${it.productCode || "KS"}) - ${it.quantity} pcs @ ₹${it.unitPrice} = ₹${it.subtotal}`
       )
       .join("\n");
 
@@ -106,7 +105,7 @@ export default function CustomerOrderDetailPage({ params }: PageProps) {
       `*Total Amount:* ₹${order.totalAmount}\n\n` +
       `Delivery Address: ${order.addressSnapshot}, ${order.citySnapshot}, ${order.stateSnapshot} - ${order.pincodeSnapshot}`;
 
-    return buildWhatsAppUrl(message, businessSettings.contact.whatsappNumber);
+    return buildWhatsAppUrl(message);
   };
 
   return (
@@ -222,9 +221,7 @@ export default function CustomerOrderDetailPage({ params }: PageProps) {
                             <tr key={item.id} className="text-ink">
                               <td className="py-3">
                                 <div className="font-medium">
-                                  {isHi
-                                    ? (item.productNameHi || item.productName)
-                                    : (item.productNameEn || item.productName)}
+                                  {item.productNameEn || item.productName}
                                 </div>
                                 {item.productCode ? (
                                   <div className="font-mono text-[11px] text-muted">

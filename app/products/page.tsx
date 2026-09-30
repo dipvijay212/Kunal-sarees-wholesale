@@ -50,7 +50,11 @@ export async function generateMetadata({ searchParams }: PageProps<"/products">)
 }
 
 export default async function ProductsPage({ searchParams }: PageProps<"/products">) {
-  const [products, category] = await Promise.all([fetchProducts(), searchParams.then(resolveCategory)]);
+  const [products, categories, category] = await Promise.all([
+    fetchProducts(),
+    categoryRepository.fetchAll(),
+    searchParams.then(resolveCategory),
+  ]);
 
   const breadcrumbs: BreadcrumbItem[] = [
     { name: "Home", path: "/" },
@@ -61,7 +65,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/product
   return (
     <>
       <JsonLd data={jsonLdGraph(breadcrumbJsonLd(breadcrumbs))} />
-      <ProductsPageContent products={products} />
+      <ProductsPageContent products={products} categories={categories} />
     </>
   );
 }

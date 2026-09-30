@@ -1317,37 +1317,18 @@ export interface Localizable {
 export function getLocalizedValue<T extends Localizable>(
   item: T | null | undefined,
   field: string,
-  lang: Language = "hi"
+  // Kept for call-site compatibility; database content is always English.
+  _lang: Language = "hi"
 ): string {
   if (!item) return "";
 
-  const isHi = lang === "hi";
-
-  // Check language-specific keys in priority order
-  const hiKeys = [`${field}_hi`, `${field}Hi`];
-  const enKeys = [`${field}_en`, `${field}En`];
-
-  const primaryKeys = isHi ? hiKeys : enKeys;
-  const fallbackKeys = isHi ? enKeys : hiKeys;
-
-  for (const key of primaryKeys) {
+  // Catalogue data from the database is stored in English only. Choosing Hindi changes
+  // the site's built-in text (dictionaries in this file), not product/category data.
+  for (const key of [`${field}_en`, `${field}En`, field]) {
     const val = item[key];
     if (typeof val === "string" && val.trim().length > 0) {
       return val;
     }
-  }
-
-  for (const key of fallbackKeys) {
-    const val = item[key];
-    if (typeof val === "string" && val.trim().length > 0) {
-      return val;
-    }
-  }
-
-  // Base field check
-  const baseVal = item[field];
-  if (typeof baseVal === "string" && baseVal.trim().length > 0) {
-    return baseVal;
   }
 
   return "";

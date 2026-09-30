@@ -11,7 +11,6 @@ import { Container } from "@/components/ui/Container";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BagIcon, LockIcon, WhatsAppIcon, UserIcon } from "@/components/ui/Icons";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { businessSettings } from "@/data/business";
 import { useOrderList } from "@/hooks/use-order-list";
 import { useCustomer } from "@/hooks/use-customer";
 import { formatPieces, formatPrice } from "@/lib/format";
@@ -209,7 +208,7 @@ export default function CheckoutPage() {
 
       // Format WhatsApp Message with confirmed order number
       const messageText = buildCheckoutWhatsAppMessage(formData, lines, summary);
-      const whatsappUrl = buildWhatsAppUrl(messageText, businessSettings.contact.whatsappNumber);
+      const whatsappUrl = buildWhatsAppUrl(messageText);
 
       const placedOrder: PlacedOrder = {
         id: `ord-${Date.now()}`,
@@ -218,7 +217,7 @@ export default function CheckoutPage() {
         items: lines.map(({ product, item, lineTotal }) => ({
           productId: product.id,
           productCode: product.productCode,
-          productName: isHi ? (product.name_hi || product.name) : (product.name_en || product.name),
+          productName: product.name_en || product.name,
           quantity: item.quantity,
           price: product.price,
           lineTotal,
@@ -255,7 +254,7 @@ export default function CheckoutPage() {
       const randomDigits = Math.floor(1000 + Math.random() * 9000);
       const fallbackOrderNumber = `KS-ORD-2026-${randomDigits}`;
       const messageText = buildCheckoutWhatsAppMessage(formData, lines, summary);
-      const whatsappUrl = buildWhatsAppUrl(messageText, businessSettings.contact.whatsappNumber);
+      const whatsappUrl = buildWhatsAppUrl(messageText);
 
       const placedOrder: PlacedOrder = {
         id: `ord-${Date.now()}`,
@@ -264,7 +263,7 @@ export default function CheckoutPage() {
         items: lines.map(({ product, item, lineTotal }) => ({
           productId: product.id,
           productCode: product.productCode,
-          productName: isHi ? (product.name_hi || product.name) : (product.name_en || product.name),
+          productName: product.name_en || product.name,
           quantity: item.quantity,
           price: product.price,
           lineTotal,

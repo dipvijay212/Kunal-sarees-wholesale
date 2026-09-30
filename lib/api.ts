@@ -547,7 +547,24 @@ export const ordersApi = {
   },
 };
 
+/** Business contact details saved in Admin → Settings (see backend setting.controller.js). */
+export interface StoredBusinessSettings {
+  businessName: string | null;
+  contact: {
+    whatsappNumber: string | null;
+    phoneDisplay: string | null;
+    email: string | null;
+    address: { lines: string[]; city: string; region: string; postalCode: string; country: string };
+    hours: { days: string; hours: string }[];
+  };
+  social: { platform: 'instagram' | 'facebook' | 'youtube'; label: string; href: string }[];
+}
+
 export const settingsApi = {
+  getBusiness: async () => {
+    return request<{ businessSettings: StoredBusinessSettings | null }>('/settings/business');
+  },
+
   getLanguage: async () => {
     return request<{
       defaultLanguage: 'hi' | 'en';
@@ -779,6 +796,13 @@ export const adminApi = {
         allowCustomerLanguageSwitch: boolean;
         updatedAt?: string;
       }>('/admin/settings/language', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
+    },
+
+    updateBusiness: async (data: StoredBusinessSettings) => {
+      return request<{ businessSettings: StoredBusinessSettings }>('/admin/settings/business', {
         method: 'PATCH',
         body: JSON.stringify(data),
       });

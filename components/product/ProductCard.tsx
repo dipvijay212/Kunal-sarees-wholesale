@@ -12,7 +12,6 @@ import { getQuantityRules } from "@/lib/quantity";
 import type { Product } from "@/types";
 import { AddToOrderButton } from "./AddToOrderButton";
 import { ProductImageCarousel } from "./ProductImageCarousel";
-import { StockStatusLabel } from "./StockStatusLabel";
 import { WishlistButton } from "./WishlistButton";
 
 export interface ProductCardProps {
@@ -116,8 +115,6 @@ export function ProductCard({
               {t.products.moq} {min} {t.products.pieces}
             </span>
           </div>
-
-          <StockStatusLabel product={product} className="mt-2" />
 
           {showAddToOrder ? <AddToOrderButton product={product} className="mt-3.5 relative z-10" /> : null}
         </div>

@@ -1,16 +1,13 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input, Select } from "@/components/ui/FormField";
-import { Modal } from "@/components/ui/Modal";
 import {
-  CheckIcon,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
@@ -20,17 +17,15 @@ import {
 } from "@/components/ui/Icons";
 import {
   filterProducts,
-  getAvailabilityOptions,
   getCategoryById,
   getCategoryOptions,
   getCollectionById,
-  getColorOptions,
-  getFabricOptions,
+  CATALOGUE_SEARCH_EVENT,
   parseCatalogueFilters,
 } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
-import type { CatalogueFilters, Product } from "@/types";
+import type { CatalogueFilters, Category, Product } from "@/types";
 import { ProductGrid } from "./ProductGrid";
 
 const ITEMS_PER_PAGE = 12;
@@ -69,11 +64,13 @@ function formatSareeTypeLabel(name: string): string {
 
 interface CatalogueBrowserProps {
   products: Product[];
+  /** Categories from the API; the client-side category store is empty on the storefront. */
+  categories?: Category[];
   /** Optional override title or pre-filtered collection context (used on /collections/[slug]) */
   defaultCollectionId?: string;
 }
 
-export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBrowserProps) {
+export function CatalogueBrowser({ products, categories, defaultCollectionId }: CatalogueBrowserProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -81,25 +78,25 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
   const { t, getLocalized, language } = useLanguage();
 
   const [isMobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [isMoreFiltersOpen, setMoreFiltersOpen] = useState(false);
-  const [showAllColors, setShowAllColors] = useState(false);
 
-  const filters = parseCatalogueFilters(searchParams);
+  const filters = parseCatalogueFilters(searchParams, categories);
+  const findCategory = (id: string) => categories?.find((category) => category.id === id) ?? getCategoryById(id);
 
   // If component is configured with a defaultCollectionId (e.g. inside /collections/[slug])
   const activeCollectionId = defaultCollectionId ?? filters.collectionId;
   const effectiveFilters: CatalogueFilters = {
     ...filters,
     collectionId: activeCollectionId,
+    // Fabric, colour and availability filters were removed from the UI; ignore them in old links.
+    fabric: null,
+    color: null,
+    availability: null,
   };
 
-  const results = filterProducts(products, effectiveFilters);
+  const results = filterProducts(products, effectiveFilters, categories);
 
   // Derived options from product pool
-  const categoryOptions = getCategoryOptions(products);
-  const fabricOptions = getFabricOptions(products);
-  const colorOptions = getColorOptions(products);
-  const availabilityOptions = getAvailabilityOptions(products);
+  const categoryOptions = getCategoryOptions(products, categories);
 
   const sortOptionsList = [
     { value: "newest", label: t.filters.sortOptions.newest },
@@ -136,11 +133,22 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
     });
   };
 
+  // The box keeps exactly what is typed (including a trailing space between words);
+  // the URL and the search itself use the trimmed text. Clearing actions reset it below.
+  const [searchText, setSearchText] = useState(filters.query ?? "");
+  useEffect(() => {
+    const onExternalSearch = (event: Event) => setSearchText((event as CustomEvent<string>).detail);
+    window.addEventListener(CATALOGUE_SEARCH_EVENT, onExternalSearch);
+    return () => window.removeEventListener(CATALOGUE_SEARCH_EVENT, onExternalSearch);
+  }, []);
+
   const handleSearchChange = (query: string) => {
-    updateParams({ q: query || null, page: 1 });
+    setSearchText(query);
+    updateParams({ q: query.trim() || null, page: 1 });
   };
 
   const clearAllFilters = () => {
+    setSearchText("");
     updateParams({
       q: null,
       category: null,
@@ -154,16 +162,8 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
     });
   };
 
-  const clearMoreFilters = () => {
-    updateParams({
-      fabric: null,
-      color: null,
-      availability: null,
-      page: 1,
-    });
-  };
-
   const removeFilter = (key: RemovableFilterKey) => {
+    if (key === "query") setSearchText("");
     if (key === "price") {
       updateParams({ minPrice: null, maxPrice: null, page: 1 });
     } else {
@@ -175,7 +175,7 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
   const activeFilters: { key: RemovableFilterKey; label: string }[] = [];
   if (effectiveFilters.query) activeFilters.push({ key: "query", label: `${t.search.title}: “${effectiveFilters.query}”` });
   if (effectiveFilters.categoryId) {
-    const rawCategory = getCategoryById(effectiveFilters.categoryId);
+    const rawCategory = findCategory(effectiveFilters.categoryId);
     const catDisplayName = rawCategory ? (getLocalized(rawCategory, "name") || rawCategory.name) : effectiveFilters.categoryId;
     activeFilters.push({
       key: "categoryId",
@@ -202,23 +202,6 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
       activeFilters.push({ key: "price", label: `${t.filters.price}: ${min} – ${max}` });
     }
   }
-  if (effectiveFilters.fabric) activeFilters.push({ key: "fabric", label: `${t.filters.fabric}: ${effectiveFilters.fabric}` });
-  if (effectiveFilters.color) activeFilters.push({ key: "color", label: `${t.filters.color}: ${effectiveFilters.color}` });
-  if (effectiveFilters.availability) {
-    const avLabel =
-      availabilityOptions.find((a) => a.value === effectiveFilters.availability)?.label ?? effectiveFilters.availability;
-    activeFilters.push({ key: "availability", label: `${t.filters.availability}: ${avLabel}` });
-  }
-
-  // Count filters inside "More Filters" (fabric, color, availability)
-  const moreFiltersCount =
-    (effectiveFilters.fabric ? 1 : 0) +
-    (effectiveFilters.color ? 1 : 0) +
-    (effectiveFilters.availability ? 1 : 0);
-
-  // Visible colors in swatch selector (first 10, or all if expanded)
-  const visibleColorOptions = showAllColors ? colorOptions : colorOptions.slice(0, 10);
-
   /* -------------------------------------------------------------------------- */
   /* Sidebar Filter Sections: Saree Type & Price                                */
   /* -------------------------------------------------------------------------- */
@@ -254,7 +237,7 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
           </button>
         </li>
         {categoryOptions.map((option) => {
-          const category = getCategoryById(option.value);
+          const category = findCategory(option.value);
           const isSelected = effectiveFilters.categoryId === option.value;
           const displayLabel = category ? formatSareeTypeLabel(getLocalized(category, "name") || category.name) : formatSareeTypeLabel(option.label);
           return (
@@ -360,147 +343,6 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
   /* "More Filters" Inner Content (Fabric, Color Swatches, Availability)         */
   /* -------------------------------------------------------------------------- */
 
-  const renderMoreFiltersContent = () => (
-    <div className="flex flex-col gap-6">
-      {/* Fabric Section */}
-      <fieldset>
-        <legend className="type-eyebrow text-ink font-semibold tracking-wide uppercase text-xs mb-3">
-          {t.filters.fabric}
-        </legend>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {fabricOptions.map((opt) => {
-            const isSelected = effectiveFilters.fabric === opt.value;
-            return (
-              <label
-                key={opt.value}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-xs border text-xs sm:text-sm cursor-pointer select-none transition-all",
-                  isSelected
-                    ? "border-maroon bg-accent-soft text-maroon font-semibold shadow-xs"
-                    : "border-line bg-canvas hover:border-line-strong text-ink",
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => updateParams({ fabric: isSelected ? null : opt.value, page: 1 })}
-                  className="accent-maroon size-4 rounded-xs"
-                />
-                <span className="truncate">{opt.label}</span>
-              </label>
-            );
-          })}
-        </div>
-      </fieldset>
-
-      {/* Color Section with Visual Swatches Grid */}
-      <fieldset className="border-t border-line pt-6">
-        <div className="flex items-center justify-between mb-3">
-          <legend className="type-eyebrow text-ink font-semibold tracking-wide uppercase text-xs">
-            {t.filters.color}
-          </legend>
-          {effectiveFilters.color && (
-            <span className="text-xs font-semibold text-maroon">{effectiveFilters.color}</span>
-          )}
-        </div>
-        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
-          {visibleColorOptions.map((color) => {
-            const isSelected = effectiveFilters.color?.toLowerCase() === color.value.toLowerCase();
-            return (
-              <button
-                key={color.value}
-                type="button"
-                onClick={() => updateParams({ color: isSelected ? null : color.value, page: 1 })}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 p-2 rounded-xs border transition-all text-center group",
-                  isSelected
-                    ? "border-maroon bg-accent-soft shadow-xs"
-                    : "border-line bg-canvas hover:border-line-strong",
-                )}
-                title={color.label}
-              >
-                <span
-                  className={cn(
-                    "size-6 rounded-full border border-black/15 shadow-2xs flex items-center justify-center transition-transform group-hover:scale-110",
-                    isSelected && "ring-2 ring-maroon ring-offset-1",
-                  )}
-                  style={{ backgroundColor: color.hex }}
-                >
-                  {isSelected && (
-                    <CheckIcon
-                      size={12}
-                      className={cn(
-                        color.hex.toLowerCase() === "#ede6d6" ||
-                          color.hex.toLowerCase() === "#ffffff" ||
-                          color.hex.toLowerCase() === "#b9cad6"
-                          ? "text-black"
-                          : "text-white",
-                      )}
-                    />
-                  )}
-                </span>
-                <span
-                  className={cn(
-                    "text-[0.6875rem] truncate w-full",
-                    isSelected ? "font-semibold text-maroon" : "text-muted group-hover:text-ink",
-                  )}
-                >
-                  {color.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {colorOptions.length > 10 && (
-          <button
-            type="button"
-            onClick={() => setShowAllColors((prev) => !prev)}
-            className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-maroon hover:underline"
-          >
-            {showAllColors
-              ? t.filters.showLess
-              : `${t.filters.showMore} (${colorOptions.length - 10} ${language === "en" ? "more" : "और"})`}
-            <ChevronDownIcon size={14} className={cn("transition-transform", showAllColors && "rotate-180")} />
-          </button>
-        )}
-      </fieldset>
-
-      {/* Stock / Availability Section */}
-      <fieldset className="border-t border-line pt-6">
-        <legend className="type-eyebrow text-ink font-semibold tracking-wide uppercase text-xs mb-3">
-          {t.filters.availability}
-        </legend>
-        <div className="grid grid-cols-2 gap-2">
-          {availabilityOptions
-            .filter((opt) => opt.value !== "out-of-stock")
-            .map((opt) => {
-              const isSelected = effectiveFilters.availability === opt.value;
-              return (
-                <label
-                  key={opt.value}
-                  className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 rounded-xs border text-xs sm:text-sm cursor-pointer select-none transition-all",
-                    isSelected
-                      ? "border-maroon bg-accent-soft text-maroon font-semibold shadow-xs"
-                      : "border-line bg-canvas hover:border-line-strong text-ink",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => updateParams({ availability: isSelected ? null : opt.value, page: 1 })}
-                    className="accent-maroon size-4 rounded-xs"
-                  />
-                  <span>{opt.label}</span>
-                </label>
-              );
-            })}
-        </div>
-      </fieldset>
-    </div>
-  );
-
   /* -------------------------------------------------------------------------- */
   /* Main Render                                                                */
   /* -------------------------------------------------------------------------- */
@@ -514,12 +356,12 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
         </div>
         <Input
           type="text"
-          value={effectiveFilters.query ?? ""}
+          value={searchText}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder={t.search.placeholder}
           className="h-12 w-full rounded-xs border-line bg-canvas pl-11 pr-10 text-sm shadow-2xs placeholder:text-muted focus:border-maroon"
         />
-        {effectiveFilters.query ? (
+        {searchText ? (
           <button
             type="button"
             onClick={() => handleSearchChange("")}
@@ -557,16 +399,6 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
 
             {/* More Filters Trigger */}
             <div className="pt-4 border-t border-line flex flex-col gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                fullWidth
-                onClick={() => setMoreFiltersOpen(true)}
-                leadingIcon={<FilterIcon size={15} />}
-                className="font-medium tracking-wide justify-center"
-              >
-                {t.filters.moreFilters} {moreFiltersCount > 0 ? `(${moreFiltersCount})` : ""}
-              </Button>
               {activeFilters.length > 0 && (
                 <button
                   type="button"
@@ -733,32 +565,6 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
         </div>
       </div>
 
-      {/* "More Filters" Modal (Desktop & Tablet) */}
-      <Modal
-        open={isMoreFiltersOpen}
-        onClose={() => setMoreFiltersOpen(false)}
-        title={t.filters.moreFilters}
-        description={language === "en" ? "Filter by fabric, color, and stock status" : "फैब्रिक, कलर और स्टॉक के अनुसार साड़ियां चुनें"}
-        size="md"
-        footer={
-          <div className="flex items-center justify-between w-full gap-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={clearMoreFilters}
-              disabled={moreFiltersCount === 0}
-            >
-              {t.filters.clearAll}
-            </Button>
-            <Button size="sm" onClick={() => setMoreFiltersOpen(false)}>
-              {t.filters.apply} ({totalItems} {t.products.pieces})
-            </Button>
-          </div>
-        }
-      >
-        {renderMoreFiltersContent()}
-      </Modal>
-
       {/* Mobile Filter Drawer (Complete Experience) */}
       <Drawer
         open={isMobileFilterOpen}
@@ -784,12 +590,6 @@ export function CatalogueBrowser({ products, defaultCollectionId }: CatalogueBro
         <div className="flex flex-col gap-5 pb-6">
           {renderSareeTypeFilter()}
           {renderPriceFilter()}
-          <div className="border-t border-line pt-5">
-            <h3 className="type-eyebrow text-gold-accent font-semibold tracking-[0.12em] uppercase text-[0.6875rem] mb-4">
-              {t.filters.moreFilters}
-            </h3>
-            {renderMoreFiltersContent()}
-          </div>
         </div>
       </Drawer>
     </div>

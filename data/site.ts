@@ -1,3 +1,5 @@
+import { getLiveSettings } from "@/lib/business-settings";
+import type { BusinessSettings } from "@/types";
 import { businessSettings } from "./business";
 
 /**
@@ -17,13 +19,14 @@ export const siteConfig = {
   social: businessSettings.social,
 } as const;
 
-/** Single-line postal address, e.g. for map links and structured data. */
-export function formatAddress(separator = ", "): string {
-  const { address } = businessSettings.contact;
-  return [...address.lines, `${address.city}, ${address.region} ${address.postalCode}`, address.country].join(separator);
+/** Single-line postal address from the saved (database) settings, e.g. for map links. */
+export function formatAddress(separator = ", ", settings: BusinessSettings = getLiveSettings()): string {
+  const { address } = settings.contact;
+  const cityLine = [address.city, [address.region, address.postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  return [...address.lines, cityLine, address.country].filter(Boolean).join(separator);
 }
 
-/** Google Maps search link for the business address. */
-export function getDirectionsUrl(): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${siteConfig.name}, ${formatAddress()}`)}`;
+/** Google Maps search link for the saved business address. */
+export function getDirectionsUrl(settings: BusinessSettings = getLiveSettings()): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${settings.businessName}, ${formatAddress(", ", settings)}`)}`;
 }

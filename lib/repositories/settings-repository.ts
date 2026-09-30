@@ -1,5 +1,5 @@
-import { adminSettingsStore, updateAdminSettings } from "@/lib/admin-stores";
-import { businessSettings as staticSettings } from "@/data/business";
+import { updateAdminSettings } from "@/lib/admin-stores";
+import { getLiveSettings } from "@/lib/business-settings";
 import type { BusinessSettings } from "@/types";
 
 export interface SettingsRepository {
@@ -8,9 +8,9 @@ export interface SettingsRepository {
 }
 
 export const settingsRepository: SettingsRepository = {
+  /** Database-backed settings provided by the root layout (see SettingsProvider). */
   get() {
-    if (typeof window === "undefined") return staticSettings;
-    return adminSettingsStore.getSnapshot();
+    return getLiveSettings();
   },
 
   update(data) {

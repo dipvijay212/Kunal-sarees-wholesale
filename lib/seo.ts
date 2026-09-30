@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { businessSettings } from "@/data/business";
 import { siteConfig } from "@/data/site";
+import type { LiveBusinessSettings } from "@/lib/business-settings";
 import { formatPrice } from "@/lib/format";
 import type { Category, Product } from "@/types";
 
@@ -213,11 +214,13 @@ export const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
 /**
- * Business entity. Only confirmed details are published: data/business.ts marks the
- * street address, email, hours, GSTIN and social URLs as placeholders, so they are omitted.
+ * Business entity from the settings saved in Admin → Settings. Until the admin has saved
+ * them, only confirmed basics are published (the built-in defaults are placeholders).
  */
-export function organizationJsonLd() {
-  const { address, whatsappNumber } = businessSettings.contact;
+export function organizationJsonLd(live: LiveBusinessSettings = { settings: businessSettings, fromDatabase: false }) {
+  const { settings, fromDatabase } = live;
+  const { address, whatsappNumber, email } = settings.contact;
+  const streetAddress = fromDatabase ? address.lines.join(", ") : "";
   return {
     "@type": "WholesaleStore",
     "@id": ORGANIZATION_ID,
@@ -227,12 +230,16 @@ export function organizationJsonLd() {
     image: absoluteUrl(siteConfig.brand.ogImage),
     description: DEFAULT_DESCRIPTION,
     telephone: `+${whatsappNumber}`,
+    ...(fromDatabase && email ? { email } : {}),
     address: {
       "@type": "PostalAddress",
-      addressLocality: address.city,
-      addressRegion: address.region,
+      ...(streetAddress ? { streetAddress } : {}),
+      ...(address.city ? { addressLocality: address.city } : {}),
+      ...(address.region ? { addressRegion: address.region } : {}),
+      ...(fromDatabase && address.postalCode ? { postalCode: address.postalCode } : {}),
       addressCountry: "IN",
     },
+    ...(fromDatabase && settings.social.length > 0 ? { sameAs: settings.social.map((link) => link.href) } : {}),
     areaServed: { "@type": "Country", name: "India" },
   };
 }

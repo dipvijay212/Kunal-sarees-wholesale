@@ -135,10 +135,8 @@ function parseWhatsAppSareeText(rawText: string) {
   if (colorMatch) {
     if (colorMatch[1] && !isNaN(Number(colorMatch[1]))) {
       result.color_en = `${colorMatch[1]} Colors Matching Set`;
-      result.color_hi = `${colorMatch[1]} कलर्स मैचिंग सेट`;
     } else if (colorMatch[1]) {
       result.color_en = colorMatch[1].trim();
-      result.color_hi = colorMatch[1].trim();
     }
   }
 

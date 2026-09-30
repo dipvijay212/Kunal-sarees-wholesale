@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/FormField";
 import { Modal } from "@/components/ui/Modal";
 import { WhatsAppIcon } from "@/components/ui/Icons";
-import { siteConfig } from "@/data/site";
+import { useSettings } from "@/hooks/use-settings";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { clearOrderList } from "@/lib/stores";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -20,6 +20,7 @@ interface OrderCheckoutModalProps {
 }
 
 export function OrderCheckoutModal({ open, onClose, lines, summary }: OrderCheckoutModalProps) {
+  const settings = useSettings();
   const { language } = useLanguage();
   const isHi = language === "hi";
 
@@ -45,7 +46,7 @@ export function OrderCheckoutModal({ open, onClose, lines, summary }: OrderCheck
 
     // Format WhatsApp Order Message
     const messageLines: string[] = [
-      isHi ? `नमस्ते ${siteConfig.name},` : `Hello ${siteConfig.name},`,
+      isHi ? `नमस्ते ${settings.businessName},` : `Hello ${settings.businessName},`,
       "",
       isHi
         ? "मैं नीचे दी गई साड़ियों का होलसेल ऑर्डर देना चाहता/चाहती हूँ:"
@@ -64,7 +65,7 @@ export function OrderCheckoutModal({ open, onClose, lines, summary }: OrderCheck
 
     messageLines.push("", isHi ? "🛍️ *ऑर्डर की साड़ियां*" : "🛍️ *Selected Sarees*");
     lines.forEach(({ product, item, lineTotal }, idx) => {
-      const prodName = isHi ? (product.name_hi || product.name) : (product.name_en || product.name);
+      const prodName = product.name_en || product.name;
       messageLines.push(`${idx + 1}. ${prodName} (${product.productCode})`);
 
       // Add selected colors breakdown if available

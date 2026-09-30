@@ -7,10 +7,11 @@ import { useUI } from "@/components/providers/UIProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Container } from "@/components/ui/Container";
 import { IconButton } from "@/components/ui/IconButton";
-import { BagIcon, MenuIcon, SearchIcon } from "@/components/ui/Icons";
+import { BagIcon, HeartIcon, MenuIcon, SearchIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { getMainNavigation } from "@/data/navigation";
 import { useOrderList } from "@/hooks/use-order-list";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { useScrolled } from "@/hooks/use-scrolled";
 import { cn } from "@/lib/cn";
 import { getActiveHref } from "@/lib/navigation";
@@ -37,6 +38,7 @@ export function Header() {
   const { summary } = useOrderList();
 
   const orderCount = summary.designCount;
+  const { count: savedCount } = useWishlist();
   const orderLabel = orderCount > 0 
     ? `${t.nav.orderList} (${orderCount} ${t.products.pieces})` 
     : t.nav.orderList;
@@ -91,6 +93,14 @@ export function Header() {
               onClick={openSearch}
               aria-haspopup="dialog"
               className="hidden lg:inline-flex text-ink hover:text-maroon hover:bg-accent-soft"
+            />
+
+            <IconButton
+              href="/wishlist"
+              label={savedCount > 0 ? `${t.wishlist.title} (${savedCount})` : t.wishlist.title}
+              icon={<HeartIcon size={20} />}
+              badge={savedCount}
+              className="text-ink hover:text-maroon hover:bg-accent-soft"
             />
 
             <IconButton

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { logoutAdmin } from "@/lib/admin-stores";
+import { useLocalStore } from "@/hooks/use-local-store";
+import { adminAuthStore, logoutAdmin } from "@/lib/admin-stores";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { MenuIcon } from "@/components/ui/Icons";
@@ -14,6 +15,7 @@ export function AdminHeader({
   onOpenMobileMenu?: () => void;
 }) {
   const router = useRouter();
+  const session = useLocalStore(adminAuthStore);
 
   const handleLogout = () => {
     logoutAdmin();
@@ -42,7 +44,7 @@ export function AdminHeader({
           </div>
           <div className="text-left">
             <p className="font-semibold text-ink leading-tight">Admin User</p>
-            <p className="text-[0.625rem] text-muted">admin@kunalsarees.com</p>
+            <p className="text-[0.625rem] text-muted">{session.email}</p>
           </div>
         </div>
 

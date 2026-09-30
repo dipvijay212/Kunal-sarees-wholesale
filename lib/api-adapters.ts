@@ -76,7 +76,7 @@ function deriveSpecifications(product: BackendProduct): ProductSpecifications {
   const isSilk = fabric.toLowerCase().includes('silk');
   const isCotton = fabric.toLowerCase().includes('cotton');
 
-  const desc = product.description || product.description_en || product.description_hi || '';
+  const desc = product.description_en || product.description || '';
   const sareeCutMatch = desc.match(/Saree Cut:\s*([^|\n]+)/i);
   const blouseMatch = desc.match(/Blouse:\s*([^|\n]+)/i);
 
@@ -107,7 +107,7 @@ function productImageAlt(altText: string | null | undefined, productName: string
 }
 
 export function adaptProduct(backend: BackendProduct): Product {
-  const colorString = backend.color_en || backend.color || backend.color_hi || 'Red';
+  const colorString = backend.color_en || backend.color || 'Red';
   const colors = parseColors(colorString);
 
   // Sort images strictly by displayOrder so the primary cover image is guaranteed to be at index 0
@@ -118,7 +118,7 @@ export function adaptProduct(backend: BackendProduct): Product {
           .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
           .map((img, index) => ({
             url: img.imageUrl,
-            alt: productImageAlt(img.altText, backend.name_hi || backend.name, index),
+            alt: productImageAlt(img.altText, backend.name_en || backend.nameEn || backend.name, index),
             width: 1200,
             height: 1600,
           }))
@@ -155,24 +155,26 @@ export function adaptProduct(backend: BackendProduct): Product {
 
   const price = typeof backend.price === 'string' ? parseFloat(backend.price) : backend.price;
 
-  const displayName = backend.name_hi || backend.nameHi || backend.name || backend.name_en || backend.nameEn || 'साड़ी';
-  const nameEn = backend.name_en || backend.nameEn || backend.name;
-  const nameHi = backend.name_hi || backend.nameHi || backend.name;
+  // Database content is English only. The *_hi fields mirror the English values, so
+  // Hindi mode shows the same product data; only the site's built-in text is translated.
+  const displayName = backend.name_en || backend.nameEn || backend.name || 'Saree';
+  const nameEn = displayName;
+  const nameHi = displayName;
 
-  const displayDesc = backend.description_hi || backend.descriptionHi || backend.description || backend.description_en || backend.descriptionEn || displayName;
-  const descEn = backend.description_en || backend.descriptionEn || backend.description || displayName;
-  const descHi = backend.description_hi || backend.descriptionHi || backend.description || displayName;
+  const displayDesc = backend.description_en || backend.descriptionEn || backend.description || displayName;
+  const descEn = displayDesc;
+  const descHi = displayDesc;
 
-  const displayShort = backend.short_description_hi || backend.shortDescriptionHi || backend.shortDescription || backend.short_description_en || backend.shortDescriptionEn || displayDesc;
-  const shortEn = backend.short_description_en || backend.shortDescriptionEn || backend.shortDescription || displayDesc;
-  const shortHi = backend.short_description_hi || backend.shortDescriptionHi || backend.shortDescription || displayDesc;
+  const displayShort = backend.short_description_en || backend.shortDescriptionEn || backend.shortDescription || displayDesc;
+  const shortEn = displayShort;
+  const shortHi = displayShort;
 
-  const displayFabric = backend.fabric_hi || backend.fabricHi || backend.fabric || backend.fabric_en || backend.fabricEn || 'बनारसी सिल्क';
-  const fabricEn = backend.fabric_en || backend.fabricEn || backend.fabric || 'Banarasi Silk';
-  const fabricHi = backend.fabric_hi || backend.fabricHi || backend.fabric || 'बनारसी सिल्क';
+  const displayFabric = backend.fabric_en || backend.fabricEn || backend.fabric || '';
+  const fabricEn = displayFabric;
+  const fabricHi = displayFabric;
 
-  const colorEn = backend.color_en || backend.colorEn || backend.color || 'Red';
-  const colorHi = backend.color_hi || backend.colorHi || backend.color || 'लाल';
+  const colorEn = backend.color_en || backend.colorEn || backend.color || '';
+  const colorHi = colorEn;
 
   // Extract design if noted in description or fallback
   const designMatch = displayDesc.match(/(?:Work|Design|काम):\s*([^|\n]+)/i);
@@ -216,11 +218,8 @@ export function adaptProduct(backend: BackendProduct): Product {
       price,
     })),
     specifications: deriveSpecifications(backend),
-    highlights: [
-      displayFabric ? `प्रीमियम ${displayFabric}` : 'प्रीमियम हैंडलूम',
-      'बारीक जरी बॉर्डर और शानदार फिनिशिंग',
-      `सूरत डायरेक्ट होलसेल कम से कम ऑर्डर: ${backend.minimumOrderQuantity} पीस`,
-    ],
+    // Built on the product page from real fields, in the visitor's site language.
+    highlights: [],
     featured: Boolean(backend.isFeatured),
     newArrival: Boolean(backend.isNew),
     status: backend.isAvailable ? 'active' : 'draft',
@@ -248,13 +247,15 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
     CATEGORY_IMAGES[backend.slug] ||
     'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85';
 
-  const displayName = backend.name || backend.name_en || backend.nameEn || backend.name_hi || backend.nameHi || 'साड़ी';
-  const nameEn = backend.name_en || backend.nameEn || backend.name;
-  const nameHi = backend.name_hi || backend.nameHi || backend.name;
+  // English only (see adaptProduct); *_hi mirrors the English value.
+  const displayName = backend.name_en || backend.nameEn || backend.name || 'Sarees';
+  const nameEn = displayName;
+  const nameHi = displayName;
 
-  const displayDesc = backend.description || backend.description_en || backend.descriptionEn || backend.description_hi || backend.descriptionHi || `प्रीमियम होलसेल ${displayName} साड़ियों का खूबसूरत कलेक्शन।`;
-  const descEn = (backend.description_en || backend.descriptionEn || backend.description) ?? undefined;
-  const descHi = (backend.description_hi || backend.descriptionHi || backend.description) ?? undefined;
+  // No generated fallback: cards hide the description line when the admin hasn't written one.
+  const displayDesc = backend.description_en || backend.descriptionEn || backend.description || "";
+  const descEn = displayDesc || undefined;
+  const descHi = descEn;
 
   return {
     id: `cat-${backend.id}`,
@@ -279,13 +280,13 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
 }
 
 export function adaptCollection(backend: BackendCollection, index = 0): Collection {
-  const displayName = backend.name_hi || backend.nameHi || backend.name || backend.name_en || backend.nameEn || 'कलेक्शन';
-  const nameEn = backend.name_en || backend.nameEn || backend.name;
-  const nameHi = backend.name_hi || backend.nameHi || backend.name;
+  const displayName = backend.name_en || backend.nameEn || backend.name || 'Collection';
+  const nameEn = displayName;
+  const nameHi = displayName;
 
-  const displayDesc = backend.description_hi || backend.descriptionHi || backend.description || backend.description_en || backend.descriptionEn || `खास ${displayName} होलसेल साड़ियां।`;
-  const descEn = (backend.description_en || backend.descriptionEn || backend.description) ?? undefined;
-  const descHi = (backend.description_hi || backend.descriptionHi || backend.description) ?? undefined;
+  const displayDesc = backend.description_en || backend.descriptionEn || backend.description || "";
+  const descEn = displayDesc || undefined;
+  const descHi = descEn;
 
   return {
     id: `col-${backend.id}`,
@@ -293,7 +294,7 @@ export function adaptCollection(backend: BackendCollection, index = 0): Collecti
     name_en: nameEn ?? undefined,
     name_hi: nameHi ?? undefined,
     slug: backend.slug,
-    tagline: displayDesc ? displayDesc.slice(0, 45) : 'सूरत डायरेक्ट होलसेल',
+    tagline: displayDesc ? displayDesc.slice(0, 45) : '',
     description: displayDesc,
     description_en: descEn,
     description_hi: descHi,
@@ -331,7 +332,7 @@ export function adaptOrder(backend: BackendOrder): PlacedOrder {
     items: (backend.items || []).map((item) => {
       const unitPrice = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice;
       const itemSubtotal = typeof item.subtotal === 'string' ? parseFloat(item.subtotal) : item.subtotal;
-      const displayName = item.productNameHi || item.productName || item.productNameEn || 'साड़ी';
+      const displayName = item.productNameEn || item.productName || 'Saree';
       return {
         productId: `prd-${item.productId}`,
         productCode: item.productCode,

@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { SettingsProvider } from "@/components/providers/SettingsProvider";
+import { fetchBusinessSettings } from "@/lib/business-settings";
 import { categoryRepository } from "@/lib/repositories";
 import { UIProvider } from "@/components/providers/UIProvider";
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, DEFAULT_TITLE, SITE_NAME, SITE_URL } from "@/lib/seo";
@@ -70,7 +72,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const langCookie = cookieStore.get("kunal_lang")?.value;
   const initialLang: Language = (langCookie === "en" || langCookie === "hi") ? (langCookie as Language) : "hi";
   // Footer category links come from the backend (cached request shared with the pages).
-  const footerCategories = (await categoryRepository.fetchAll())
+  // Contact details, address and social links saved in Admin → Settings (database).
+  const [categories, { settings, fromDatabase }] = await Promise.all([
+    categoryRepository.fetchAll(),
+    fetchBusinessSettings(),
+  ]);
+  const footerCategories = categories
     .slice(0, 6)
     .map(({ slug, name, name_en, name_hi }) => ({ slug, name, name_en, name_hi }));
 
@@ -85,11 +92,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-canvas text-ink antialiased">
-        <LanguageProvider initialLanguage={initialLang}>
-          <UIProvider>
-            <SiteShell footerCategories={footerCategories}>{children}</SiteShell>
-          </UIProvider>
-        </LanguageProvider>
+        <SettingsProvider settings={settings} fromDatabase={fromDatabase}>
+          <LanguageProvider initialLanguage={initialLang}>
+            <UIProvider>
+              <SiteShell footerCategories={footerCategories}>{children}</SiteShell>
+            </UIProvider>
+          </LanguageProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

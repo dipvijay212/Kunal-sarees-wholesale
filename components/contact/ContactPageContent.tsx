@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { MailIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { formatAddress, getDirectionsUrl, siteConfig } from "@/data/site";
+import { formatAddress, getDirectionsUrl } from "@/data/site";
+import { useSettings } from "@/hooks/use-settings";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
 export function ContactPageContent() {
   const { t, language } = useLanguage();
-  const { contact } = siteConfig;
+  const settings = useSettings();
+  const { contact } = settings;
   const isHi = language === "hi";
 
   const methods = [
@@ -34,16 +36,21 @@ export function ContactPageContent() {
         </a>
       ),
     },
-    {
-      icon: <MailIcon size={22} />,
-      title: isHi ? "ईमेल" : "Email",
-      description: contact.email,
-      action: (
-        <a href={`mailto:${contact.email}`} className="btn btn--secondary btn--sm">
-          {isHi ? "ईमेल भेजें" : "Send Email"}
-        </a>
-      ),
-    },
+    // Email card only once an email is saved in Admin → Settings.
+    ...(contact.email
+      ? [
+          {
+            icon: <MailIcon size={22} />,
+            title: isHi ? "ईमेल" : "Email",
+            description: contact.email,
+            action: (
+              <a href={`mailto:${contact.email}`} className="btn btn--secondary btn--sm">
+                {isHi ? "ईमेल भेजें" : "Send Email"}
+              </a>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -60,7 +67,7 @@ export function ContactPageContent() {
 
       <section aria-label="Contact channels" className="section-y-sm">
         <Container>
-          <ul className="grid gap-4 md:grid-cols-3">
+          <ul className={`grid gap-4 ${methods.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
             {methods.map((method) => (
               <li key={method.title} className="card card__body flex flex-col gap-4">
                 <span className="text-accent">{method.icon}</span>
@@ -87,20 +94,22 @@ export function ContactPageContent() {
                 : "Boutique owners and saree retailers are welcome to visit our Surat shop to inspect weaves in person. Please message ahead on WhatsApp."}
             </p>
             <ContactDetails className="mt-8" />
-            <div className="mt-8">
-              <p className="type-eyebrow text-subtle">{isHi ? "सोशल मीडिया पर जुड़ें" : "Follow Us"}</p>
-              <SocialLinks className="mt-3" />
-            </div>
+            {settings.social.length > 0 ? (
+              <div className="mt-8">
+                <p className="type-eyebrow text-subtle">{isHi ? "सोशल मीडिया पर जुड़ें" : "Follow Us"}</p>
+                <SocialLinks className="mt-3" />
+              </div>
+            ) : null}
           </div>
 
           <div className="lg:col-span-7">
             {/* Static location panel */}
             <div className="card flex aspect-[4/3] flex-col items-center justify-center gap-5 p-6 text-center sm:aspect-[16/10]">
               <p className="type-eyebrow text-accent-strong">
-                {contact.address.city}, {contact.address.region}
+                {[contact.address.city, contact.address.region].filter(Boolean).join(", ")}
               </p>
-              <p className="max-w-sm font-display text-2xl leading-snug text-ink sm:text-3xl">{formatAddress()}</p>
-              <Button href={getDirectionsUrl()} external variant="secondary" size="sm">
+              <p className="max-w-sm font-display text-2xl leading-snug text-ink sm:text-3xl">{formatAddress(", ", settings)}</p>
+              <Button href={getDirectionsUrl(settings)} external variant="secondary" size="sm">
                 {isHi ? "गूगल मैप्स पर देखें" : "View on Google Maps"}
               </Button>
             </div>

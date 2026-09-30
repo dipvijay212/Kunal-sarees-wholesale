@@ -120,9 +120,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
                   <span className="ml-1 rounded-full bg-accent px-1.5 py-0.5 text-[0.625rem] font-bold text-white">
                     {qty}
                   </span>
-                ) : (
-                  <span className="text-[0.6875rem] text-muted">({color.stock})</span>
-                )}
+                ) : null}
               </button>
             );
           })}
@@ -148,9 +146,6 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
                     style={{ backgroundColor: color.hex }}
                   />
                   <span className="text-sm font-medium text-ink">{color.name}</span>
-                  <span className="text-xs text-subtle">
-                    ({language === "en" ? "Stock" : "स्टॉक"}: {color.stock})
-                  </span>
                 </div>
 
                 <div className="flex items-center gap-2">

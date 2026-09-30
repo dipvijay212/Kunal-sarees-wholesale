@@ -8,7 +8,7 @@ import { BagIcon, ChevronRightIcon, HeartIcon, SearchIcon, UserIcon } from "@/co
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { getMainNavigation } from "@/data/navigation";
-import { siteConfig } from "@/data/site";
+import { useSettings } from "@/hooks/use-settings";
 import { useOrderList } from "@/hooks/use-order-list";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCustomer } from "@/hooks/use-customer";
@@ -28,6 +28,7 @@ const secondaryItemClass =
   "flex min-h-12 w-full items-center justify-between gap-3 text-left text-sm font-medium text-muted transition-colors hover:text-maroon";
 
 export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
+  const settings = useSettings();
   const { openSearch, openOrderList } = useUI();
   const { t, isSwitchAllowed } = useLanguage();
   const { summary } = useOrderList();
@@ -55,10 +56,10 @@ export function MobileNav({ id, open, onClose, activeHref }: MobileNavProps) {
           <WhatsAppButton fullWidth label={t.buttons.whatsappChat} />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <a
-              href={siteConfig.contact.phoneHref}
+              href={settings.contact.phoneHref}
               className="flex min-h-10 items-center text-xs font-semibold tracking-wide text-muted transition-colors hover:text-maroon"
             >
-              {siteConfig.contact.phoneDisplay}
+              {settings.contact.phoneDisplay}
             </a>
             <SocialLinks size="sm" />
           </div>

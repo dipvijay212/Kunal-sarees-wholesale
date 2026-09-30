@@ -44,7 +44,9 @@ export function ContactDetails({ showHours = true, className }: ContactDetailsPr
             </span>
           ))}
           <span className="block">
-            {contact.address.city}, {contact.address.region} {contact.address.postalCode}
+            {[contact.address.city, [contact.address.region, contact.address.postalCode].filter(Boolean).join(" ")]
+              .filter(Boolean)
+              .join(", ")}
           </span>
         </address>
         <a
@@ -69,13 +71,15 @@ export function ContactDetails({ showHours = true, className }: ContactDetailsPr
         </a>
       </DetailRow>
 
-      <DetailRow icon={<MailIcon size={18} />} label="ईमेल">
-        <a href={`mailto:${contact.email}`} className={linkClass}>
-          {contact.email}
-        </a>
-      </DetailRow>
+      {contact.email ? (
+        <DetailRow icon={<MailIcon size={18} />} label="ईमेल">
+          <a href={`mailto:${contact.email}`} className={linkClass}>
+            {contact.email}
+          </a>
+        </DetailRow>
+      ) : null}
 
-      {showHours ? (
+      {showHours && contact.hours.length > 0 ? (
         <DetailRow icon={<ClockIcon size={18} />} label="खुलने का समय">
           <dl className="flex flex-col gap-1 text-muted">
             {contact.hours.map((entry) => (

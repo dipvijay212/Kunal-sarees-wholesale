@@ -5,7 +5,6 @@ import { Breadcrumbs } from "@/components/layout/PageHeader";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 import { ProductPurchasePanel } from "@/components/product/ProductPurchasePanel";
-import { StockStatusLabel } from "@/components/product/StockStatusLabel";
 import { Badge } from "@/components/ui/Badge";
 import { Container } from "@/components/ui/Container";
 import { CheckIcon, PackageIcon, ShieldCheckIcon } from "@/components/ui/Icons";
@@ -33,6 +32,13 @@ export function ProductPageContent({
   const displayDescription = getLocalized(product, "description") || product.description;
   const displayFabric = getLocalized(product, "fabric") || product.fabric;
   const displayCategoryName = category ? (getLocalized(category, "name") || category.name) : "—";
+  // Labels follow the site language; the values are the product's own (English) data.
+  const isHindi = language === "hi";
+  const highlights = [
+    product.fabric ? `${isHindi ? "फैब्रिक" : "Fabric"}: ${product.fabric}` : null,
+    isHindi ? `कम से कम ऑर्डर: ${product.moq} पीस` : `Minimum order: ${product.moq} pieces`,
+    `${isHindi ? "डिज़ाइन कोड" : "Design code"}: ${product.productCode}`,
+  ].filter((item): item is string => Boolean(item));
   const displayCollectionName = collection ? (getLocalized(collection, "name") || collection.name) : "";
 
   const specifications = [
@@ -103,7 +109,6 @@ export function ProductPageContent({
           </div>
 
           <div className="mt-6 flex flex-col gap-4">
-            <StockStatusLabel product={product} />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
               <span>{t.productDetails.colorLabel}</span>
               <ul className="flex flex-wrap items-center gap-2">
@@ -115,7 +120,6 @@ export function ProductPageContent({
                       style={{ backgroundColor: variant.color.hex }}
                     />
                     <span className="text-ink">{variant.color.name}</span>
-                    <span className="text-xs text-subtle">({variant.stock})</span>
                   </li>
                 ))}
               </ul>
@@ -148,7 +152,7 @@ export function ProductPageContent({
               {t.productDetails.highlightsTitle}
             </h2>
             <ul className="mt-8 flex flex-col gap-4">
-              {product.highlights.map((highlight) => (
+              {highlights.map((highlight) => (
                 <li key={highlight} className="flex items-start gap-3 text-muted">
                   <CheckIcon size={18} className="mt-1 shrink-0 text-accent" />
                   {highlight}

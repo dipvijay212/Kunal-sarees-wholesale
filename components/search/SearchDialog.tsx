@@ -8,7 +8,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { ArrowRightIcon, SearchIcon } from "@/components/ui/Icons";
 import { Modal } from "@/components/ui/Modal";
 import { RemoteImage } from "@/components/ui/RemoteImage";
-import { searchCatalogue } from "@/lib/catalog";
+import { CATALOGUE_SEARCH_EVENT, searchCatalogue } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 
 const POPULAR_SEARCHES_HI = ["बनारसी", "कांजीवरम", "ऑर्गेंजा", "ब्राइडल", "जॉर्जेट", "सिल्क"];
@@ -45,6 +45,8 @@ export function SearchDialog() {
     event.preventDefault();
     if (!trimmed) return;
     router.push(resultsHref);
+    // Lets an already-open catalogue update its search box (see CatalogueBrowser).
+    window.dispatchEvent(new CustomEvent(CATALOGUE_SEARCH_EVENT, { detail: trimmed }));
     close();
   };
 

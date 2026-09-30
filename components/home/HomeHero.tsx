@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/Container";
 import { ArrowRightIcon, MailIcon, PhoneIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { siteConfig } from "@/data/site";
+import { useSettings } from "@/hooks/use-settings";
 import type { Banner } from "@/types";
 
 interface HomeHeroProps {
@@ -16,6 +16,7 @@ interface HomeHeroProps {
 
 /** Split luxury editorial hero for Kunal Sarees */
 export function HomeHero({}: HomeHeroProps) {
+  const settings = useSettings();
   const { t } = useLanguage();
 
   return (
@@ -44,7 +45,7 @@ export function HomeHero({}: HomeHeroProps) {
                 KS
               </span>
               <span className="font-serif text-xs font-bold tracking-wider text-ink uppercase">
-                {siteConfig.name}
+                {settings.businessName}
               </span>
               <span aria-hidden="true" className="text-gold">·</span>
               <span className="text-xs font-medium text-maroon-dark">
@@ -89,7 +90,7 @@ export function HomeHero({}: HomeHeroProps) {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {/* Phone & WhatsApp */}
                 <a
-                  href={siteConfig.contact.phoneHref}
+                  href={settings.contact.phoneHref}
                   className="group flex items-center gap-3.5 rounded-xs border border-line bg-surface p-3.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-maroon/50 hover:shadow-soft"
                 >
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xs bg-accent-soft text-maroon transition-colors group-hover:bg-maroon group-hover:text-white">
@@ -100,28 +101,30 @@ export function HomeHero({}: HomeHeroProps) {
                       {t.hero.callWhatsapp}
                     </span>
                     <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
-                      {siteConfig.contact.phoneDisplay}
+                      {settings.contact.phoneDisplay}
                     </span>
                   </div>
                 </a>
 
-                {/* Wholesale Email */}
-                <a
-                  href={`mailto:${siteConfig.contact.email}`}
-                  className="group flex items-center gap-3.5 rounded-xs border border-line bg-surface p-3.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/60 hover:shadow-soft"
-                >
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xs bg-gold/10 text-gold transition-colors group-hover:bg-gold group-hover:text-white">
-                    <MailIcon size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">
-                      {t.hero.wholesaleEmail}
-                    </span>
-                    <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
-                      {siteConfig.contact.email}
-                    </span>
-                  </div>
-                </a>
+                {/* Wholesale Email (shown once set in Admin → Settings) */}
+                {settings.contact.email ? (
+                  <a
+                    href={`mailto:${settings.contact.email}`}
+                    className="group flex items-center gap-3.5 rounded-xs border border-line bg-surface p-3.5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/60 hover:shadow-soft"
+                  >
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xs bg-gold/10 text-gold transition-colors group-hover:bg-gold group-hover:text-white">
+                      <MailIcon size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-[0.6875rem] font-semibold uppercase tracking-wider text-muted">
+                        {t.hero.wholesaleEmail}
+                      </span>
+                      <span className="block text-sm font-semibold text-ink transition-colors group-hover:text-maroon truncate">
+                        {settings.contact.email}
+                      </span>
+                    </div>
+                  </a>
+                ) : null}
               </div>
             </div>
           </div>

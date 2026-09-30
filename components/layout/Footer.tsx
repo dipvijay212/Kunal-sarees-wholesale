@@ -25,12 +25,16 @@ export function Footer({ categories = [] }: { categories?: FooterCategory[] }) {
   const { t, language, isSwitchAllowed } = useLanguage();
   const settings = useSettings();
   const contact = settings.contact;
+  const cityLine = [contact.address.city, [contact.address.region, contact.address.postalCode].filter(Boolean).join(" ")]
+    .filter(Boolean)
+    .join(", ");
   const year = 2026;
   const quickLinks = getFooterQuickLinks(t);
 
   // Live categories from the backend, so the footer never links to a category that doesn't exist.
   const footerCategories = categories.map((category) => ({
-    label: language === "en" ? category.name_en || category.name : category.name_hi || category.name,
+    // Category names are database content, shown in English in both site languages.
+    label: category.name_en || category.name,
     href: `/products?category=${encodeURIComponent(category.slug)}`,
   }));
 
@@ -120,8 +124,10 @@ export function Footer({ categories = [] }: { categories?: FooterCategory[] }) {
               <li className="flex items-start gap-2.5">
                 <MapPinIcon size={18} className="mt-0.5 shrink-0 text-gold-light" />
                 <address className="not-italic text-xs sm:text-sm text-cream/90">
-                  <span className="block text-cream">{contact.address.lines.join(", ")}</span>
-                  <span className="block text-cream/80">{contact.address.city}, {contact.address.region} {contact.address.postalCode}</span>
+                  {contact.address.lines.length > 0 ? (
+                    <span className="block text-cream">{contact.address.lines.join(", ")}</span>
+                  ) : null}
+                  <span className="block text-cream/80">{cityLine}</span>
                   <a
                     href={getDirectionsUrl()}
                     target="_blank"
@@ -152,12 +158,14 @@ export function Footer({ categories = [] }: { categories?: FooterCategory[] }) {
                 </a>
               </li>
 
-              <li className="flex items-center gap-2.5">
-                <MailIcon size={16} className="shrink-0 text-gold-light" />
-                <a href={`mailto:${contact.email}`} className="text-cream/90 hover:text-gold-light transition-colors text-xs sm:text-sm">
-                  {contact.email}
-                </a>
-              </li>
+              {contact.email ? (
+                <li className="flex items-center gap-2.5">
+                  <MailIcon size={16} className="shrink-0 text-gold-light" />
+                  <a href={`mailto:${contact.email}`} className="text-cream/90 hover:text-gold-light transition-colors text-xs sm:text-sm">
+                    {contact.email}
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>
