@@ -89,6 +89,23 @@ function deriveSpecifications(product: BackendProduct): ProductSpecifications {
   };
 }
 
+/**
+ * Admin uploads store the photo's file name as alt text (e.g. "IMG_20240512_101522"
+ * or "WhatsApp Image 2024-05-12 at 10.15.22"). Those are replaced with a descriptive
+ * "<product name> - view N" so screen readers and image search get meaningful text.
+ */
+function productImageAlt(altText: string | null | undefined, productName: string, index: number): string {
+  const alt = altText?.trim();
+  const looksLikeFileName =
+    !alt ||
+    /^(img|dsc|pxl|image|photo|screenshot|whatsapp image|wa\d)[\s_-]*\d/i.test(alt) ||
+    /\d{8}|\d{4}-\d{2}-\d{2}|_/.test(alt) ||
+    /^[\d\s._-]+$/.test(alt);
+  if (!looksLikeFileName) return alt;
+  const label = /saree|साड़ी/i.test(productName) ? productName : `${productName} saree`;
+  return index === 0 ? label : `${label} - view ${index + 1}`;
+}
+
 export function adaptProduct(backend: BackendProduct): Product {
   const colorString = backend.color_en || backend.color || backend.color_hi || 'Red';
   const colors = parseColors(colorString);
@@ -99,9 +116,9 @@ export function adaptProduct(backend: BackendProduct): Product {
       ? backend.images
           .slice()
           .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-          .map((img) => ({
+          .map((img, index) => ({
             url: img.imageUrl,
-            alt: img.altText || backend.name_hi || backend.name,
+            alt: productImageAlt(img.altText, backend.name_hi || backend.name, index),
             width: 1200,
             height: 1600,
           }))
@@ -254,6 +271,8 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
       width: 1200,
       height: 800,
     },
+    seoTitle: backend.seoTitle?.trim() || undefined,
+    seoDescription: backend.seoDescription?.trim() || undefined,
     featured: (backend.productCount ?? 0) > 0 || index < 6,
     order: index + 1,
   };

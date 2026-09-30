@@ -101,13 +101,6 @@ export function ProductCard({
               {product.productCode}
             </span>
           </div>
-
-          {/* Product Name */}
-          <h3 className="font-display text-lg sm:text-[1.3125rem] font-medium leading-snug text-ink mt-1.5 transition-colors group-hover:text-maroon line-clamp-2 min-h-[2.7em]">
-            <Link href={href} className="focus:outline-none hover:underline">
-              {displayName}
-            </Link>
-          </h3>
         </div>
 
         {/* Commercial & Stock Information */}

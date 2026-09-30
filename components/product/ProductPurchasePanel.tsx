@@ -6,11 +6,9 @@ import { useUI } from "@/components/providers/UIProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { BagIcon, CheckIcon, MinusIcon, PlusIcon } from "@/components/ui/Icons";
-import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { useOrderList } from "@/hooks/use-order-list";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { getQuantityRules } from "@/lib/quantity";
-import { buildMultiColorEnquiryMessage } from "@/lib/whatsapp";
 import type { Product } from "@/types";
 import { WishlistButton } from "./WishlistButton";
 
@@ -261,14 +259,6 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
               ? (language === "en" ? `Need at least ${rules.min} pcs (add ${moqDeficit} more)` : `कम से कम ${rules.min} पीस चाहिए (${moqDeficit} और जोड़ें)`)
               : (language === "en" ? `Add to Order List (${totalQuantity} pcs)` : `ऑर्डर लिस्ट में जोड़ें (${totalQuantity} पीस)`)}
         </Button>
-
-        <WhatsAppButton
-          variant="secondary"
-          size="lg"
-          fullWidth
-          label={t.productDetails.orderViaWhatsApp}
-          message={buildMultiColorEnquiryMessage(product, colorQuantities, totalQuantity)}
-        />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -295,22 +285,14 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
           </p>
           <p className="type-price text-lg text-ink">{formatPrice(estimatedTotal)}</p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            disabled={isOutOfStock || isBelowMoq}
-            onClick={handleAddToOrderList}
-            leadingIcon={<CheckIcon size={16} />}
-          >
-            {language === "en" ? `Add (${totalQuantity} pcs)` : `जोड़ें (${totalQuantity} पीस)`}
-          </Button>
-          <WhatsAppButton
-            variant="secondary"
-            size="sm"
-            label="WhatsApp"
-            message={buildMultiColorEnquiryMessage(product, colorQuantities, totalQuantity)}
-          />
-        </div>
+        <Button
+          size="sm"
+          disabled={isOutOfStock || isBelowMoq}
+          onClick={handleAddToOrderList}
+          leadingIcon={<CheckIcon size={16} />}
+        >
+          {language === "en" ? `Add (${totalQuantity} pcs)` : `जोड़ें (${totalQuantity} पीस)`}
+        </Button>
       </div>
     </div>
   );

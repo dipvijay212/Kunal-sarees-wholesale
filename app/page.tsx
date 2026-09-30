@@ -5,60 +5,45 @@ import { WholesaleCta } from "@/components/home/WholesaleCta";
 import { WholesaleHighlights } from "@/components/home/WholesaleHighlights";
 import { WhyKunalSarees } from "@/components/home/WhyKunalSarees";
 import { AboutKunalSarees } from "@/components/home/AboutKunalSarees";
-import { businessSettings } from "@/data/business";
-import { siteConfig } from "@/data/site";
+import { JsonLd } from "@/components/seo/JsonLd";
 import {
+  fetchCategories,
   fetchFeaturedCategories,
   fetchNewArrivals,
   fetchProducts,
 } from "@/lib/catalog";
+import {
+  DEFAULT_TITLE,
+  homeDescription,
+  jsonLdGraph,
+  organizationJsonLd,
+  pageMetadata,
+  websiteJsonLd,
+} from "@/lib/seo";
 
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Kunal Sarees — Surat Direct Wholesale Sarees",
-  description:
-    "Curated Banarasi, Silk, Organza and Bridal sarees for boutiques and retailers nationwide. Direct Surat wholesale prices.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "Kunal Sarees — Surat Direct Wholesale Sarees",
-    description:
-      "Curated Banarasi, Silk, Organza and Bridal sarees for boutiques and retailers nationwide. Direct Surat wholesale prices.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // Same cached requests as the page body.
+  const [categories, products] = await Promise.all([fetchCategories(), fetchProducts()]);
+  return pageMetadata({
+    title: DEFAULT_TITLE,
+    absoluteTitle: true,
+    description: homeDescription(categories, products),
+    path: "/",
+  });
+}
 
 export default async function HomePage() {
-  const products = await fetchProducts();
-  const featuredCategories = await fetchFeaturedCategories(6);
-  const newArrivals = await fetchNewArrivals(6);
-
-  const { address } = businessSettings.contact;
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WholesaleStore",
-    name: siteConfig.name,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    logo: `${siteConfig.url}${siteConfig.brand.logo.src}`,
-    telephone: `+${businessSettings.contact.whatsappNumber}`,
-    email: businessSettings.contact.email,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: address.lines.join(", "),
-      addressLocality: address.city,
-      addressRegion: address.region,
-      postalCode: address.postalCode,
-      addressCountry: "IN",
-    },
-    sameAs: siteConfig.social.map((link) => link.href),
-  };
+  const [products, featuredCategories, newArrivals] = await Promise.all([
+    fetchProducts(),
+    fetchFeaturedCategories(6),
+    fetchNewArrivals(6),
+  ]);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c") }}
-      />
+      <JsonLd data={jsonLdGraph(organizationJsonLd(), websiteJsonLd())} />
 
       {/* 1. HERO SECTION */}
       <HomeHero />

@@ -1,72 +1,100 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductPageContent } from "@/components/product/ProductPageContent";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { businessSettings } from "@/data/business";
-import { siteConfig } from "@/data/site";
 import {
   fetchProductBySlug,
   fetchProducts,
   getAvailability,
-  getCategoryById,
   getCollectionById,
   getRelatedProducts,
 } from "@/lib/catalog";
-import { formatPrice } from "@/lib/format";
+import { categoryRepository } from "@/lib/repositories";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  categoryDisplayName,
+  categoryPath,
+  isPlaceholderImage,
+  jsonLdGraph,
+  ORGANIZATION_ID,
+  pageMetadata,
+  productPath,
+  productSeo,
+  SITE_NAME,
+  truncate,
+  type BreadcrumbItem,
+} from "@/lib/seo";
+import type { ProductAvailability } from "@/types";
 
 export async function generateStaticParams() {
   const prods = await fetchProducts();
   return prods.map((product) => ({ slug: product.slug }));
 }
 
+// Products added in admin after the build render (and get their SEO) on first request.
 export const dynamicParams = true;
 
 export async function generateMetadata({ params }: PageProps<"/products/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const product = await fetchProductBySlug(slug);
-  if (!product) return {};
-
-  const name = product.name_hi || product.name;
-  const desc = product.shortDescription_hi || product.shortDescription || product.description;
-
-  return {
-    title: `${name} — ${product.fabric} Wholesale`,
-    description: `${desc} Wholesale from ${formatPrice(product.price)} per piece, MOQ ${product.moq}. Design code ${product.productCode}.`,
-    alternates: { canonical: `/products/${product.slug}` },
-    openGraph: {
-      title: `${name} | ${siteConfig.name}`,
-      description: desc,
-      images: product.images[0] ? [{ url: product.images[0].url, alt: product.images[0].alt }] : undefined,
-    },
-  };
+  if (!product) return { title: "Saree Not Found", robots: { index: false, follow: true } };
+  return pageMetadata(productSeo(product));
 }
+
+const SCHEMA_AVAILABILITY: Record<ProductAvailability, string> = {
+  "in-stock": "https://schema.org/InStock",
+  "low-stock": "https://schema.org/LimitedAvailability",
+  // Out-of-stock designs are made to order (see "ऑर्डर पर बनेगी" in lib/catalog.ts).
+  "out-of-stock": "https://schema.org/MadeToOrder",
+};
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
   const { slug } = await params;
-  const product = await fetchProductBySlug(slug);
+  const [product, categories, allProducts] = await Promise.all([
+    fetchProductBySlug(slug),
+    categoryRepository.fetchAll(),
+    fetchProducts(),
+  ]);
   if (!product) notFound();
 
-  const category = getCategoryById(product.categoryId);
+  // Resolved from the backend so the category link, breadcrumb and spec row render server-side.
+  const category = categories.find((c) => c.id === product.categoryId);
   const collection = getCollectionById(product.collectionId);
-  const related = getRelatedProducts(product, 4);
+  const related = getRelatedProducts(product, 4, allProducts);
   const availability = getAvailability(product);
+  const seo = productSeo(product);
+  const productUrl = absoluteUrl(productPath(product));
+  const name = product.name_en || product.name;
 
+  const breadcrumbs: BreadcrumbItem[] = [
+    { name: "Home", path: "/" },
+    { name: "Sarees", path: "/products" },
+    ...(category ? [{ name: categoryDisplayName(category), path: categoryPath(category) }] : []),
+    { name, path: seo.path },
+  ];
+
+  // Only fields backed by real catalogue data. Colour, fabric and specifications are
+  // omitted because lib/api-adapters.ts fills defaults when the backend has none.
   const productJsonLd = {
-    "@context": "https://schema.org",
     "@type": "Product",
-    name: product.name_hi || product.name,
+    "@id": `${productUrl}#product`,
+    name,
     sku: product.productCode,
-    description: product.description_hi || product.description,
-    material: product.fabric,
-    color: product.colors.map((color) => color.name).join(", "),
-    image: product.images.map((image) => image.url),
-    brand: { "@type": "Brand", name: siteConfig.name },
+    description: truncate(product.description_en || product.description, 500),
+    image: product.images.filter((image) => !isPlaceholderImage(image.url)).map((image) => image.url),
+    url: productUrl,
+    brand: { "@type": "Brand", name: SITE_NAME },
+    ...(category ? { category: categoryDisplayName(category) } : {}),
     offers: {
       "@type": "Offer",
+      url: productUrl,
       priceCurrency: businessSettings.currency,
       price: product.price,
-      availability:
-        availability === "out-of-stock" ? "https://schema.org/PreOrder" : "https://schema.org/InStock",
-      url: `${siteConfig.url}/products/${product.slug}`,
+      availability: SCHEMA_AVAILABILITY[availability],
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@id": ORGANIZATION_ID },
       eligibleQuantity: {
         "@type": "QuantitativeValue",
         minValue: product.moq,
@@ -77,10 +105,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c") }}
-      />
+      <JsonLd data={jsonLdGraph(productJsonLd, breadcrumbJsonLd(breadcrumbs))} />
       <ProductPageContent
         product={product}
         category={category ?? null}
@@ -90,4 +115,3 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
     </>
   );
 }
-

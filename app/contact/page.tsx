@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { ContactPageContent } from "@/components/contact/ContactPageContent";
 
-export const metadata: Metadata = {
-  title: "हमसे बात करें | Contact Us | Kunal Sarees",
-  description: "Connect with Kunal Sarees via WhatsApp, Phone or Visit our Surat Wholesale Hub.",
-  alternates: { canonical: "/contact" },
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Contact Us",
+  description:
+    "Contact Kunal Sarees, a wholesale saree supplier in Surat, on WhatsApp or phone for stock availability, catalogue videos, pricing and bulk orders.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return <ContactPageContent />;

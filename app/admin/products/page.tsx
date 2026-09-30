@@ -266,6 +266,36 @@ export default function AdminProductsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Free-text category field: matches an existing category by name, otherwise creates a new one on save
+  const [categoryInput, setCategoryInput] = useState("");
+  const getCategoryLabel = (c?: { name?: string; name_en?: string; name_hi?: string }) =>
+    (c?.name || c?.name_en || c?.name_hi || "").trim();
+  const findCategoryByName = (value: string) => {
+    const needle = value.trim().toLowerCase();
+    if (!needle) return undefined;
+    return categories.find((c) =>
+      [c.name, c.name_en, c.name_hi].some((n) => n?.trim().toLowerCase() === needle)
+    );
+  };
+
+  const resolveCategoryId = async (value: string): Promise<string> => {
+    const existing = findCategoryByName(value);
+    if (existing) return existing.id;
+
+    const name = value.trim();
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "category";
+    const payload = { name, name_en: name, name_hi: name, slug: baseSlug };
+    let res;
+    try {
+      res = await adminApi.categories.create(payload);
+    } catch {
+      // Slug may already be taken by a hidden/deleted category; retry with a unique suffix
+      res = await adminApi.categories.create({ ...payload, slug: `${baseSlug}-${Date.now().toString(36)}` });
+    }
+    await syncAdminCategories();
+    return `cat-${res.category.id}`;
+  };
+
   // Helper to detect best matching Category from text
   const detectCategory = (text: string): string => {
     if (!text || categories.length === 0) return categories[0]?.id || "";
@@ -299,11 +329,13 @@ export default function AdminProductsPage() {
     const parsed = parseWhatsAppSareeText(whatsAppText);
     const matchedCategory = detectCategory(`${whatsAppText} ${parsed.fabric || ""} ${parsed.name || ""}`);
 
+    const matchedCategoryLabel = getCategoryLabel(categories.find((c) => c.id === matchedCategory));
+    if (matchedCategoryLabel) setCategoryInput(matchedCategoryLabel);
+
     setEditingProduct((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        name: parsed.name || prev.name,
         price: parsed.price || prev.price,
         fabric: parsed.fabric || prev.fabric,
         design: parsed.design || prev.design,
@@ -328,7 +360,8 @@ export default function AdminProductsPage() {
       (p.name_hi && p.name_hi.toLowerCase().includes(search.toLowerCase())) ||
       (p.name_en && p.name_en.toLowerCase().includes(search.toLowerCase())) ||
       p.productCode.toLowerCase().includes(search.toLowerCase()) ||
-      p.fabric.toLowerCase().includes(search.toLowerCase());
+      p.fabric.toLowerCase().includes(search.toLowerCase()) ||
+      getCategoryLabel(categories.find((c) => c.id === p.categoryId)).toLowerCase().includes(search.toLowerCase());
 
     const matchesCategory = selectedCategory === "all" || p.categoryId === selectedCategory;
     const matchesStatus = selectedStatus === "all" || p.status === selectedStatus;
@@ -344,6 +377,7 @@ export default function AdminProductsPage() {
     setSetAsCategoryCover(true);
     setSelectedCategoryCoverUrl("");
     const codeDigits = Math.floor(1000 + Math.random() * 9000);
+    setCategoryInput("");
     setEditingProduct({
       name: "",
       slug: "",
@@ -354,7 +388,7 @@ export default function AdminProductsPage() {
       price: "" as unknown as number,
       moq: "" as unknown as number,
       stock: 100,
-      categoryId: categories[0]?.id || "",
+      categoryId: "",
       color_en: "",
       color_hi: "",
       specifications: {
@@ -365,7 +399,7 @@ export default function AdminProductsPage() {
         origin: "",
       },
       featured: false,
-      newArrival: false,
+      newArrival: true,
       status: "active" as ProductStatus,
       images: [],
       videoUrl: "",
@@ -387,6 +421,7 @@ export default function AdminProductsPage() {
       : (product.videoUrl ? [product.videoUrl] : []);
 
     setSelectedCategoryCoverUrl(currentImages[0]?.url || "");
+    setCategoryInput(getCategoryLabel(categories.find((c) => c.id === product.categoryId)));
     setEditingProduct({
       ...product,
       images: currentImages,
@@ -437,43 +472,10 @@ export default function AdminProductsPage() {
         return;
       }
     } catch (err: unknown) {
-      console.warn("Cloudinary upload failed, falling back to local file preview:", err);
+      // Never fall back to embedding the file as a data URL: it bloats every catalogue API response
+      console.warn("Cloudinary upload failed:", err);
       const errMsg = err instanceof Error ? err.message : "Media upload error";
-      if (errMsg.includes("Cloudinary is not configured")) {
-        setUploadError("Notice: Cloudinary is not configured in backend .env. Photo preview loaded locally.");
-      } else {
-        setUploadError(`${errMsg} (Loaded as local preview)`);
-      }
-
-      // 2. Client-side Data URL Fallback
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const dataUrl = event.target?.result as string;
-          if (dataUrl) {
-            setEditingProduct((prev) => {
-              if (!prev) return prev;
-              const updated = [
-                ...(prev.images || []),
-                {
-                  url: dataUrl,
-                  alt: file.name.replace(/\.[^/.]+$/, "") || prev.name || "Saree Photo",
-                  width: 1200,
-                  height: 1600,
-                },
-              ];
-              if (!selectedCategoryCoverUrl && updated[0]?.url) {
-                setSelectedCategoryCoverUrl(updated[0].url);
-              }
-              return {
-                ...prev,
-                images: updated,
-              };
-            });
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      setUploadError(`Photo upload failed: ${errMsg}. Please try again.`);
     } finally {
       setIsUploadingImages(false);
     }
@@ -562,36 +564,9 @@ export default function AdminProductsPage() {
         return;
       }
     } catch (err: unknown) {
-      console.warn("Cloudinary video upload failed, falling back to local preview:", err);
+      console.warn("Cloudinary video upload failed:", err);
       const errMsg = err instanceof Error ? err.message : "Video upload error";
-      if (errMsg.includes("Cloudinary is not configured")) {
-        setUploadError("Notice: Cloudinary is not configured in backend .env. Video preview loaded locally.");
-      } else {
-        setUploadError(`${errMsg} (Loaded as local preview)`);
-      }
-
-      // 2. Client-side Data URL Fallback for multiple files
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const videoDataUrl = event.target?.result as string;
-          if (videoDataUrl) {
-            setEditingProduct((prev) => {
-              if (!prev) return prev;
-              const currentVideos = prev.videoUrls && prev.videoUrls.length > 0
-                ? prev.videoUrls
-                : (prev.videoUrl ? [prev.videoUrl] : []);
-              const updated = [...currentVideos, videoDataUrl];
-              return {
-                ...prev,
-                videoUrls: updated,
-                videoUrl: updated[0] || "",
-              };
-            });
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+      setUploadError(`Video upload failed: ${errMsg}. Please try again.`);
     } finally {
       setIsUploadingVideo(false);
     }
@@ -651,9 +626,8 @@ export default function AdminProductsPage() {
     setSaveError(null);
     setUploadError(null);
 
-    const primaryName = (editingProduct.name || "").trim();
-    if (!primaryName) {
-      setSaveError("Product Name (साड़ी का नाम) is required.");
+    if (!categoryInput.trim()) {
+      setSaveError("Category (साड़ी श्रेणी) is required.");
       return;
     }
 
@@ -681,11 +655,17 @@ export default function AdminProductsPage() {
       setSpecsHistory(updatedHistory);
 
       const inStock = editingProduct.status !== "draft" && (editingProduct.stock === undefined || Number(editingProduct.stock) > 0);
-      const chosenCatId = editingProduct.categoryId || categories[0]?.id || "";
+      const chosenCatId = await resolveCategoryId(categoryInput);
+
+      // The saree name is no longer entered by the admin; derive it from fabric / category / code
+      const primaryName =
+        editingProduct.fabric?.trim() || categoryInput.trim() || editingProduct.productCode?.trim() || "Saree";
 
       await saveAdminProduct({
         ...editingProduct,
         name: primaryName,
+        name_en: primaryName,
+        name_hi: primaryName,
         price: numPrice,
         moq: validMoq,
         categoryId: chosenCatId,
@@ -733,11 +713,7 @@ export default function AdminProductsPage() {
     }
   };
 
-  const currentCategory = categories.find(
-    (c) => c.id === (editingProduct?.categoryId || categories[0]?.id)
-  );
-  const currentCategoryName =
-    currentCategory?.name || currentCategory?.name_hi || currentCategory?.name_en || "Category";
+  const currentCategoryName = getCategoryLabel(findCategoryByName(categoryInput)) || categoryInput.trim() || "Category";
 
   return (
     <AdminLayout title="Product Management">
@@ -762,7 +738,7 @@ export default function AdminProductsPage() {
           <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
-            placeholder="Search by saree title, code, fabric, or work..."
+            placeholder="Search by code, category, fabric, or work..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xs border border-line bg-canvas pl-9 pr-3 py-2 text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
@@ -801,7 +777,7 @@ export default function AdminProductsPage() {
           <thead className="border-b border-line bg-canvas-deep text-xs uppercase tracking-wider text-muted font-semibold">
             <tr>
               <th className="px-4 py-3">Code / Image</th>
-              <th className="px-4 py-3">Saree Title & Category</th>
+              <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Fabric & Work</th>
               <th className="px-4 py-3">Wholesale Rate & MOQ</th>
               <th className="px-4 py-3">Status</th>
@@ -847,13 +823,10 @@ export default function AdminProductsPage() {
                     </div>
                   </td>
 
-                  {/* Name & Category */}
+                  {/* Category */}
                   <td className="px-4 py-3">
                     <div className="font-semibold text-ink">
-                      {product.name || product.name_hi || product.name_en}
-                    </div>
-                    <div className="text-xs text-accent font-medium">
-                      {category?.name || category?.name_en || category?.name_hi || "No Category"}
+                      {getCategoryLabel(category) || "No Category"}
                     </div>
                   </td>
 
@@ -1409,44 +1382,29 @@ export default function AdminProductsPage() {
                   </h4>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {/* Saree Name / Title */}
-                    <div className="sm:col-span-2">
-                      <label className="font-semibold text-ink block">
-                        Saree Title / Product Name (साड़ी का नाम) *
-                      </label>
+                    {/* Category (type to search existing, or enter a new one) */}
+                    <div>
+                      <label className="font-semibold text-ink block">Category (साड़ी श्रेणी) *</label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Sonal Trendy Mal Cotton Saree with Zari Border"
-                        value={editingProduct.name || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setEditingProduct({
-                            ...editingProduct,
-                            name: val,
-                            name_en: val,
-                            name_hi: val,
-                          });
-                        }}
+                        list="datalist-categories"
+                        autoComplete="off"
+                        placeholder="Type or pick a category, e.g. Fandy Satin"
+                        value={categoryInput}
+                        onChange={(e) => setCategoryInput(e.target.value)}
                         className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
                       />
-                    </div>
-
-                    {/* Category Selection */}
-                    <div>
-                      <label className="font-semibold text-ink block">Category (साड़ी श्रेणी) *</label>
-                      <select
-                        required
-                        value={editingProduct.categoryId || ""}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, categoryId: e.target.value })}
-                        className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-                      >
+                      <datalist id="datalist-categories">
                         {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name || c.name_en || c.name_hi}
-                          </option>
+                          <option key={c.id} value={getCategoryLabel(c)} />
                         ))}
-                      </select>
+                      </datalist>
+                      {categoryInput.trim() && !findCategoryByName(categoryInput) ? (
+                        <p className="text-[11px] text-accent mt-1">
+                          New category &quot;{categoryInput.trim()}&quot; will be created on save.
+                        </p>
+                      ) : null}
                     </div>
 
                     {/* Product Code */}
@@ -1535,6 +1493,22 @@ export default function AdminProductsPage() {
                       </label>
                       <p className="text-[11px] text-muted ml-6.5 mt-0.5">
                         Uncheck if this saree is currently out of stock or unavailable.
+                      </p>
+                    </div>
+
+                    {/* New Arrival Checkmark */}
+                    <div className="sm:col-span-2">
+                      <label className="flex items-center gap-2.5 cursor-pointer text-ink font-semibold select-none">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(editingProduct.newArrival)}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, newArrival: e.target.checked })}
+                          className="size-4 rounded-xs accent-accent cursor-pointer"
+                        />
+                        <span className="text-sm">New Arrival (नया माल)</span>
+                      </label>
+                      <p className="text-[11px] text-muted ml-6.5 mt-0.5">
+                        Show this saree in the New Arrivals section on the home page.
                       </p>
                     </div>
                   </div>

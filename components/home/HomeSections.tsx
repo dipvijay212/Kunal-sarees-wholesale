@@ -20,6 +20,12 @@ export function HomeSections({
 }: HomeSectionsProps) {
   const { t } = useLanguage();
 
+  // Keep the two sections distinct: sarees shown in New Arrivals are left out of All Sarees,
+  // unless that would leave All Sarees empty.
+  const newArrivalIds = new Set(newArrivals.map((p) => p.id));
+  const remainingProducts = allProducts.filter((p) => !newArrivalIds.has(p.id));
+  const catalogueProducts = remainingProducts.length > 0 ? remainingProducts : allProducts;
+
   return (
     <>
       {/* 1. FEATURED CATEGORIES */}
@@ -42,7 +48,8 @@ export function HomeSections({
         </Container>
       </section>
 
-      {/* 2. NEW ARRIVALS */}
+      {/* 2. NEW ARRIVALS (hidden until at least one saree is marked as a new arrival) */}
+      {newArrivals.length > 0 ? (
       <section aria-labelledby="new-arrivals-heading" className="section-y border-t border-line bg-canvas">
         <Container>
           <SectionHeading
@@ -57,6 +64,7 @@ export function HomeSections({
           </div>
         </Container>
       </section>
+      ) : null}
 
       {/* 3. COMPLETE CATALOG */}
       <section aria-labelledby="all-products-heading" className="section-y border-t border-line bg-canvas">
@@ -69,7 +77,7 @@ export function HomeSections({
             action={{ label: t.products.viewAllFull, href: "/products" }}
           />
           <div className="mt-10 lg:mt-12">
-            <ProductGrid products={allProducts} />
+            <ProductGrid products={catalogueProducts} />
           </div>
         </Container>
       </section>

@@ -2,7 +2,7 @@
  * Centralized API client for Kunal Sarees REST Backend
  */
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api').replace(/\/+$/, '');
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -43,6 +43,9 @@ export interface BackendCategory {
   productCount?: number;
   image?: string | null;
   imageUrl?: string | null;
+  /** Optional admin SEO overrides (null = auto-generate). */
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -222,6 +225,17 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     ...options,
     headers,
   };
+
+  // Cache public catalogue reads on the server so page navigations don't re-hit the backend every time.
+  // Admin edits appear on the storefront within this window.
+  const isPublicServerGet =
+    typeof window === 'undefined' &&
+    (!options.method || options.method === 'GET') &&
+    !headers.has('Authorization') &&
+    !endpoint.startsWith('/admin');
+  if (isPublicServerGet && options.cache === undefined) {
+    fetchOptions.next = { revalidate: 30 };
+  }
 
   const res = await fetch(url, fetchOptions);
 
@@ -613,6 +627,8 @@ export const adminApi = {
       description_hi?: string;
       imageUrl?: string | null;
       image?: string | null;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
     }) => {
       return request<{ category: BackendCategory }>('/admin/categories', {
         method: 'POST',
@@ -633,6 +649,8 @@ export const adminApi = {
         isActive?: boolean;
         imageUrl?: string | null;
         image?: string | null;
+        seoTitle?: string | null;
+        seoDescription?: string | null;
       }
     ) => {
       return request<{ category: BackendCategory }>(`/admin/categories/${id}`, {

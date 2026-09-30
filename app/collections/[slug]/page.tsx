@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CollectionDetailPageContent } from "@/components/collection/CollectionDetailPageContent";
-import { siteConfig } from "@/data/site";
 import { fetchCollections, fetchProducts } from "@/lib/catalog";
+import { pageMetadata, truncate } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const cols = await fetchCollections();
@@ -17,15 +17,13 @@ export async function generateMetadata({ params }: PageProps<"/collections/[slug
   const collection = cols.find((c) => c.slug === slug);
   if (!collection) return {};
 
-  return {
-    title: `${collection.name} — Wholesale Sarees`,
-    description: collection.description,
-    alternates: { canonical: `/collections/${collection.slug}` },
-    openGraph: {
-      title: `${collection.name} | ${siteConfig.name}`,
-      description: collection.description,
-    },
-  };
+  const name = collection.name_en || collection.name;
+  return pageMetadata({
+    title: `${name} | Wholesale Sarees`,
+    description: truncate(collection.description_en || collection.description || `${name} wholesale sarees from Kunal Sarees, Surat.`),
+    path: `/collections/${collection.slug}`,
+    images: collection.image?.url ? [{ url: collection.image.url, alt: `${name} by Kunal Sarees` }] : undefined,
+  });
 }
 
 export default async function CollectionPage({ params }: PageProps<"/collections/[slug]">) {

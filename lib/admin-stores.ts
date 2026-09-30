@@ -129,7 +129,8 @@ export async function saveAdminProduct(productData: Partial<Product>) {
       }
     }
 
-    const productImages = (productData.images || []).map((img, idx) => ({
+    // Only Cloudinary URLs are persisted; display placeholders (e.g. stock photos) are never saved
+    const productImages = (productData.images || []).filter((img) => isCloudinaryUrl(img.url)).map((img, idx) => ({
       imageUrl: img.url,
       altText: img.alt || rawName,
       displayOrder: idx + 1,
@@ -280,6 +281,11 @@ export async function syncAdminCategories() {
   }
 }
 
+/** Media must live on Cloudinary; the backend rejects any other URL (including base64 data URLs). */
+function isCloudinaryUrl(url: unknown): url is string {
+  return typeof url === "string" && /^https:\/\/res\.cloudinary\.com\//i.test(url.trim());
+}
+
 export async function saveAdminCategory(categoryData: Partial<Category>) {
   try {
     const nameVal = (categoryData.name || categoryData.name_en || categoryData.name_hi || "Category").trim();
@@ -289,7 +295,11 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
-    const imageUrlVal = categoryData.image?.url || (categoryData as any).imageUrl || (categoryData as any).image || undefined;
+    const rawImageUrl = categoryData.image?.url || (categoryData as any).imageUrl || (categoryData as any).image || undefined;
+    const imageUrlVal = isCloudinaryUrl(rawImageUrl) ? rawImageUrl : undefined;
+    // Empty strings clear the override so the storefront auto-generates SEO again.
+    const seoTitleVal = categoryData.seoTitle?.trim() || null;
+    const seoDescriptionVal = categoryData.seoDescription?.trim() || null;
 
     if (categoryData.id) {
       const rawId = String(categoryData.id).replace(/^cat-/, "");
@@ -302,6 +312,8 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
         description_hi: descVal,
         description_en: descVal,
         imageUrl: imageUrlVal,
+        seoTitle: seoTitleVal,
+        seoDescription: seoDescriptionVal,
       });
     } else {
       await adminApi.categories.create({
@@ -313,6 +325,8 @@ export async function saveAdminCategory(categoryData: Partial<Category>) {
         description_hi: descVal,
         description_en: descVal,
         imageUrl: imageUrlVal,
+        seoTitle: seoTitleVal,
+        seoDescription: seoDescriptionVal,
       });
     }
     await syncAdminCategories();

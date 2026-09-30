@@ -14,28 +14,25 @@ import { getFooterQuickLinks } from "@/data/navigation";
 import { Logo } from "./Logo";
 import { SocialLinks } from "./SocialLinks";
 
-export function Footer() {
+export interface FooterCategory {
+  slug: string;
+  name: string;
+  name_en?: string;
+  name_hi?: string;
+}
+
+export function Footer({ categories = [] }: { categories?: FooterCategory[] }) {
   const { t, language, isSwitchAllowed } = useLanguage();
   const settings = useSettings();
   const contact = settings.contact;
   const year = 2026;
   const quickLinks = getFooterQuickLinks(t);
 
-  const footerCategories = language === "en" ? [
-    { label: "Banarasi Sarees", href: "/products?category=banarasi-sarees" },
-    { label: "Silk Sarees", href: "/products?category=silk-sarees" },
-    { label: "Georgette Sarees", href: "/products?category=georgette-sarees" },
-    { label: "Cotton Sarees", href: "/products?category=cotton-sarees" },
-    { label: "Organza Sarees", href: "/products?category=organza-sarees" },
-    { label: "Bridal Sarees", href: "/products?category=bridal-sarees" },
-  ] : [
-    { label: "बनारसी साड़ियां", href: "/products?category=banarasi-sarees" },
-    { label: "सिल्क साड़ियां", href: "/products?category=silk-sarees" },
-    { label: "जॉर्जेट साड़ियां", href: "/products?category=georgette-sarees" },
-    { label: "कॉटन साड़ियां", href: "/products?category=cotton-sarees" },
-    { label: "ऑर्गेंजा साड़ियां", href: "/products?category=organza-sarees" },
-    { label: "ब्राइडल साड़ियां", href: "/products?category=bridal-sarees" },
-  ];
+  // Live categories from the backend, so the footer never links to a category that doesn't exist.
+  const footerCategories = categories.map((category) => ({
+    label: language === "en" ? category.name_en || category.name : category.name_hi || category.name,
+    href: `/products?category=${encodeURIComponent(category.slug)}`,
+  }));
 
   return (
     <footer className="border-t border-gold/30 bg-maroon-dark text-cream">

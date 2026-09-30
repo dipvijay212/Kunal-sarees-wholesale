@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useLocalStore } from "@/hooks/use-local-store";
 import {
   adminCategoriesStore,
+  adminProductsStore,
   deleteAdminCategory,
   saveAdminCategory,
 } from "@/lib/admin-stores";
@@ -15,6 +16,16 @@ import { PlusIcon, CloseIcon } from "@/components/ui/Icons";
 
 export default function AdminCategoriesPage() {
   const categories = useLocalStore(adminCategoriesStore);
+  const products = useLocalStore(adminProductsStore);
+
+  // Number of sarees assigned to each category
+  const productCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    products.forEach((p) => {
+      if (p.categoryId) counts.set(p.categoryId, (counts.get(p.categoryId) || 0) + 1);
+    });
+    return counts;
+  }, [products]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -62,27 +73,9 @@ export default function AdminCategoriesPage() {
         return;
       }
     } catch (err) {
-      console.warn("Category image upload failed, falling back to local data URL:", err);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        if (dataUrl) {
-          setEditingCategory((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  image: {
-                    url: dataUrl,
-                    alt: prev.name || "Category Image",
-                    width: 1200,
-                    height: 800,
-                  },
-                }
-              : prev
-          );
-        }
-      };
-      reader.readAsDataURL(file);
+      // Never store the image as a data URL: it bloats every category API response
+      console.warn("Category image upload failed:", err);
+      alert("Category photo upload failed. Please try again.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -137,6 +130,7 @@ export default function AdminCategoriesPage() {
             <tr>
               <th className="px-4 py-3">Photo</th>
               <th className="px-4 py-3">Category Name</th>
+              <th className="px-4 py-3">Sarees</th>
               <th className="px-4 py-3">Slug</th>
               <th className="px-4 py-3">Description</th>
               <th className="px-4 py-3">Featured</th>
@@ -161,6 +155,12 @@ export default function AdminCategoriesPage() {
                 </td>
                 <td className="px-4 py-3 font-semibold text-ink">
                   <div>{cat.name || cat.name_en || cat.name_hi}</div>
+                </td>
+                <td className="px-4 py-3 text-ink font-semibold whitespace-nowrap">
+                  {productCounts.get(cat.id) || 0}{" "}
+                  <span className="text-xs font-normal text-muted">
+                    {(productCounts.get(cat.id) || 0) === 1 ? "saree" : "sarees"}
+                  </span>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-muted">{cat.slug}</td>
                 <td className="px-4 py-3 text-xs text-muted max-w-xs truncate">
@@ -263,6 +263,48 @@ export default function AdminCategoriesPage() {
                     }
                     className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
                   />
+                </div>
+
+                {/* SEO overrides (optional) */}
+                <div>
+                  <label className="font-semibold text-ink block">SEO Title (optional)</label>
+                  <p className="text-[11px] text-muted mb-1">
+                    Leave empty to auto-generate. &quot;| Kunal Sarees&quot; is added automatically. Aim for 60 characters or fewer.
+                  </p>
+                  <input
+                    type="text"
+                    maxLength={120}
+                    placeholder={`e.g. ${editingCategory.name?.trim() || "Georgette"} Sarees Wholesale in Surat`}
+                    value={editingCategory.seoTitle || ""}
+                    onChange={(e) =>
+                      setEditingCategory({
+                        ...editingCategory,
+                        seoTitle: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+                  />
+                  <p className="mt-1 text-[11px] text-muted">{(editingCategory.seoTitle || "").length}/60</p>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-ink block">SEO Description (optional)</label>
+                  <p className="text-[11px] text-muted mb-1">
+                    Shown in Google search results. Leave empty to auto-generate. Aim for 160 characters or fewer.
+                  </p>
+                  <textarea
+                    rows={3}
+                    maxLength={320}
+                    value={editingCategory.seoDescription || ""}
+                    onChange={(e) =>
+                      setEditingCategory({
+                        ...editingCategory,
+                        seoDescription: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                  />
+                  <p className="mt-1 text-[11px] text-muted">{(editingCategory.seoDescription || "").length}/160</p>
                 </div>
 
                 {/* Category Display Photo */}

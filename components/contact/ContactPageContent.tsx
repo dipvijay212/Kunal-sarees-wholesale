@@ -15,24 +15,6 @@ export function ContactPageContent() {
   const { contact } = siteConfig;
   const isHi = language === "hi";
 
-  const localBusinessJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WholesaleStore",
-    name: siteConfig.name,
-    url: siteConfig.url,
-    telephone: `+${contact.whatsappNumber}`,
-    email: contact.email,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: contact.address.lines.join(", "),
-      addressLocality: contact.address.city,
-      addressRegion: contact.address.region,
-      postalCode: contact.address.postalCode,
-      addressCountry: "IN",
-    },
-    sameAs: siteConfig.social.map((link) => link.href),
-  };
-
   const methods = [
     {
       icon: <WhatsAppIcon size={22} />,
@@ -66,11 +48,6 @@ export function ContactPageContent() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd).replace(/</g, "\\u003c") }}
-      />
-
       <PageHeader
         eyebrow={t.contact.eyebrow}
         title={t.contact.title}

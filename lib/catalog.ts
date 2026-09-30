@@ -88,8 +88,9 @@ export function getNewArrivals(limit = 4): Product[] {
     .slice(0, limit);
 }
 
-export function getRelatedProducts(product: Product, limit = 4): Product[] {
-  const activeProducts = getProducts();
+/** Pass `source` on the server, where the client-side product store is empty. */
+export function getRelatedProducts(product: Product, limit = 4, source: Product[] = getProducts()): Product[] {
+  const activeProducts = source;
   const candidates = activeProducts.filter((candidate) => candidate.id !== product.id);
   const sameCollection = candidates.filter((candidate) => candidate.collectionId === product.collectionId);
   const sameCategory = candidates.filter(
@@ -478,8 +479,10 @@ export async function fetchProductBySlug(slug: string): Promise<Product | undefi
 }
 
 export async function fetchCategories(): Promise<CategoryWithCount[]> {
-  const categories = await categoryRepository.fetchAll();
-  const products = await productRepository.fetchAll();
+  const [categories, products] = await Promise.all([
+    categoryRepository.fetchAll(),
+    productRepository.fetchAll(),
+  ]);
   return categories.map((cat) => {
     const catProducts = products.filter((p) => p.categoryId === cat.id);
     return {
@@ -505,8 +508,10 @@ export async function fetchFeaturedCategories(limit = 6): Promise<CategoryWithCo
 }
 
 export async function fetchCollections(): Promise<CollectionWithCount[]> {
-  const collections = await collectionRepository.fetchAll();
-  const products = await productRepository.fetchAll();
+  const [collections, products] = await Promise.all([
+    collectionRepository.fetchAll(),
+    productRepository.fetchAll(),
+  ]);
   return collections.map((col) => ({
     ...col,
     productCount: products.filter((p) => p.collectionId === col.id).length,

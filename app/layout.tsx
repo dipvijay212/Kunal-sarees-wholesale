@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { SiteShell } from "@/components/layout/SiteShell";
+import { categoryRepository } from "@/lib/repositories";
 import { UIProvider } from "@/components/providers/UIProvider";
-import { siteConfig } from "@/data/site";
+import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, DEFAULT_TITLE, SITE_NAME, SITE_URL } from "@/lib/seo";
 import type { Language } from "@/lib/translations";
 import "@/styles/globals.css";
 
@@ -21,35 +22,39 @@ const sansFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Kunal Sarees | सूरत डायरेक्ट होलसेल साड़ियां",
-    template: "%s | Kunal Sarees",
+    default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: siteConfig.description,
-  applicationName: siteConfig.name,
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
   keywords: [
     "Kunal Sarees",
+    "wholesale sarees",
+    "saree wholesaler in Surat",
+    "Surat saree supplier",
     "होलसेल साड़ियां",
-    "सूरत साड़ी होलसेलर",
-    "बनारसी सिल्क साड़ी होलसेल",
-    "कांजीवरम साड़ी",
-    "ब्राइडल साड़ियां",
-    "सूरत साड़ी थोक बाजार",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
   openGraph: {
     type: "website",
-    locale: "hi_IN",
-    siteName: siteConfig.name,
-    title: "Kunal Sarees | सूरत डायरेक्ट होलसेल साड़ियां",
-    description: siteConfig.description,
-    images: [{ url: siteConfig.brand.ogImage, width: 1200, height: 630, alt: siteConfig.name }],
+    locale: "en_IN",
+    alternateLocale: ["hi_IN"],
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kunal Sarees | सूरत डायरेक्ट होलसेल साड़ियां",
-    description: siteConfig.description,
-    images: [siteConfig.brand.ogImage],
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [{ url: DEFAULT_OG_IMAGE.url, alt: DEFAULT_OG_IMAGE.alt }],
   },
 };
 
@@ -64,6 +69,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies();
   const langCookie = cookieStore.get("kunal_lang")?.value;
   const initialLang: Language = (langCookie === "en" || langCookie === "hi") ? (langCookie as Language) : "hi";
+  // Footer category links come from the backend (cached request shared with the pages).
+  const footerCategories = (await categoryRepository.fetchAll())
+    .slice(0, 6)
+    .map(({ slug, name, name_en, name_hi }) => ({ slug, name, name_en, name_hi }));
 
   return (
     <html lang={initialLang} className={`${displayFont.variable} ${sansFont.variable}`}>
@@ -78,7 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-canvas text-ink antialiased">
         <LanguageProvider initialLanguage={initialLang}>
           <UIProvider>
-            <SiteShell>{children}</SiteShell>
+            <SiteShell footerCategories={footerCategories}>{children}</SiteShell>
           </UIProvider>
         </LanguageProvider>
       </body>

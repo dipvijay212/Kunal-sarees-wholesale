@@ -9,8 +9,23 @@ function normaliseWhatsAppNumber(value: string | undefined): string {
   return digits.length > 10 ? digits : DEFAULT_WHATSAPP_NUMBER;
 }
 
+/** The only canonical production origin. Used for canonical URLs, the sitemap, Open Graph and JSON-LD. */
+export const PRODUCTION_SITE_URL = "https://www.kunalsarees.in";
+
+/**
+ * Resolves the public site origin. A `*.vercel.app` value (the old demo domain or a
+ * preview URL) is never used, so it can't leak into canonical URLs or the sitemap.
+ */
 function normaliseSiteUrl(value: string | undefined): string {
-  return (value ?? "http://localhost:3000").replace(/\/+$/, "");
+  const url = (value ?? "").trim().replace(/\/+$/, "");
+  let isVercelHost = false;
+  try {
+    isVercelHost = url !== "" && new URL(url).hostname.endsWith(".vercel.app");
+  } catch {
+    // Not a valid absolute URL; fall through to the defaults below.
+  }
+  if (url && !isVercelHost && /^https?:\/\//.test(url)) return url;
+  return process.env.NODE_ENV === "production" ? PRODUCTION_SITE_URL : "http://localhost:3000";
 }
 
 const whatsappNumber = normaliseWhatsAppNumber(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER);

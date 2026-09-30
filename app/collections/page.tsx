@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
+import { categoryListPhrase, pageMetadata, truncate } from "@/lib/seo";
 import { CollectionsPageContent } from "@/components/collection/CollectionsPageContent";
-import { fetchCategories } from "@/lib/catalog";
+import { fetchCategories, fetchProducts } from "@/lib/catalog";
 
-export const metadata: Metadata = {
-  title: "साड़ी श्रेणियां व कलेक्शन | Saree Collections & Categories | Kunal Sarees",
-  description:
-    "Explore our complete wholesale saree categories: Silk Sarees, Cotton, Banarasi, Organza, Georgette, and Bridal Sarees.",
-  alternates: { canonical: "/collections" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // Same cached requests as the page body, so this adds no extra backend call.
+  const [categories, products] = await Promise.all([fetchCategories(), fetchProducts()]);
+  const list = categoryListPhrase(categories, products, 5);
+
+  return pageMetadata({
+    title: "Saree Categories",
+    description: truncate(
+      list
+        ? `Browse Kunal Sarees wholesale saree categories, including ${list} sarees, supplied from Surat to boutiques and retailers across India.`
+        : "Browse Kunal Sarees wholesale saree categories, supplied from Surat to boutiques and retailers across India.",
+    ),
+    path: "/collections",
+  });
+}
 
 export default async function CollectionsPage() {
   const categories = await fetchCategories();
