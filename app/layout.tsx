@@ -9,6 +9,7 @@ import { categoryRepository } from "@/lib/repositories";
 import { UIProvider } from "@/components/providers/UIProvider";
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, DEFAULT_TITLE, SITE_NAME, SITE_URL } from "@/lib/seo";
 import type { Language } from "@/lib/translations";
+import { GoogleTagHead, GoogleTagNoscript } from "@/components/seo/GoogleTag";
 import "@/styles/globals.css";
 
 const displayFont = Cormorant_Garamond({
@@ -81,9 +82,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     .slice(0, 6)
     .map(({ slug, name, name_en, name_hi }) => ({ slug, name, name_en, name_hi }));
 
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+  const gaId = process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_GOOGLE_TAG_ID || "G-BNSL3EDE8G";
+
   return (
     <html lang={initialLang} className={`${displayFont.variable} ${sansFont.variable}`}>
       <head>
+        <GoogleTagHead gtmId={gtmId} gaId={gaId} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -92,6 +97,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-canvas text-ink antialiased">
+        <GoogleTagNoscript gtmId={gtmId} />
         <SettingsProvider settings={settings} fromDatabase={fromDatabase}>
           <LanguageProvider initialLanguage={initialLang}>
             <UIProvider>
