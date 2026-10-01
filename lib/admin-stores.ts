@@ -62,6 +62,19 @@ export const adminProductsStore = createLocalStore<Product[]>({
   validate: isProductList,
 });
 
+/**
+ * Makes sure a product the visitor is acting on (adding to the order list) is in the
+ * client catalogue, with its latest data. The order list, checkout and search resolve
+ * saved product ids against this store.
+ */
+export function rememberCatalogueProduct(product: Product) {
+  adminProductsStore.set((products) =>
+    products.some((existing) => existing.id === product.id)
+      ? products.map((existing) => (existing.id === product.id ? product : existing))
+      : [...products, product],
+  );
+}
+
 export async function syncAdminProducts() {
   try {
     const res = await adminApi.products.getAll({ limit: 100 });

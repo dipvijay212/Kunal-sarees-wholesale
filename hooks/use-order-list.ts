@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { adminProductsStore } from "@/lib/admin-stores";
 import { resolveOrderListLines, summarizeOrderList } from "@/lib/order-list";
 import {
   addToOrderList,
@@ -14,7 +15,9 @@ export function useOrderList() {
   const items = useLocalStore(orderListStore);
   const hydrated = useHydrated();
 
-  const lines = useMemo(() => resolveOrderListLines(items), [items]);
+  // Lines are resolved against the client catalogue, so recompute when it loads or changes.
+  const catalogue = useLocalStore(adminProductsStore);
+  const lines = useMemo(() => resolveOrderListLines(items, catalogue), [items, catalogue]);
   const summary = useMemo(() => summarizeOrderList(lines), [lines]);
 
   return {

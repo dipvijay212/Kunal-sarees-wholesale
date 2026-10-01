@@ -1,4 +1,4 @@
-import type { OrderListItem, OrderListLine, OrderListSummary } from "@/types";
+import type { OrderListItem, OrderListLine, OrderListSummary, Product } from "@/types";
 import { getProductById } from "./catalog";
 import { getQuantityRules, normalizeQuantity } from "./quantity";
 
@@ -7,11 +7,13 @@ import { getQuantityRules, normalizeQuantity } from "./quantity";
  * no longer exists (or is no longer listed) are dropped, and quantities are
  * re-validated against the product's current order rules.
  */
-export function resolveOrderListLines(items: OrderListItem[]): OrderListLine[] {
+export function resolveOrderListLines(items: OrderListItem[], catalogue?: Product[]): OrderListLine[] {
   const lines: OrderListLine[] = [];
 
   for (const item of items) {
-    const product = getProductById(item.productId);
+    const product = catalogue
+      ? catalogue.find((candidate) => candidate.id === item.productId && candidate.status === "active")
+      : getProductById(item.productId);
     if (!product) continue;
 
     const quantity = normalizeQuantity(item.quantity, getQuantityRules(product));

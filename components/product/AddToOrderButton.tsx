@@ -4,6 +4,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useUI } from "@/components/providers/UIProvider";
 import { CheckIcon, PlusIcon } from "@/components/ui/Icons";
 import { useOrderList } from "@/hooks/use-order-list";
+import { rememberCatalogueProduct } from "@/lib/admin-stores";
 import { cn } from "@/lib/cn";
 import { getQuantityRules } from "@/lib/quantity";
 import type { Product } from "@/types";
@@ -28,12 +29,14 @@ export function AddToOrderButton({ product, className }: AddToOrderButtonProps) 
   const handleAddInitial = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    rememberCatalogueProduct(product);
     addItem(product.id, min);
   };
 
   const handleAddMore = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    rememberCatalogueProduct(product);
     addItem(product.id, step || min);
   };
 

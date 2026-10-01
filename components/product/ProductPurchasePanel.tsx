@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { BagIcon, CheckIcon, MinusIcon, PlusIcon } from "@/components/ui/Icons";
 import { useOrderList } from "@/hooks/use-order-list";
+import { rememberCatalogueProduct } from "@/lib/admin-stores";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { getQuantityRules } from "@/lib/quantity";
 import type { Product } from "@/types";
@@ -72,6 +73,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
 
   const handleAddToOrderList = () => {
     if (isBelowMoq || isOutOfStock) return;
+    rememberCatalogueProduct(product);
     addItem(product.id, totalQuantity);
     openOrderList();
   };
