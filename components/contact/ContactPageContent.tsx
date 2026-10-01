@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { MailIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { formatAddress, getDirectionsUrl } from "@/data/site";
+import { formatAddress, shopMap } from "@/data/site";
 import { useSettings } from "@/hooks/use-settings";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
@@ -103,15 +103,22 @@ export function ContactPageContent() {
           </div>
 
           <div className="lg:col-span-7">
-            {/* Static location panel */}
-            <div className="card flex aspect-[4/3] flex-col items-center justify-center gap-5 p-6 text-center sm:aspect-[16/10]">
-              <p className="type-eyebrow text-accent-strong">
-                {[contact.address.city, contact.address.region].filter(Boolean).join(", ")}
-              </p>
-              <p className="max-w-sm font-display text-2xl leading-snug text-ink sm:text-3xl">{formatAddress(", ", settings)}</p>
-              <Button href={getDirectionsUrl(settings)} external variant="secondary" size="sm">
-                {isHi ? "गूगल मैप्स पर देखें" : "View on Google Maps"}
-              </Button>
+            {/* Google Maps location panel */}
+            <div className="card overflow-hidden">
+              <iframe
+                src={shopMap.embedUrl}
+                title={isHi ? `गूगल मैप्स पर ${settings.businessName}` : `${settings.businessName} on Google Maps`}
+                className="block aspect-[4/3] w-full border-0 sm:aspect-[16/10]"
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4 sm:px-6">
+                <p className="min-w-0 text-sm text-muted">{formatAddress(", ", settings)}</p>
+                <Button href={shopMap.placeUrl} external variant="secondary" size="sm">
+                  {isHi ? "गूगल मैप्स पर देखें" : "View on Google Maps"}
+                </Button>
+              </div>
             </div>
           </div>
         </Container>
