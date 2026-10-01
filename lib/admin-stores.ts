@@ -223,7 +223,9 @@ export async function saveAdminProduct(productData: Partial<Product>) {
         adminProductsStore.set((prev) => [adapted, ...prev.filter((p) => p.id !== adapted.id)]);
       }
     }
-    await syncAdminProducts();
+    // The store already holds the saved product (from the response above), so the full
+    // refresh runs in the background instead of keeping the form waiting.
+    void syncAdminProducts();
   } catch (err) {
     console.error("Error saving admin product:", err);
     throw err;

@@ -671,34 +671,38 @@ export default function AdminProductsPage() {
         stock: inStock ? (editingProduct.stock && Number(editingProduct.stock) > 0 ? Number(editingProduct.stock) : 100) : 0,
       });
 
-      // Update Category image if option is enabled
-      // Whichever product is saved with this checkbox enabled will set the latest category cover
-      if (setAsCategoryCover && chosenCatId) {
-        const coverPhotoUrl =
-          (selectedCategoryCoverUrl && editingProduct.images?.some((img) => img.url === selectedCategoryCoverUrl))
-            ? selectedCategoryCoverUrl
-            : editingProduct.images?.[0]?.url;
-        if (coverPhotoUrl) {
-          const rawCatId = chosenCatId.replace(/^cat-/, "");
-          try {
-            await adminApi.categories.update(rawCatId, {
-              imageUrl: coverPhotoUrl,
-            });
-            // Update local adminCategoriesStore immediately
-            adminCategoriesStore.set((cats) =>
-              cats.map((c) =>
-                c.id === chosenCatId || c.id === `cat-${rawCatId}`
-                  ? { ...c, image: { url: coverPhotoUrl, alt: c.name, width: 1200, height: 1600 } }
-                  : c
-              )
-            );
-          } catch (catErr) {
-            console.error("Failed to update category image:", catErr);
+      // The product is saved. Updating the category cover and refreshing the category list
+      // run in the background so the form closes straight away.
+      void (async () => {
+        // Update Category image if option is enabled
+        // Whichever product is saved with this checkbox enabled will set the latest category cover
+        if (setAsCategoryCover && chosenCatId) {
+          const coverPhotoUrl =
+            (selectedCategoryCoverUrl && editingProduct.images?.some((img) => img.url === selectedCategoryCoverUrl))
+              ? selectedCategoryCoverUrl
+              : editingProduct.images?.[0]?.url;
+          if (coverPhotoUrl) {
+            const rawCatId = chosenCatId.replace(/^cat-/, "");
+            try {
+              await adminApi.categories.update(rawCatId, {
+                imageUrl: coverPhotoUrl,
+              });
+              // Update local adminCategoriesStore immediately
+              adminCategoriesStore.set((cats) =>
+                cats.map((c) =>
+                  c.id === chosenCatId || c.id === `cat-${rawCatId}`
+                    ? { ...c, image: { url: coverPhotoUrl, alt: c.name, width: 1200, height: 1600 } }
+                    : c
+                )
+              );
+            } catch (catErr) {
+              console.error("Failed to update category image:", catErr);
+            }
           }
         }
-      }
 
-      await syncAdminCategories();
+        await syncAdminCategories();
+      })();
 
       setIsModalOpen(false);
       setEditingProduct(null);

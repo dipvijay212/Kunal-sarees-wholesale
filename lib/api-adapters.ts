@@ -155,26 +155,21 @@ export function adaptProduct(backend: BackendProduct): Product {
 
   const price = typeof backend.price === 'string' ? parseFloat(backend.price) : backend.price;
 
-  // Database content is English only. The *_hi fields mirror the English values, so
-  // Hindi mode shows the same product data; only the site's built-in text is translated.
+  // Database content is English only, shown as-is in both site languages (only the site's
+  // built-in text is translated). No *_hi copies are sent to the browser.
   const displayName = backend.name_en || backend.nameEn || backend.name || 'Saree';
   const nameEn = displayName;
-  const nameHi = displayName;
 
   const displayDesc = backend.description_en || backend.descriptionEn || backend.description || displayName;
   const descEn = displayDesc;
-  const descHi = displayDesc;
 
   const displayShort = backend.short_description_en || backend.shortDescriptionEn || backend.shortDescription || displayDesc;
   const shortEn = displayShort;
-  const shortHi = displayShort;
 
   const displayFabric = backend.fabric_en || backend.fabricEn || backend.fabric || '';
   const fabricEn = displayFabric;
-  const fabricHi = displayFabric;
 
   const colorEn = backend.color_en || backend.colorEn || backend.color || '';
-  const colorHi = colorEn;
 
   // Extract design if noted in description or fallback
   const designMatch = displayDesc.match(/(?:Work|Design|काम):\s*([^|\n]+)/i);
@@ -185,21 +180,16 @@ export function adaptProduct(backend: BackendProduct): Product {
     productCode: backend.productCode,
     name: displayName,
     name_en: nameEn,
-    name_hi: nameHi,
     slug: backend.slug,
     description: displayDesc,
     description_en: descEn,
-    description_hi: descHi,
     shortDescription: displayShort,
     shortDescription_en: shortEn,
-    shortDescription_hi: shortHi,
     categoryId,
     collectionId,
     fabric: displayFabric,
     fabric_en: fabricEn,
-    fabric_hi: fabricHi,
     color_en: colorEn,
-    color_hi: colorHi,
     design: designVal as DesignType,
     price,
     moq: backend.minimumOrderQuantity || 2,
@@ -247,25 +237,21 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
     CATEGORY_IMAGES[backend.slug] ||
     'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85';
 
-  // English only (see adaptProduct); *_hi mirrors the English value.
+  // English only (see adaptProduct).
   const displayName = backend.name_en || backend.nameEn || backend.name || 'Sarees';
   const nameEn = displayName;
-  const nameHi = displayName;
 
   // No generated fallback: cards hide the description line when the admin hasn't written one.
   const displayDesc = backend.description_en || backend.descriptionEn || backend.description || "";
   const descEn = displayDesc || undefined;
-  const descHi = descEn;
 
   return {
     id: `cat-${backend.id}`,
     name: displayName,
     name_en: nameEn ?? undefined,
-    name_hi: nameHi ?? undefined,
     slug: backend.slug,
     description: displayDesc,
     description_en: descEn,
-    description_hi: descHi,
     image: {
       url: imageUrl,
       alt: displayName,
@@ -282,22 +268,18 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
 export function adaptCollection(backend: BackendCollection, index = 0): Collection {
   const displayName = backend.name_en || backend.nameEn || backend.name || 'Collection';
   const nameEn = displayName;
-  const nameHi = displayName;
 
   const displayDesc = backend.description_en || backend.descriptionEn || backend.description || "";
   const descEn = displayDesc || undefined;
-  const descHi = descEn;
 
   return {
     id: `col-${backend.id}`,
     name: displayName,
     name_en: nameEn ?? undefined,
-    name_hi: nameHi ?? undefined,
     slug: backend.slug,
     tagline: displayDesc ? displayDesc.slice(0, 45) : '',
     description: displayDesc,
     description_en: descEn,
-    description_hi: descHi,
     image: {
       url: backend.image || 'https://images.unsplash.com/photo-1641699862936-be9f49b1c38d?auto=format&fit=crop&w=1200&q=85',
       alt: displayName,
