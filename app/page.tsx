@@ -39,9 +39,15 @@ export default async function HomePage() {
   const [products, featuredCategories, newArrivals, business] = await Promise.all([
     fetchProducts(),
     fetchFeaturedCategories(6),
-    fetchNewArrivals(6),
+    fetchNewArrivals(4),
     fetchBusinessSettings(),
   ]);
+
+  // The home page previews one row of new arrivals and 8 sarees, so only those are sent
+  // to the browser. New arrivals are left out of "All Sarees" unless nothing else exists.
+  const newArrivalIds = new Set(newArrivals.map((product) => product.id));
+  const otherProducts = products.filter((product) => !newArrivalIds.has(product.id));
+  const previewProducts = (otherProducts.length > 0 ? otherProducts : products).slice(0, 8);
 
   return (
     <>
@@ -57,7 +63,7 @@ export default async function HomePage() {
       <HomeSections
         featuredCategories={featuredCategories}
         newArrivals={newArrivals}
-        allProducts={products}
+        allProducts={previewProducts}
       />
 
       {/* 4. WHY KUNAL SAREES */}

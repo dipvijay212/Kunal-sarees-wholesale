@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
+const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api").replace(/\/+$/, "");
+const isLoopbackApi = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/.test(apiUrl);
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  async rewrites() {
+    // A backend on localhost is only reachable from this machine. When the site is opened
+    // through a forwarded port, tunnel or another device, the browser calls /backend-api on
+    // its own origin instead (see lib/api.ts) and this server passes it on to the backend.
+    if (!isLoopbackApi) return [];
+    return [{ source: "/backend-api/:path*", destination: `${apiUrl}/:path*` }];
+  },
   experimental: {
     // Reuse already-visited pages from the client router cache instead of re-rendering on every navigation
     staleTimes: {

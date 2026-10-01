@@ -59,9 +59,10 @@ export function Header() {
             eager
             showTagline
             markClassName="size-9 xs:size-10 sm:size-12 lg:size-14 shadow-sm shrink-0"
-            wordmarkClassName="text-[1.05rem] xs:text-lg sm:text-2xl lg:text-[1.625rem] font-bold tracking-[0.06em] xs:tracking-[0.1em] lg:tracking-[0.14em]"
-            taglineClassName="text-[0.5625rem] xs:text-[0.625rem] sm:text-[0.6875rem] lg:text-[0.725rem] tracking-[0.12em] xs:tracking-[0.18em] lg:tracking-[0.24em] font-semibold text-muted/90"
-            className="min-w-0 py-1"
+            // Phones: the name scales with the screen width so "KUNAL SAREES" always shows in full.
+            wordmarkClassName="text-[clamp(0.8rem,4.1vw,1.05rem)] xs:text-lg sm:text-2xl lg:text-[1.625rem] font-bold tracking-[0.04em] xs:tracking-[0.1em] lg:tracking-[0.14em]"
+            taglineClassName="text-[clamp(0.4375rem,2.1vw,0.5625rem)] xs:text-[0.625rem] sm:text-[0.6875rem] lg:text-[0.725rem] tracking-[0.06em] xs:tracking-[0.18em] lg:tracking-[0.24em] font-semibold text-muted/90"
+            className="shrink-0 py-1"
           />
 
           <nav aria-label={t.nav.menu} className="hidden lg:block">
@@ -100,7 +101,8 @@ export function Header() {
               label={savedCount > 0 ? `${t.wishlist.title} (${savedCount})` : t.wishlist.title}
               icon={<HeartIcon size={20} />}
               badge={savedCount}
-              className="text-ink hover:text-maroon hover:bg-accent-soft"
+              // Hidden on small phones to leave room for the full brand name; the menu links to it there.
+              className="hidden xs:inline-flex text-ink hover:text-maroon hover:bg-accent-soft"
             />
 
             <IconButton

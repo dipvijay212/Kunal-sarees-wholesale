@@ -7,6 +7,9 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { CategoryWithCount, Product } from "@/types";
 
+const MAX_HOME_CATEGORIES = 6;
+const MAX_HOME_PRODUCTS = 8;
+
 interface HomeSectionsProps {
   featuredCategories: CategoryWithCount[];
   newArrivals: Product[];
@@ -24,7 +27,9 @@ export function HomeSections({
   // unless that would leave All Sarees empty.
   const newArrivalIds = new Set(newArrivals.map((p) => p.id));
   const remainingProducts = allProducts.filter((p) => !newArrivalIds.has(p.id));
-  const catalogueProducts = remainingProducts.length > 0 ? remainingProducts : allProducts;
+  // The home page shows a preview only; "View all" opens the full catalogue.
+  const catalogueProducts = (remainingProducts.length > 0 ? remainingProducts : allProducts).slice(0, MAX_HOME_PRODUCTS);
+  const homeCategories = featuredCategories.slice(0, MAX_HOME_CATEGORIES);
 
   return (
     <>
@@ -36,10 +41,10 @@ export function HomeSections({
             eyebrow={t.categories.eyebrow}
             title={t.categories.title}
             description={t.categories.description}
-            action={{ label: t.categories.viewAll, href: "/products" }}
+            action={{ label: t.categories.viewAllCategories, href: "/collections" }}
           />
           <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
-            {featuredCategories.map((category) => (
+            {homeCategories.map((category) => (
               <li key={category.id}>
                 <CategoryCard category={category} />
               </li>
@@ -60,7 +65,7 @@ export function HomeSections({
             action={{ label: t.products.viewAllNew, href: "/products" }}
           />
           <div className="mt-10 lg:mt-12">
-            <ProductGrid products={newArrivals} eagerCount={3} />
+            <ProductGrid products={newArrivals} eagerCount={3} singleRow />
           </div>
         </Container>
       </section>

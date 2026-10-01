@@ -69,10 +69,11 @@ export function Logo({
         />
       </div>
       {showWordmark ? (
-        <span className="flex min-w-0 flex-col overflow-hidden">
+        <span className="flex min-w-0 flex-col">
           <span
             className={cn(
-              "font-serif leading-none font-bold tracking-[0.12em] sm:tracking-[0.15em] truncate uppercase transition-colors duration-200",
+              // Never truncated: the brand name must always be readable in full.
+              "font-serif leading-none font-bold tracking-[0.12em] sm:tracking-[0.15em] whitespace-nowrap uppercase transition-colors duration-200",
               isLight
                 ? "text-cream group-hover:text-gold-light group-focus-visible:text-gold-light"
                 : "text-ink group-hover:text-maroon group-focus-visible:text-maroon",
@@ -84,7 +85,7 @@ export function Logo({
           {showTagline ? (
             <span
               className={cn(
-                "mt-0.5 sm:mt-1 text-[0.625rem] sm:text-[0.6875rem] leading-none font-semibold tracking-[0.16em] sm:tracking-[0.24em] truncate uppercase transition-colors duration-200",
+                "mt-0.5 sm:mt-1 text-[0.625rem] sm:text-[0.6875rem] leading-none font-semibold tracking-[0.16em] sm:tracking-[0.24em] whitespace-nowrap uppercase transition-colors duration-200",
                 isLight
                   ? "text-gold-light"
                   : "text-muted group-hover:text-gold group-focus-visible:text-gold",

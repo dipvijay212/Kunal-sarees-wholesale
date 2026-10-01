@@ -2,7 +2,27 @@
  * Centralized API client for Kunal Sarees REST Backend
  */
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api').replace(/\/+$/, '');
+const CONFIGURED_API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api').replace(/\/+$/, '');
+
+const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '[::1]'];
+
+/**
+ * A backend on localhost can't be reached by a browser that opened the site through a
+ * forwarded port, tunnel or another device. There, go through the same-origin
+ * /backend-api rewrite (see next.config.ts) instead.
+ */
+function resolveApiBase(): string {
+  if (typeof window === 'undefined') return CONFIGURED_API_BASE;
+  if (LOOPBACK_HOSTS.includes(window.location.hostname)) return CONFIGURED_API_BASE;
+  try {
+    if (LOOPBACK_HOSTS.includes(new URL(CONFIGURED_API_BASE).hostname)) return '/backend-api';
+  } catch {
+    // not an absolute URL — use it as configured
+  }
+  return CONFIGURED_API_BASE;
+}
+
+const API_BASE = resolveApiBase();
 
 export interface ApiResponse<T> {
   success: boolean;
