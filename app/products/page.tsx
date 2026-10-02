@@ -14,6 +14,8 @@ import {
 } from "@/lib/seo";
 import type { Category } from "@/types";
 
+export const revalidate = 60;
+
 type SearchParams = Awaited<PageProps<"/products">["searchParams"]>;
 
 function firstParam(value: string | string[] | undefined): string | undefined {

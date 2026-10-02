@@ -10,6 +10,7 @@ import { fetchBusinessSettings } from "@/lib/business-settings";
 import {
   fetchCategories,
   fetchFeaturedCategories,
+  fetchFeaturedProducts,
   fetchNewArrivals,
   fetchProducts,
 } from "@/lib/catalog";
@@ -24,9 +25,11 @@ import {
 
 import type { Metadata } from "next";
 
+export const revalidate = 60;
+
 export async function generateMetadata(): Promise<Metadata> {
   // Same cached requests as the page body.
-  const [categories, products] = await Promise.all([fetchCategories(), fetchProducts()]);
+  const [categories, products] = await Promise.all([fetchCategories(), fetchFeaturedProducts(8)]);
   return pageMetadata({
     title: DEFAULT_TITLE,
     absoluteTitle: true,
@@ -36,8 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [products, featuredCategories, newArrivals, business] = await Promise.all([
-    fetchProducts(),
+  const [featuredProducts, featuredCategories, newArrivals, business] = await Promise.all([
+    fetchFeaturedProducts(8),
     fetchFeaturedCategories(6),
     fetchNewArrivals(6),
     fetchBusinessSettings(),
@@ -57,7 +60,7 @@ export default async function HomePage() {
       <HomeSections
         featuredCategories={featuredCategories}
         newArrivals={newArrivals}
-        allProducts={products}
+        allProducts={featuredProducts}
       />
 
       {/* 4. WHY KUNAL SAREES */}

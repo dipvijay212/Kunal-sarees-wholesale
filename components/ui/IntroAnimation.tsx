@@ -13,8 +13,8 @@ export function IntroAnimation() {
     try {
       const alreadySeen = sessionStorage.getItem("ks_intro_seen");
       if (alreadySeen === "1") {
-        setStage("hidden");
-        return;
+        const tHide = setTimeout(() => setStage("hidden"), 0);
+        return () => clearTimeout(tHide);
       }
     } catch {
       // Ignore if sessionStorage is unavailable

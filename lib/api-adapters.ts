@@ -3,7 +3,6 @@ import type {
   Category,
   Collection,
   PlacedOrder,
-  Fabric,
   DesignType,
   ProductColor,
   ProductImage,
@@ -276,6 +275,7 @@ export function adaptCategory(backend: BackendCategory, index = 0): Category {
     seoDescription: backend.seoDescription?.trim() || undefined,
     featured: (backend.productCount ?? 0) > 0 || index < 6,
     order: index + 1,
+    productCount: backend.productCount ?? 0,
   };
 }
 

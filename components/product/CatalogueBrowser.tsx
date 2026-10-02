@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
@@ -136,18 +136,36 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
   // The box keeps exactly what is typed (including a trailing space between words);
   // the URL and the search itself use the trimmed text. Clearing actions reset it below.
   const [searchText, setSearchText] = useState(filters.query ?? "");
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const updateParamsRef = useRef(updateParams);
+  updateParamsRef.current = updateParams;
+
   useEffect(() => {
-    const onExternalSearch = (event: Event) => setSearchText((event as CustomEvent<string>).detail);
+    const onExternalSearch = (event: Event) => {
+      const q = (event as CustomEvent<string>).detail;
+      setSearchText(q);
+      updateParamsRef.current({ q: q.trim() || null, page: 1 });
+    };
     window.addEventListener(CATALOGUE_SEARCH_EVENT, onExternalSearch);
-    return () => window.removeEventListener(CATALOGUE_SEARCH_EVENT, onExternalSearch);
+    return () => {
+      window.removeEventListener(CATALOGUE_SEARCH_EVENT, onExternalSearch);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
   }, []);
 
   const handleSearchChange = (query: string) => {
     setSearchText(query);
-    updateParams({ q: query.trim() || null, page: 1 });
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      updateParams({ q: query.trim() || null, page: 1 });
+    }, 280);
   };
 
   const clearAllFilters = () => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     setSearchText("");
     updateParams({
       q: null,
@@ -163,7 +181,10 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
   };
 
   const removeFilter = (key: RemovableFilterKey) => {
-    if (key === "query") setSearchText("");
+    if (key === "query") {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      setSearchText("");
+    }
     if (key === "price") {
       updateParams({ minPrice: null, maxPrice: null, page: 1 });
     } else {

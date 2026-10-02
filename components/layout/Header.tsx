@@ -29,7 +29,7 @@ const MOBILE_NAV_ID = "mobile-navigation";
  */
 export function Header() {
   const pathname = usePathname();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const navItems = getMainNavigation(t);
   const activeHref = getActiveHref(pathname, navItems);
   const isScrolled = useScrolled();

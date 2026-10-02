@@ -1,14 +1,15 @@
-import { adminProductsStore, saveAdminProduct, deleteAdminProduct } from "@/lib/admin-stores";
 import { productsApi } from "@/lib/api";
 import { adaptProduct } from "@/lib/api-adapters";
 import type { Product } from "@/types";
+
+let cachedProducts: Product[] = [];
 
 export interface ProductRepository {
   getAll(options?: { includeInactive?: boolean }): Product[];
   getById(id: string, options?: { includeInactive?: boolean }): Product | undefined;
   getBySlug(slug: string, options?: { includeInactive?: boolean }): Product | undefined;
   fetchBySlug(slug: string): Promise<Product | undefined>;
-  fetchAll(options?: { includeInactive?: boolean }): Promise<Product[]>;
+  fetchAll(options?: { includeInactive?: boolean; limit?: number }): Promise<Product[]>;
   create(data: Partial<Product> & { name: string; price: number }): Product;
   update(id: string, data: Partial<Product>): Product | undefined;
   delete(id: string): boolean;
@@ -16,8 +17,7 @@ export interface ProductRepository {
 
 export const productRepository: ProductRepository = {
   getAll(options = {}) {
-    const all = adminProductsStore.getSnapshot();
-    return options.includeInactive ? all : all.filter((p: Product) => p.status === "active");
+    return options.includeInactive ? cachedProducts : cachedProducts.filter((p: Product) => p.status === "active");
   },
 
   getById(id, options = {}) {
@@ -44,13 +44,11 @@ export const productRepository: ProductRepository = {
     try {
       const res = await productsApi.getAll({
         isAvailable: options.includeInactive ? undefined : true,
-        limit: 100,
+        limit: options.limit ?? 100,
       });
       if (res && res.products) {
         const adapted = res.products.map(adaptProduct);
-        if (typeof window !== "undefined") {
-          adminProductsStore.set(adapted);
-        }
+        cachedProducts = adapted;
         return adapted;
       }
     } catch (err) {
@@ -60,18 +58,22 @@ export const productRepository: ProductRepository = {
   },
 
   create(data) {
-    saveAdminProduct(data);
-    const all = this.getAll({ includeInactive: true });
-    return all[0] || (data as Product);
+    const newProd = data as Product;
+    cachedProducts.unshift(newProd);
+    return newProd;
   },
 
   update(id, data) {
-    saveAdminProduct({ ...data, id });
-    return this.getById(id, { includeInactive: true });
+    const index = cachedProducts.findIndex((p) => p.id === id);
+    if (index >= 0) {
+      cachedProducts[index] = { ...cachedProducts[index], ...data };
+      return cachedProducts[index];
+    }
+    return undefined;
   },
 
   delete(id) {
-    deleteAdminProduct(id);
+    cachedProducts = cachedProducts.filter((p) => p.id !== id);
     return true;
   },
 };

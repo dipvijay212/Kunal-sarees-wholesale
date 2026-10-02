@@ -38,11 +38,11 @@ export function ProductImageCarousel({
   isHovered: controlledIsHovered,
 }: ProductImageCarouselProps) {
   const [internalHovered, setInternalHovered] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [hoverIndex, setHoverIndex] = useState(0);
 
   const hoverDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const preloadedRef = useRef<boolean>(false);
 
   // Controlled vs Uncontrolled hover state
   const isHovered = controlledIsHovered !== undefined ? controlledIsHovered : internalHovered;
@@ -64,20 +64,6 @@ export function ProductImageCarousel({
     }
   }, []);
 
-  // Preload additional images (index 1+) once hover starts
-  const preloadAdditionalImages = useCallback(() => {
-    if (preloadedRef.current || !hasMultipleImages || typeof window === "undefined") return;
-    preloadedRef.current = true;
-
-    for (let i = 1; i < images.length; i++) {
-      const imgUrl = images[i]?.url;
-      if (imgUrl) {
-        const img = new window.Image();
-        img.src = imgUrl;
-      }
-    }
-  }, [hasMultipleImages, images]);
-
   // Handle hover start & stop transitions
   useEffect(() => {
     if (!hasMultipleImages || !isHovered) {
@@ -94,14 +80,12 @@ export function ProductImageCarousel({
       if (prefersReducedMotion) return;
     }
 
-    // Preload next images immediately
-    preloadAdditionalImages();
-
     // Clear existing timers before starting new ones
     clearTimers();
 
     // Hover delay: wait HOVER_DELAY before switching to image 2
     hoverDelayTimerRef.current = setTimeout(() => {
+      setHasInteracted(true);
       setHoverIndex(1);
 
       // Continuous loop every IMAGE_INTERVAL
@@ -114,7 +98,7 @@ export function ProductImageCarousel({
       clearTimers();
       setHoverIndex(0);
     };
-  }, [isHovered, hasMultipleImages, totalImages, clearTimers, preloadAdditionalImages]);
+  }, [isHovered, hasMultipleImages, totalImages, clearTimers]);
 
   // Component unmount cleanup
   useEffect(() => {
@@ -125,6 +109,7 @@ export function ProductImageCarousel({
 
   // Standalone mouse handlers if not controlled by parent
   const handleMouseEnter = () => {
+    setHasInteracted(true);
     if (controlledIsHovered === undefined) {
       setInternalHovered(true);
     }
@@ -179,6 +164,10 @@ export function ProductImageCarousel({
     >
       {/* Image layers for smooth crossfade */}
       {images.map((img, index) => {
+        // Defer rendering secondary images until user actually interacts with card
+        if (index > 0 && !hasInteracted && !isHovered) {
+          return null;
+        }
         const isActive = index === activeIndex;
         return (
           <div

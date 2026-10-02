@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 interface GoogleTagProps {
   gtmId?: string;
   gaId?: string;
@@ -7,8 +9,9 @@ export function GoogleTagHead({ gtmId, gaId }: GoogleTagProps) {
   return (
     <>
       {gtmId && (
-        <script
+        <Script
           id="gtm-script"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -20,9 +23,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       )}
       {gaId && (
         <>
-          <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
-          <script
+          <Script
+            id="google-gtag-src"
+            strategy="afterInteractive"
+            src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+          />
+          <Script
             id="google-tag-init"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}

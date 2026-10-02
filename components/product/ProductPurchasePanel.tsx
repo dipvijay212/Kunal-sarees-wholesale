@@ -7,7 +7,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { BagIcon, CheckIcon, MinusIcon, PlusIcon } from "@/components/ui/Icons";
 import { useOrderList } from "@/hooks/use-order-list";
-import { formatPieces, formatPrice } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { getQuantityRules } from "@/lib/quantity";
 import type { Product } from "@/types";
 import { WishlistButton } from "./WishlistButton";

@@ -27,8 +27,7 @@ export function HomeHero({}: HomeHeroProps) {
           src="/images/editorial/hero-drape.svg"
           alt=""
           fill
-          loading="eager"
-          fetchPriority="high"
+          priority={false}
           sizes="100vw"
           className="object-cover object-right opacity-35"
         />

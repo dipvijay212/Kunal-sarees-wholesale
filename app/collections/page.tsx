@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { categoryListPhrase, pageMetadata, truncate } from "@/lib/seo";
 import { CollectionsPageContent } from "@/components/collection/CollectionsPageContent";
-import { fetchCategories, fetchProducts } from "@/lib/catalog";
+import { fetchCategories, fetchFeaturedProducts } from "@/lib/catalog";
+
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   // Same cached requests as the page body, so this adds no extra backend call.
-  const [categories, products] = await Promise.all([fetchCategories(), fetchProducts()]);
+  const [categories, products] = await Promise.all([fetchCategories(), fetchFeaturedProducts(8)]);
   const list = categoryListPhrase(categories, products, 5);
 
   return pageMetadata({

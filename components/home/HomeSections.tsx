@@ -77,7 +77,7 @@ export function HomeSections({
             action={{ label: t.products.viewAllFull, href: "/products" }}
           />
           <div className="mt-10 lg:mt-12">
-            <ProductGrid products={catalogueProducts} />
+            <ProductGrid products={catalogueProducts.slice(0, 8)} />
           </div>
         </Container>
       </section>

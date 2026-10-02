@@ -18,6 +18,7 @@ export interface Category {
   featured: boolean;
   /** Display order in navigation and listings. */
   order: number;
+  productCount?: number;
 }
 
 export interface CategoryWithCount extends Category {

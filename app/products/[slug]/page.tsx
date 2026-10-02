@@ -6,9 +6,9 @@ import { businessSettings } from "@/data/business";
 import {
   fetchProductBySlug,
   fetchProducts,
+  fetchRelatedProducts,
   getAvailability,
   getCollectionById,
-  getRelatedProducts,
 } from "@/lib/catalog";
 import { categoryRepository } from "@/lib/repositories";
 import {
@@ -28,8 +28,10 @@ import {
 } from "@/lib/seo";
 import type { ProductAvailability } from "@/types";
 
+export const revalidate = 60;
+
 export async function generateStaticParams() {
-  const prods = await fetchProducts();
+  const prods = await fetchProducts({ limit: 20 });
   return prods.map((product) => ({ slug: product.slug }));
 }
 
@@ -52,17 +54,16 @@ const SCHEMA_AVAILABILITY: Record<ProductAvailability, string> = {
 
 export default async function ProductPage({ params }: PageProps<"/products/[slug]">) {
   const { slug } = await params;
-  const [product, categories, allProducts] = await Promise.all([
+  const [product, categories] = await Promise.all([
     fetchProductBySlug(slug),
     categoryRepository.fetchAll(),
-    fetchProducts(),
   ]);
   if (!product) notFound();
 
   // Resolved from the backend so the category link, breadcrumb and spec row render server-side.
   const category = categories.find((c) => c.id === product.categoryId);
   const collection = getCollectionById(product.collectionId);
-  const related = getRelatedProducts(product, 4, allProducts);
+  const related = await fetchRelatedProducts(product, 4);
   const availability = getAvailability(product);
   const seo = productSeo(product);
   const productUrl = absoluteUrl(productPath(product));

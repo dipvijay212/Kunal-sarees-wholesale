@@ -514,7 +514,7 @@ export function filterProducts(source: Product[], filters: CatalogueFilters, cat
 /* Async Fetchers for Server & Client Components                              */
 /* -------------------------------------------------------------------------- */
 
-export async function fetchProducts(options?: GetProductsOptions): Promise<Product[]> {
+export async function fetchProducts(options?: GetProductsOptions & { limit?: number }): Promise<Product[]> {
   return productRepository.fetchAll(options);
 }
 
@@ -522,26 +522,40 @@ export async function fetchProductBySlug(slug: string): Promise<Product | undefi
   return productRepository.fetchBySlug(slug);
 }
 
-export async function fetchCategories(): Promise<CategoryWithCount[]> {
-  const [categories, products] = await Promise.all([
-    categoryRepository.fetchAll(),
-    productRepository.fetchAll(),
-  ]);
-  return categories.map((cat) => {
-    const catProducts = products.filter((p) => p.categoryId === cat.id);
-    return {
-      ...cat,
-      image: {
-        ...cat.image,
-        url: resolveCategoryImageUrl(cat.image, catProducts),
-      },
-      productCount: catProducts.length,
-    };
-  });
+export async function fetchFeaturedProducts(limit = 8): Promise<Product[]> {
+  const products = await fetchProducts({ limit: Math.max(limit * 2, 16) });
+  const featured = products.filter((p) => p.featured);
+  if (featured.length >= limit) return featured.slice(0, limit);
+  return products.slice(0, limit);
 }
 
-export async function fetchFeaturedCategories(limit = 6): Promise<CategoryWithCount[]> {
-  const categories = await fetchCategories();
+export async function fetchCategories(products?: Product[]): Promise<CategoryWithCount[]> {
+  const categories = await categoryRepository.fetchAll();
+  if (products && products.length > 0) {
+    return categories.map((cat) => {
+      const catProducts = products.filter((p) => p.categoryId === cat.id);
+      return {
+        ...cat,
+        image: {
+          ...cat.image,
+          url: resolveCategoryImageUrl(cat.image, catProducts),
+        },
+        productCount: catProducts.length,
+      };
+    });
+  }
+  return categories.map((cat) => ({
+    ...cat,
+    image: {
+      ...cat.image,
+      url: cat.image?.url || "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=1200&q=85",
+    },
+    productCount: cat.productCount ?? 0,
+  }));
+}
+
+export async function fetchFeaturedCategories(limit = 6, products?: Product[]): Promise<CategoryWithCount[]> {
+  const categories = await fetchCategories(products);
   const sorted = [...categories].sort((a, b) => {
     if ((b.productCount > 0) !== (a.productCount > 0)) {
       return b.productCount > 0 ? 1 : -1;
@@ -551,24 +565,34 @@ export async function fetchFeaturedCategories(limit = 6): Promise<CategoryWithCo
   return sorted.slice(0, limit);
 }
 
-export async function fetchCollections(): Promise<CollectionWithCount[]> {
-  const [collections, products] = await Promise.all([
-    collectionRepository.fetchAll(),
-    productRepository.fetchAll(),
-  ]);
+export async function fetchCollections(products?: Product[]): Promise<CollectionWithCount[]> {
+  const collections = await collectionRepository.fetchAll();
+  if (products && products.length > 0) {
+    return collections.map((col) => ({
+      ...col,
+      productCount: products.filter((p) => p.collectionId === col.id).length,
+    }));
+  }
   return collections.map((col) => ({
     ...col,
-    productCount: products.filter((p) => p.collectionId === col.id).length,
+    productCount: col.productCount ?? 0,
   }));
 }
 
-export async function fetchFeaturedCollections(limit = 6): Promise<CollectionWithCount[]> {
-  const collections = await fetchCollections();
+export async function fetchFeaturedCollections(limit = 6, products?: Product[]): Promise<CollectionWithCount[]> {
+  const collections = await fetchCollections(products);
   return collections.filter((col) => col.featured).slice(0, limit);
 }
 
 export async function fetchNewArrivals(limit = 6): Promise<Product[]> {
-  const products = await fetchProducts();
-  return products.filter((p) => p.newArrival).slice(0, limit);
+  const products = await fetchProducts({ limit: Math.max(limit * 2, 12) });
+  const arrivals = products.filter((p) => p.newArrival).sort(byNewest);
+  if (arrivals.length >= limit) return arrivals.slice(0, limit);
+  return products.slice(0, limit);
+}
+
+export async function fetchRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
+  const candidates = await fetchProducts({ limit: 16 });
+  return getRelatedProducts(product, limit, candidates);
 }
 

@@ -1,7 +1,8 @@
-import { adminCategoriesStore, saveAdminCategory, deleteAdminCategory } from "@/lib/admin-stores";
 import { categoriesApi } from "@/lib/api";
 import { adaptCategory } from "@/lib/api-adapters";
 import type { Category } from "@/types";
+
+let cachedCategories: Category[] = [];
 
 export interface CategoryRepository {
   getAll(): Category[];
@@ -15,7 +16,7 @@ export interface CategoryRepository {
 
 export const categoryRepository: CategoryRepository = {
   getAll() {
-    return adminCategoriesStore.getSnapshot();
+    return cachedCategories;
   },
 
   getById(id) {
@@ -31,9 +32,7 @@ export const categoryRepository: CategoryRepository = {
       const res = await categoriesApi.getAll();
       if (res && res.categories) {
         const adapted = res.categories.map((c, i) => adaptCategory(c, i));
-        if (typeof window !== "undefined") {
-          adminCategoriesStore.set(adapted);
-        }
+        cachedCategories = adapted;
         return adapted;
       }
     } catch (err) {
@@ -43,18 +42,22 @@ export const categoryRepository: CategoryRepository = {
   },
 
   create(data) {
-    saveAdminCategory(data);
-    const all = this.getAll();
-    return all[all.length - 1];
+    const newCat = data as Category;
+    cachedCategories.push(newCat);
+    return newCat;
   },
 
   update(id, data) {
-    saveAdminCategory({ ...data, id });
-    return this.getById(id);
+    const index = cachedCategories.findIndex((c) => c.id === id);
+    if (index >= 0) {
+      cachedCategories[index] = { ...cachedCategories[index], ...data };
+      return cachedCategories[index];
+    }
+    return undefined;
   },
 
   delete(id) {
-    deleteAdminCategory(id);
+    cachedCategories = cachedCategories.filter((c) => c.id !== id);
     return true;
   },
 };

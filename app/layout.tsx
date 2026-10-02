@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Cormorant_Garamond, Manrope, Mukta, Noto_Serif_Devanagari } from "next/font/google";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
@@ -16,12 +15,28 @@ const displayFont = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-ks-display",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const sansFont = Manrope({
   subsets: ["latin"],
   variable: "--font-ks-sans",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const muktaFont = Mukta({
+  subsets: ["latin", "devanagari"],
+  variable: "--font-ks-mukta",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const notoSerifFont = Noto_Serif_Devanagari({
+  subsets: ["latin", "devanagari"],
+  variable: "--font-ks-noto-serif",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -69,9 +84,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const langCookie = cookieStore.get("kunal_lang")?.value;
-  const initialLang: Language = (langCookie === "en" || langCookie === "hi") ? (langCookie as Language) : "hi";
+  const initialLang: Language = "hi";
   // Footer category links come from the backend (cached request shared with the pages).
   // Contact details, address and social links saved in Admin → Settings (database).
   const [categories, { settings, fromDatabase }] = await Promise.all([
@@ -86,15 +99,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const gaId = process.env.NEXT_PUBLIC_GA_ID || process.env.NEXT_PUBLIC_GOOGLE_TAG_ID || "G-BNSL3EDE8G";
 
   return (
-    <html lang={initialLang} className={`${displayFont.variable} ${sansFont.variable}`}>
+    <html
+      lang={initialLang}
+      className={`${displayFont.variable} ${sansFont.variable} ${muktaFont.variable} ${notoSerifFont.variable}`}
+    >
       <head>
         <GoogleTagHead gtmId={gtmId} gaId={gaId} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;500;600;700;800&family=Noto+Serif+Devanagari:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body className="flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-canvas text-ink antialiased">
         <GoogleTagNoscript gtmId={gtmId} />

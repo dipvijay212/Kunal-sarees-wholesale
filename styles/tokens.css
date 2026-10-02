@@ -155,8 +155,8 @@
   --color-gold-accent: var(--ks-gold-accent);
   --color-gold-soft: var(--ks-gold-soft);
 
-  --font-display: "Noto Serif Devanagari", var(--font-ks-display), "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Mukta", var(--font-ks-sans), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-ks-noto-serif), var(--font-ks-display), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-ks-mukta), var(--font-ks-sans), "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   --radius-xs: var(--ks-radius-xs);
   --radius-sm: var(--ks-radius-sm);

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { ContactPageContent } from "@/components/contact/ContactPageContent";
 
+export const revalidate = 300;
+
 export const metadata: Metadata = pageMetadata({
   title: "Contact Us",
   description:

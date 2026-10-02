@@ -14,6 +14,7 @@ export interface Collection {
   image: ProductImage;
   featured: boolean;
   order: number;
+  productCount?: number;
 }
 
 export interface CollectionWithCount extends Collection {

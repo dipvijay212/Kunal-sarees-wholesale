@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { AboutPageContent } from "@/components/about/AboutPageContent";
-import { fetchCategories, fetchProducts } from "@/lib/catalog";
+import { fetchCategories, fetchFeaturedProducts, fetchProducts } from "@/lib/catalog";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = pageMetadata({
   title: "About Us",
@@ -13,7 +15,7 @@ export const metadata: Metadata = pageMetadata({
 export default async function AboutPage() {
   const [categories, products] = await Promise.all([
     fetchCategories(),
-    fetchProducts(),
+    fetchFeaturedProducts(12),
   ]);
 
   return <AboutPageContent categories={categories} products={products} />;
