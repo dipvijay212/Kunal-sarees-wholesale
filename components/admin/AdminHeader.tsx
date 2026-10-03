@@ -6,6 +6,7 @@ import { adminAuthStore, logoutAdmin } from "@/lib/admin-stores";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { MenuIcon } from "@/components/ui/Icons";
+import { AdminInstallButton } from "./AdminInstallButton";
 
 export function AdminHeader({
   title,
@@ -36,7 +37,10 @@ export function AdminHeader({
         <h1 className="type-h4 text-ink font-serif">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* Visible Install App button */}
+        <AdminInstallButton variant="header" />
+
         {/* Admin user info badge */}
         <div className="hidden sm:flex items-center gap-2 text-xs">
           <div className="flex size-7 items-center justify-center rounded-full bg-accent/15 font-semibold text-accent">

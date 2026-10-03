@@ -14,10 +14,10 @@ const nextConfig: NextConfig = {
     return [{ source: "/backend-api/:path*", destination: `${apiUrl}/:path*` }];
   },
   experimental: {
-    // Reuse already-visited pages from the client router cache instead of re-rendering on every navigation
+    // Keep client router fresh so changes from admin reflect immediately on the storefront
     staleTimes: {
-      dynamic: 60,
-      static: 300,
+      dynamic: 0,
+      static: 30,
     },
   },
   async redirects() {

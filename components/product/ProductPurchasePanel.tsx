@@ -259,7 +259,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <WishlistButton productId={product.id} productName={displayName} variant="inline" className="-ml-3" />
+        <WishlistButton productId={product.id} productName={displayName} variant="inline" />
         {existingLine ? (
           <p className="text-sm text-muted">
             {existingLine.item.quantity} {t.products.pieces}{" "}
@@ -275,21 +275,31 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       </div>
 
       {/* Mobile Sticky Bottom Order Action Bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t border-line bg-canvas/95 p-3.5 backdrop-blur-md shadow-lg lg:hidden">
-        <div>
-          <p className="text-[0.625rem] font-semibold uppercase tracking-wider text-muted">
-            {totalQuantity} {t.products.pieces}
-          </p>
-          <p className="type-price text-lg text-ink">{formatPrice(estimatedTotal)}</p>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.08)] lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 px-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
+          <div className="min-w-0 flex flex-col justify-center">
+            <span className="text-[0.625rem] font-bold uppercase tracking-wider text-muted truncate">
+              {totalQuantity} {t.products.pieces} {rules.min > 1 ? `· Min ${rules.min}` : ""}
+            </span>
+            <span className="type-price text-xl font-bold text-maroon tabular-nums leading-tight">
+              {formatPrice(estimatedTotal)}
+            </span>
+          </div>
+
+          <Button
+            size="md"
+            disabled={isOutOfStock || isBelowMoq}
+            onClick={handleAddToOrderList}
+            leadingIcon={<BagIcon size={16} />}
+            className="font-semibold shadow-sm px-4 sm:px-5 shrink-0"
+          >
+            {isOutOfStock
+              ? t.products.outOfStock
+              : isBelowMoq
+                ? (language === "en" ? `Need +${moqDeficit} pcs` : `+${moqDeficit} पीस चाहिए`)
+                : (language === "en" ? `Add to Order (${totalQuantity})` : `ऑर्डर में जोड़ें (${totalQuantity})`)}
+          </Button>
         </div>
-        <Button
-          size="sm"
-          disabled={isOutOfStock || isBelowMoq}
-          onClick={handleAddToOrderList}
-          leadingIcon={<CheckIcon size={16} />}
-        >
-          {language === "en" ? `Add (${totalQuantity} pcs)` : `जोड़ें (${totalQuantity} पीस)`}
-        </Button>
       </div>
     </div>
   );

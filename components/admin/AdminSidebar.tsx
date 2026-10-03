@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -12,6 +13,7 @@ import {
   PackageIcon,
   SparkleIcon,
 } from "@/components/ui/Icons";
+import { AdminInstallButton } from "./AdminInstallButton";
 
 interface NavItem {
   label: string;
@@ -47,9 +49,15 @@ export function AdminSidebar({
     >
       {/* Brand Header */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">
-        <Link href="/admin" onClick={onItemClick} className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-xs bg-accent text-xs font-bold text-accent-contrast">
-            KS
+        <Link href="/admin" onClick={onItemClick} className="flex items-center gap-3">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-full ring-2 ring-gold/40 bg-canvas p-0.5 shadow-sm">
+            <Image
+              src="/brand/ks-logo-320.png"
+              alt="Kunal Sarees Logo"
+              width={36}
+              height={36}
+              className="size-full rounded-full object-cover"
+            />
           </div>
           <div>
             <span className="font-serif text-base font-bold tracking-tight text-ink block leading-none">
@@ -92,6 +100,11 @@ export function AdminSidebar({
           );
         })}
       </nav>
+
+      {/* Install App Sidebar Card */}
+      <div className="p-3 border-t border-line shrink-0">
+        <AdminInstallButton variant="sidebar" />
+      </div>
 
       {/* Back to Storefront Link */}
       <div className="border-t border-line p-3 shrink-0">

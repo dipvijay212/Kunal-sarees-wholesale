@@ -5,15 +5,21 @@ import { Container } from "@/components/ui/Container";
 import { ChatIcon, PackageIcon, ShieldCheckIcon, TagIcon } from "@/components/ui/Icons";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useSettings } from "@/hooks/use-settings";
+import type { BusinessSettings } from "@/types";
 
 const pillarIcons = [ShieldCheckIcon, TagIcon, PackageIcon, ChatIcon];
 
-export function WhyKunalSarees() {
-  const settings = useSettings();
+interface WhyKunalSareesProps {
+  settings?: BusinessSettings;
+}
+
+export function WhyKunalSarees({ settings: propSettings }: WhyKunalSareesProps = {}) {
+  const contextSettings = useSettings();
+  const settings = propSettings || contextSettings;
   const { t } = useLanguage();
   const { whyUs } = t;
   const whyImage =
-    settings.storefrontImages?.whyChooseUsImage ||
+    settings.storefrontImages?.whyChooseUsImage?.trim() ||
     "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80";
 
   return (

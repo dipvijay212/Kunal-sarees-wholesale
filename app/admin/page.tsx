@@ -6,6 +6,7 @@ import { useLocalStore } from "@/hooks/use-local-store";
 import { adminOrdersStore, adminProductsStore, adminCustomersStore } from "@/lib/admin-stores";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { ArrowRightIcon, BagIcon, ChatIcon, PackageIcon, SparkleIcon } from "@/components/ui/Icons";
+import { AdminInstallBanner } from "@/components/admin/AdminInstallBanner";
 
 export default function AdminDashboardPage() {
   const products = useLocalStore(adminProductsStore);
@@ -28,6 +29,9 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout title="Dashboard Analytics">
+      {/* Visible PWA Install Banner */}
+      <AdminInstallBanner />
+
       {/* Metric Cards Grid */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <div className="rounded-xs border border-line bg-canvas p-5 shadow-xs">

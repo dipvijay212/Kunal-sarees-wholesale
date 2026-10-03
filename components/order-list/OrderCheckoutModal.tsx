@@ -8,7 +8,7 @@ import { WhatsAppIcon } from "@/components/ui/Icons";
 import { useSettings } from "@/hooks/use-settings";
 import { formatPieces, formatPrice } from "@/lib/format";
 import { clearOrderList } from "@/lib/stores";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildWhatsAppUrl, getProductImageUrl, productLink } from "@/lib/whatsapp";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import type { OrderListLine, OrderListSummary } from "@/types";
 
@@ -66,7 +66,12 @@ export function OrderCheckoutModal({ open, onClose, lines, summary }: OrderCheck
     messageLines.push("", isHi ? "🛍️ *ऑर्डर की साड़ियां*" : "🛍️ *Selected Sarees*");
     lines.forEach(({ product, item, lineTotal }, idx) => {
       const prodName = product.name_en || product.name;
-      messageLines.push(`${idx + 1}. ${prodName} (${product.productCode})`);
+      messageLines.push(`${idx + 1}. ${prodName}`);
+
+      const imageUrl = getProductImageUrl(product) || productLink(product);
+      if (imageUrl) {
+        messageLines.push(`   ${isHi ? "फोटो" : "Image"}: ${imageUrl}`);
+      }
 
       // Add selected colors breakdown if available
       if (item.selectedColors) {

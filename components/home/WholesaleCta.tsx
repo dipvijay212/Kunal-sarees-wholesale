@@ -6,13 +6,19 @@ import { Container } from "@/components/ui/Container";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useSettings } from "@/hooks/use-settings";
+import type { BusinessSettings } from "@/types";
 
-export function WholesaleCta() {
-  const settings = useSettings();
+interface WholesaleCtaProps {
+  settings?: BusinessSettings;
+}
+
+export function WholesaleCta({ settings: propSettings }: WholesaleCtaProps = {}) {
+  const contextSettings = useSettings();
+  const settings = propSettings || contextSettings;
   const { t } = useLanguage();
   const { cta } = t;
   const bannerImage =
-    settings.storefrontImages?.wholesaleBannerImage ||
+    settings.storefrontImages?.wholesaleBannerImage?.trim() ||
     "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=85";
 
   return (

@@ -21,11 +21,30 @@ export function buildWhatsAppUrl(message?: string, phoneNumber?: string): string
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
 
-/** Absolute product URL, only when a real public site URL is configured. */
-function productLink(product: Product): string | null {
-  const settings = settingsRepository.get();
-  if (!process.env.NEXT_PUBLIC_SITE_URL) return null;
-  return `${settings.seo.siteUrl}/products/${product.slug}`;
+/** Absolute product image URL (Cloudinary, hosted, or CDN), safe for WhatsApp links. */
+export function getProductImageUrl(product: Product): string | null {
+  const rawUrl = product.images?.[0]?.url;
+  if (!rawUrl || typeof rawUrl !== "string" || !rawUrl.trim()) return null;
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("data:")) return null;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  const origin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : (settingsRepository.get().seo.siteUrl || "https://www.kunalsarees.in");
+  return `${origin.replace(/\/+$/, "")}/${trimmed.replace(/^\/+/, "")}`;
+}
+
+/** Absolute product URL, resolving host from environment, settings, or window. */
+export function productLink(product: Product): string | null {
+  if (!product?.slug) return null;
+  const origin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : (settingsRepository.get().seo.siteUrl || "https://www.kunalsarees.in");
+  return `${origin.replace(/\/+$/, "")}/products/${product.slug}`;
 }
 
 export const defaultWhatsAppMessage = `Hello, I would like to know more about your wholesale saree collections.`;
@@ -35,8 +54,13 @@ export function buildProductEnquiryMessage(product: Product, quantity?: number):
     `Hello ${getBusinessName()},`,
     "",
     "I would like to enquire about this design:",
-    `• ${product.name} (${product.productCode})`,
+    `• ${product.name}`,
   ];
+
+  const imageUrl = getProductImageUrl(product);
+  if (imageUrl) {
+    lines.push(`• Image: ${imageUrl}`);
+  }
 
   if (quantity) {
     lines.push(`• Quantity: ${formatPieces(quantity)}`);
@@ -45,7 +69,7 @@ export function buildProductEnquiryMessage(product: Product, quantity?: number):
   lines.push(`• Listed wholesale rate: ${formatPrice(product.price)} per piece`);
 
   const link = productLink(product);
-  if (link) lines.push(`• ${link}`);
+  if (link && link !== imageUrl) lines.push(`• Link: ${link}`);
 
   lines.push("", "Please share availability and dispatch timelines.");
   return lines.join("\n");
@@ -60,8 +84,13 @@ export function buildMultiColorEnquiryMessage(
     `Hello ${getBusinessName()},`,
     "",
     "I would like to place an enquiry for this design:",
-    `• Product: ${product.name} (${product.productCode})`,
+    `• Product: ${product.name}`,
   ];
+
+  const imageUrl = getProductImageUrl(product);
+  if (imageUrl) {
+    lines.push(`• Image: ${imageUrl}`);
+  }
 
   const activeColors = Object.entries(colorQuantities).filter(([, qty]) => qty > 0);
   if (activeColors.length > 0) {
@@ -75,19 +104,25 @@ export function buildMultiColorEnquiryMessage(
   lines.push(`• Wholesale rate: ${formatPrice(product.price)} per piece (Est. ${formatPrice(totalQuantity * product.price)})`);
 
   const link = productLink(product);
-  if (link) lines.push(`• Link: ${link}`);
+  if (link && link !== imageUrl) lines.push(`• Link: ${link}`);
 
   lines.push("", "Please confirm availability, stock status and dispatch timelines.");
   return lines.join("\n");
 }
 
 export function buildOrderListMessage(lines: OrderListLine[], summary: OrderListSummary): string {
-  const body = lines.map(({ product, item, lineTotal }, index) =>
-    [
-      `${index + 1}. ${product.name} (${product.productCode})`,
-      `   ${formatPieces(item.quantity)} × ${formatPrice(product.price)} = ${formatPrice(lineTotal)}`,
-    ].join("\n"),
-  );
+  const body = lines.map(({ product, item, lineTotal }, index) => {
+    const prodName = product.name_en || product.name;
+    const imageUrl = getProductImageUrl(product) || productLink(product);
+    const itemLines = [`${index + 1}. ${prodName}`];
+    if (imageUrl) {
+      itemLines.push(`   Image: ${imageUrl}`);
+    }
+    itemLines.push(
+      `   ${formatPieces(item.quantity)} × ${formatPrice(product.price)} = ${formatPrice(lineTotal)}`
+    );
+    return itemLines.join("\n");
+  });
 
   return [
     `Hello ${getBusinessName()},`,
@@ -177,8 +212,13 @@ export function buildCheckoutWhatsAppMessage(
   messageLines.push("", "🛍️ *Selected Sarees:*", "");
 
   lines.forEach(({ product, item }, index) => {
-    messageLines.push(`${index + 1}. ${product.name}`);
-    messageLines.push(`   Code: ${product.productCode}`);
+    const prodName = product.name_en || product.name;
+    messageLines.push(`${index + 1}. ${prodName}`);
+
+    const imageUrl = getProductImageUrl(product) || productLink(product);
+    if (imageUrl) {
+      messageLines.push(`   Image: ${imageUrl}`);
+    }
 
     if (item.selectedColors) {
       const activeColors = Object.entries(item.selectedColors).filter(([, qty]) => qty > 0);

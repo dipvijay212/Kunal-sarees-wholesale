@@ -587,7 +587,9 @@ export interface StoredBusinessSettings {
 
 export const settingsApi = {
   getBusiness: async () => {
-    return request<{ businessSettings: StoredBusinessSettings | null }>('/settings/business');
+    return request<{ businessSettings: StoredBusinessSettings | null }>('/settings/business', {
+      cache: 'no-store',
+    });
   },
 
   getLanguage: async () => {

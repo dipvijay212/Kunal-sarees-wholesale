@@ -116,9 +116,9 @@ export function ProductImageGallery({ images, videoUrl, videoUrls, productName, 
       className={cn("flex flex-col gap-4 lg:flex-row-reverse lg:items-start lg:gap-5", className)}
     >
       {/* Main stage */}
-      <div className="relative flex-1">
+      <div className="relative flex-1 min-w-0 max-w-full">
         <div
-          className="media-frame aspect-[3/4] touch-pan-y rounded-xs select-none bg-canvas-deep"
+          className="media-frame relative aspect-[3/4] w-full touch-pan-y rounded-xs select-none bg-canvas-deep shadow-xs overflow-hidden"
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
           onPointerCancel={() => {
@@ -165,78 +165,81 @@ export function ProductImageGallery({ images, videoUrl, videoUrls, productName, 
               />
             ))
           )}
-        </div>
 
-        {!isVideoSelected && activeImage ? (
-          <IconButton
-            label="बड़ी फोटो देखें"
-            icon={<ExpandIcon size={18} />}
-            onClick={() => setZoomOpen(true)}
-            variant="overlay"
-            aria-haspopup="dialog"
-            className="absolute top-3 right-3"
-          />
-        ) : null}
+          {/* Overlays inside media-frame */}
+          {!isVideoSelected && activeImage ? (
+            <IconButton
+              label="बड़ी फोटो देखें"
+              icon={<ExpandIcon size={16} />}
+              onClick={() => setZoomOpen(true)}
+              variant="overlay"
+              aria-haspopup="dialog"
+              className="absolute top-2.5 right-2.5 size-8 sm:size-9 z-10 shadow-sm"
+            />
+          ) : null}
 
-        {allVideos.length > 0 && !isVideoSelected ? (
-          <button
-            type="button"
-            onClick={() => setSelectedVideoIndex(0)}
-            className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-md hover:bg-accent-deep transition-transform hover:scale-105"
-          >
-            <svg className="size-3.5 fill-current" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            Watch Video {allVideos.length > 1 ? `(${allVideos.length})` : ""}
-          </button>
-        ) : null}
-
-        {hasMultiple && !isVideoSelected ? (
-          <>
-            <div className="pointer-events-none absolute inset-x-3 top-1/2 flex -translate-y-1/2 justify-between">
-              <IconButton
-                label="पिछली फोटो"
-                icon={<ChevronLeftIcon size={20} />}
-                onClick={previous}
-                variant="overlay"
-                className="pointer-events-auto"
-              />
-              <IconButton
-                label="अगली फोटो"
-                icon={<ChevronRightIcon size={20} />}
-                onClick={next}
-                variant="overlay"
-                className="pointer-events-auto"
-              />
-            </div>
-            <p
-              aria-live="polite"
-              className="absolute bottom-4 left-4 rounded-xs bg-accent-deep/90 px-2.5 py-1 text-[0.6875rem] font-semibold tracking-[0.14em] text-canvas tabular-nums shadow-xs"
+          {allVideos.length > 0 && !isVideoSelected ? (
+            <button
+              type="button"
+              onClick={() => setSelectedVideoIndex(0)}
+              className="absolute top-2.5 left-2.5 inline-flex items-center gap-1.5 rounded-full bg-accent/90 backdrop-blur-xs px-2.5 py-1 text-[0.6875rem] sm:text-xs font-semibold text-white shadow-md hover:bg-accent transition-transform hover:scale-105 z-10"
             >
-              {activeIndex + 1} / {total}
-            </p>
-          </>
-        ) : null}
+              <svg className="size-3 fill-current" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Watch Video {allVideos.length > 1 ? `(${allVideos.length})` : ""}
+            </button>
+          ) : null}
+
+          {hasMultiple && !isVideoSelected ? (
+            <>
+              <div className="pointer-events-none absolute inset-x-2 sm:inset-x-3 top-1/2 flex -translate-y-1/2 justify-between z-10">
+                <IconButton
+                  label="पिछली फोटो"
+                  icon={<ChevronLeftIcon size={18} />}
+                  onClick={previous}
+                  variant="overlay"
+                  className="pointer-events-auto size-8 sm:size-9 shadow-md bg-canvas/85 text-ink backdrop-blur-xs hover:bg-canvas"
+                />
+                <IconButton
+                  label="अगली फोटो"
+                  icon={<ChevronRightIcon size={18} />}
+                  onClick={next}
+                  variant="overlay"
+                  className="pointer-events-auto size-8 sm:size-9 shadow-md bg-canvas/85 text-ink backdrop-blur-xs hover:bg-canvas"
+                />
+              </div>
+              <p
+                aria-live="polite"
+                className="absolute bottom-2.5 right-2.5 rounded-full bg-ink/80 backdrop-blur-sm px-2.5 py-0.5 text-[0.625rem] sm:text-[0.6875rem] font-semibold tracking-wider text-canvas tabular-nums shadow-xs z-10"
+              >
+                {activeIndex + 1} / {total}
+              </p>
+            </>
+          ) : null}
+        </div>
       </div>
 
       {/* Thumbnails */}
       {hasMultiple ? (
-        <ul className="scrollbar-none flex gap-3 overflow-x-auto lg:w-20 lg:flex-col lg:overflow-visible">
+        <ul className="scrollbar-none flex gap-2 overflow-x-auto pb-1 pt-0.5 w-full max-w-full lg:w-20 lg:flex-col lg:overflow-visible snap-x">
           {images.map((image, index) => {
             const isActive = !isVideoSelected && index === activeIndex;
             return (
-              <li key={image.url} className="w-20 shrink-0 lg:w-full">
+              <li key={image.url} className="w-14 sm:w-16 shrink-0 lg:w-full snap-start">
                 <button
                   type="button"
                   onClick={() => goTo(index)}
                   aria-label={`फोटो ${index + 1} of ${total} देखें`}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "media-frame block aspect-[3/4] w-full rounded-xs border transition-[border-color,opacity] duration-300",
-                    isActive ? "border-accent ring-1 ring-accent opacity-100" : "border-line opacity-60 hover:opacity-100",
+                    "media-frame block aspect-[3/4] w-full rounded-xs border-2 transition-all duration-200",
+                    isActive
+                      ? "border-accent ring-2 ring-accent/30 shadow-xs opacity-100"
+                      : "border-line opacity-60 hover:opacity-100",
                   )}
                 >
-                  <RemoteImage src={image.url} alt="" fill sizes="80px" className="object-cover" />
+                  <RemoteImage src={image.url} alt="" fill sizes="64px" className="object-cover" />
                 </button>
               </li>
             );
@@ -246,23 +249,25 @@ export function ProductImageGallery({ images, videoUrl, videoUrls, productName, 
           {allVideos.map((_vUrl, vIdx) => {
             const isThisVideoActive = selectedVideoIndex === vIdx;
             return (
-              <li key={`vid-${vIdx}`} className="w-20 shrink-0 lg:w-full">
+              <li key={`vid-${vIdx}`} className="w-14 sm:w-16 shrink-0 lg:w-full snap-start">
                 <button
                   type="button"
                   onClick={() => setSelectedVideoIndex(vIdx)}
                   aria-label={`वीडियो ${vIdx + 1} देखें`}
                   aria-current={isThisVideoActive ? "true" : undefined}
                   className={cn(
-                    "media-frame relative flex flex-col items-center justify-center aspect-[3/4] w-full rounded-xs border bg-canvas-deep transition-[border-color,opacity] duration-300",
-                    isThisVideoActive ? "border-accent ring-1 ring-accent opacity-100 bg-accent/10" : "border-line opacity-75 hover:opacity-100",
+                    "media-frame relative flex flex-col items-center justify-center aspect-[3/4] w-full rounded-xs border-2 bg-canvas-deep transition-all duration-200",
+                    isThisVideoActive
+                      ? "border-accent ring-2 ring-accent/30 opacity-100 bg-accent/10"
+                      : "border-line opacity-75 hover:opacity-100",
                   )}
                 >
-                  <div className="size-7 rounded-full bg-accent text-white flex items-center justify-center shadow-xs">
-                    <svg className="size-3.5 fill-current ml-0.5" viewBox="0 0 24 24">
+                  <div className="size-6 rounded-full bg-accent text-white flex items-center justify-center shadow-xs">
+                    <svg className="size-3 fill-current ml-0.5" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
-                  <span className="text-[9px] font-bold mt-1 text-ink text-center px-1 truncate max-w-full">
+                  <span className="text-[8px] font-bold mt-1 text-ink text-center px-0.5 truncate max-w-full">
                     {allVideos.length > 1 ? `Reel ${vIdx + 1}` : "Video"}
                   </span>
                 </button>

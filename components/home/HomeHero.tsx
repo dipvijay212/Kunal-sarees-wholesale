@@ -7,17 +7,22 @@ import { ArrowRightIcon, MailIcon, PhoneIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useSettings } from "@/hooks/use-settings";
-import type { Banner } from "@/types";
+import type { Banner, BusinessSettings } from "@/types";
 
 interface HomeHeroProps {
   banner?: Banner;
   stats?: { value: string; label: string }[];
+  settings?: BusinessSettings;
 }
 
 /** Split luxury editorial hero for Kunal Sarees */
-export function HomeHero({}: HomeHeroProps) {
-  const settings = useSettings();
+export function HomeHero({ settings: propSettings }: HomeHeroProps) {
+  const contextSettings = useSettings();
+  const settings = propSettings || contextSettings;
   const { t } = useLanguage();
+  const heroImage =
+    settings.storefrontImages?.heroImage?.trim() ||
+    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85";
 
   return (
     <section className="relative isolate overflow-hidden border-b border-line bg-canvas">
@@ -133,7 +138,7 @@ export function HomeHero({}: HomeHeroProps) {
           <div className="relative lg:col-span-5">
             <div className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-xs border border-line-strong bg-cream-warm shadow-lift ring-4 ring-gold/15">
               <Image
-                src={settings.storefrontImages?.heroImage || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85"}
+                src={heroImage}
                 alt={t.hero.photoTagTitle}
                 fill
                 priority

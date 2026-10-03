@@ -24,6 +24,9 @@ import {
 
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   // Same cached requests as the page body.
   const [categories, products] = await Promise.all([fetchCategories(), fetchProducts()]);
@@ -54,7 +57,7 @@ export default async function HomePage() {
       <JsonLd data={jsonLdGraph(organizationJsonLd(business), websiteJsonLd())} />
 
       {/* 1. HERO SECTION */}
-      <HomeHero />
+      <HomeHero settings={business.settings} />
 
       {/* 2. TRUST / BUSINESS HIGHLIGHTS */}
       <WholesaleHighlights />
@@ -67,13 +70,13 @@ export default async function HomePage() {
       />
 
       {/* 4. WHY KUNAL SAREES */}
-      <WhyKunalSarees />
+      <WhyKunalSarees settings={business.settings} />
 
       {/* 5. ORDERING PROCESS */}
       <OrderingProcess />
 
       {/* 6. WHOLESALE CTA */}
-      <WholesaleCta />
+      <WholesaleCta settings={business.settings} />
 
       {/* 7. ABOUT KUNAL SAREES */}
       <AboutKunalSarees />

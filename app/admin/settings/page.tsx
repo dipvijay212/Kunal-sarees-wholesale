@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useRouter } from "next/navigation";
-import { useSettingsSavedInDatabase } from "@/components/providers/SettingsProvider";
+import { useSettingsSavedInDatabase, useRefreshBusinessSettings } from "@/components/providers/SettingsProvider";
 import { useLocalStore } from "@/hooks/use-local-store";
 import { useSettings } from "@/hooks/use-settings";
 import { businessSettings as defaultSettings, DEFAULT_STOREFRONT_IMAGES } from "@/data/business";
 import { adminSettingsStore } from "@/lib/admin-stores";
 import type { BusinessSettings } from "@/types";
-import { adminApi } from "@/lib/api";
+import { adminApi, settingsApi } from "@/lib/api";
+import { mergeBusinessSettings } from "@/lib/business-settings";
 import { Button } from "@/components/ui/Button";
 import { DEFAULT_LANGUAGE_SETTINGS, type Language, type WebsiteLanguageSettings } from "@/lib/translations";
 import { useLanguage } from "@/components/providers/LanguageProvider";
@@ -20,10 +21,12 @@ export default function AdminSettingsPage() {
   const router = useRouter();
   const [isSavingBusiness, setIsSavingBusiness] = useState(false);
   const { refreshSettings } = useLanguage();
+  const refreshBusinessSettings = useRefreshBusinessSettings();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSavingLang, setIsSavingLang] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [imageSuccessMessage, setImageSuccessMessage] = useState<string | null>(null);
 
   // Business settings form
   const toForm = (source: BusinessSettings) => ({
@@ -46,11 +49,76 @@ export default function AdminSettingsPage() {
   });
   const [form, setForm] = useState(() => toForm(settings));
 
+  // Load latest live settings directly from the backend on mount
   useEffect(() => {
-    if (settings) {
-      setForm(toForm(settings));
+    settingsApi.getBusiness()
+      .then((res) => {
+        if (res && res.businessSettings) {
+          const merged = mergeBusinessSettings(res.businessSettings);
+          setForm(toForm(merged));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const saveBusinessData = async (formToSave = form) => {
+    setIsSavingBusiness(true);
+    setErrorMessage(null);
+
+    try {
+      await adminApi.settings.updateBusiness({
+        businessName: formToSave.businessName,
+        contact: {
+          whatsappNumber: formToSave.whatsappNumber,
+          phoneDisplay: formToSave.phoneDisplay,
+          email: formToSave.email,
+          address: {
+            lines: formToSave.lines.split("\n").filter(Boolean),
+            city: formToSave.city,
+            region: formToSave.region,
+            postalCode: formToSave.postalCode,
+            country: "India",
+          },
+          hours: [
+            { days: "Monday – Saturday", hours: formToSave.hoursWeekday },
+            { days: "Sunday", hours: formToSave.hoursSunday },
+          ],
+        },
+        social: [
+          { platform: "instagram", label: "Instagram", href: formToSave.instagram },
+          { platform: "facebook", label: "Facebook", href: formToSave.facebook },
+          { platform: "youtube", label: "YouTube", href: formToSave.youtube },
+        ].filter((link) => link.href.trim() !== "") as { platform: "instagram" | "facebook" | "youtube"; label: string; href: string }[],
+        storefrontImages: {
+          heroImage: formToSave.heroImage?.trim() || null,
+          wholesaleBannerImage: formToSave.wholesaleBannerImage?.trim() || null,
+          whyChooseUsImage: formToSave.whyChooseUsImage?.trim() || null,
+        },
+      });
+
+      // Synchronize client-side providers and other open tabs immediately
+      try {
+        localStorage.setItem("kunal_business_settings_sync", Date.now().toString());
+        window.dispatchEvent(new CustomEvent("kunal_business_settings_updated"));
+      } catch {
+        // ignore storage errors
+      }
+
+      await refreshBusinessSettings();
+      router.refresh();
+
+      setSuccessMessage("✓ Settings & Homepage Showcase Images saved successfully! Storefront has been updated.");
+      setImageSuccessMessage("✓ Saved to database! Your storefront homepage images are now updated.");
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setImageSuccessMessage(null);
+      }, 7000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to save settings.");
+    } finally {
+      setIsSavingBusiness(false);
     }
-  }, [settings]);
+  };
 
   const handleStorefrontImageUpload = async (
     field: "heroImage" | "wholesaleBannerImage" | "whyChooseUsImage",
@@ -64,12 +132,13 @@ export default function AdminSettingsPage() {
     try {
       const res = await adminApi.media.uploadImages([file]);
       if (res && res.urls && res.urls[0]) {
-        setForm((prev) => ({
-          ...prev,
+        const updatedForm = {
+          ...form,
           [field]: res.urls[0],
-        }));
-        setSuccessMessage("Photo uploaded to Cloudinary successfully. Click 'Save All Settings' to apply.");
-        setTimeout(() => setSuccessMessage(null), 4000);
+        };
+        setForm(updatedForm);
+        // Automatically save to database immediately upon upload so changes take effect instantly!
+        await saveBusinessData(updatedForm);
       }
     } catch (err: any) {
       const msg = err?.message || "Failed to upload image.";
@@ -181,49 +250,7 @@ export default function AdminSettingsPage() {
 
   const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSavingBusiness(true);
-    setErrorMessage(null);
-
-    try {
-      // Saved to the database so every visitor sees it (not just this browser).
-      await adminApi.settings.updateBusiness({
-        businessName: form.businessName,
-        contact: {
-          whatsappNumber: form.whatsappNumber,
-          phoneDisplay: form.phoneDisplay,
-          email: form.email,
-          address: {
-            lines: form.lines.split("\n").filter(Boolean),
-            city: form.city,
-            region: form.region,
-            postalCode: form.postalCode,
-            country: "India",
-          },
-          hours: [
-            { days: "Monday – Saturday", hours: form.hoursWeekday },
-            { days: "Sunday", hours: form.hoursSunday },
-          ],
-        },
-        social: [
-          { platform: "instagram", label: "Instagram", href: form.instagram },
-          { platform: "facebook", label: "Facebook", href: form.facebook },
-          { platform: "youtube", label: "YouTube", href: form.youtube },
-        ].filter((link) => link.href.trim() !== "") as { platform: "instagram" | "facebook" | "youtube"; label: string; href: string }[],
-        storefrontImages: {
-          heroImage: form.heroImage?.trim() || null,
-          wholesaleBannerImage: form.wholesaleBannerImage?.trim() || null,
-          whyChooseUsImage: form.whyChooseUsImage?.trim() || null,
-        },
-      });
-
-      setSuccessMessage("Store settings & homepage showcase images saved. The storefront updates immediately or within about 30 seconds.");
-      setTimeout(() => setSuccessMessage(null), 5000);
-      router.refresh();
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : "Failed to save contact settings.");
-    } finally {
-      setIsSavingBusiness(false);
-    }
+    await saveBusinessData(form);
   };
 
   return (
@@ -579,13 +606,40 @@ export default function AdminSettingsPage() {
           {/* STOREFRONT BANNERS & EDITORIAL SHOWCASE IMAGES                    */}
           {/* ================================================================= */}
           <div className="rounded-xs border border-line bg-canvas p-6 shadow-xs ring-1 ring-gold/20">
-            <div className="border-b border-line pb-3">
-              <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-gold">Storefront Visuals</span>
-              <h3 className="type-h4 text-ink font-serif mt-0.5">Homepage Banners &amp; Editorial Showcase Images</h3>
-              <p className="text-xs text-muted mt-1">
-                Customize the high-resolution photographs displayed across your homepage sections. You can upload new photos directly to Cloudinary or paste existing image URLs.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
+              <div>
+                <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-gold">Storefront Visuals</span>
+                <h3 className="type-h4 text-ink font-serif mt-0.5">Homepage Banners &amp; Editorial Showcase Images</h3>
+                <p className="text-xs text-muted mt-1">
+                  Customize the high-resolution photographs displayed across your homepage sections. Photos uploaded from your device are saved to the website automatically.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isSavingBusiness}
+                  onClick={() => saveBusinessData(form)}
+                  className="bg-maroon hover:bg-maroon-dark text-white text-xs font-semibold px-4 py-2 shadow-xs"
+                >
+                  {isSavingBusiness ? "Saving..." : "Save Images to Website"}
+                </Button>
+              </div>
             </div>
+
+            {imageSuccessMessage ? (
+              <div className="mt-4 rounded-xs border border-success/40 bg-success/10 p-3.5 text-xs font-semibold text-success flex items-center justify-between gap-3 animate-in fade-in">
+                <span>{imageSuccessMessage}</span>
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xs bg-success/20 px-2.5 py-1 text-xs font-bold text-success hover:bg-success/30 underline shrink-0 transition-colors"
+                >
+                  View Live Website ↗
+                </a>
+              </div>
+            ) : null}
 
             <div className="mt-6 space-y-6 text-xs">
               {/* 1. Hero Showcase Image */}
@@ -617,9 +671,20 @@ export default function AdminSettingsPage() {
                         <label className="font-semibold text-ink text-sm block">
                           1. Homepage Hero Showcase Photo
                         </label>
-                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
-                          Top Hero
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {form.heroImage && !form.heroImage.includes("unsplash.com") ? (
+                            <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.625rem] font-semibold text-success">
+                              ● Custom Uploaded
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-line px-2 py-0.5 text-[0.625rem] font-medium text-muted">
+                              ● Default Stock
+                            </span>
+                          )}
+                          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
+                            Top Hero
+                          </span>
+                        </div>
                       </div>
                       <p className="text-muted mt-1 text-xs">
                         Featured on the right side of the main homepage hero banner (beside <em>&quot;Curated Weaves for Boutiques &amp; Retailers&quot;</em>).
@@ -639,25 +704,37 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2.5 pt-2 border-t border-line/60">
-                      <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "heroImage" ? "opacity-60 pointer-events-none" : ""}`}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          disabled={uploadingField === "heroImage"}
-                          onChange={(e) => handleStorefrontImageUpload("heroImage", e)}
-                        />
-                        <span>{uploadingField === "heroImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
-                      </label>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-line/60">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "heroImage" ? "opacity-60 pointer-events-none" : ""}`}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            disabled={uploadingField === "heroImage"}
+                            onChange={(e) => handleStorefrontImageUpload("heroImage", e)}
+                          />
+                          <span>{uploadingField === "heroImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                        </label>
 
-                      <button
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, heroImage: DEFAULT_STOREFRONT_IMAGES.heroImage })}
+                          className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                        >
+                          Reset to Original
+                        </button>
+                      </div>
+
+                      <Button
                         type="button"
-                        onClick={() => setForm({ ...form, heroImage: DEFAULT_STOREFRONT_IMAGES.heroImage })}
-                        className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                        size="sm"
+                        disabled={isSavingBusiness}
+                        onClick={() => saveBusinessData(form)}
+                        className="bg-maroon hover:bg-maroon-dark text-white text-[0.6875rem] py-1 px-3"
                       >
-                        Reset to Original
-                      </button>
+                        {isSavingBusiness ? "Saving..." : "Save Photo"}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -692,9 +769,20 @@ export default function AdminSettingsPage() {
                         <label className="font-semibold text-ink text-sm block">
                           2. Wholesale Enquiry Banner Photo
                         </label>
-                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
-                          Wholesale CTA
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {form.wholesaleBannerImage && !form.wholesaleBannerImage.includes("unsplash.com") ? (
+                            <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.625rem] font-semibold text-success">
+                              ● Custom Uploaded
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-line px-2 py-0.5 text-[0.625rem] font-medium text-muted">
+                              ● Default Stock
+                            </span>
+                          )}
+                          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
+                            Wholesale CTA
+                          </span>
+                        </div>
                       </div>
                       <p className="text-muted mt-1 text-xs">
                         Featured on the maroon wholesale CTA banner (beside <em>&quot;Looking for the Right Sarees for Your Business?&quot;</em>).
@@ -714,25 +802,37 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2.5 pt-2 border-t border-line/60">
-                      <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "wholesaleBannerImage" ? "opacity-60 pointer-events-none" : ""}`}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          disabled={uploadingField === "wholesaleBannerImage"}
-                          onChange={(e) => handleStorefrontImageUpload("wholesaleBannerImage", e)}
-                        />
-                        <span>{uploadingField === "wholesaleBannerImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
-                      </label>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-line/60">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "wholesaleBannerImage" ? "opacity-60 pointer-events-none" : ""}`}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            disabled={uploadingField === "wholesaleBannerImage"}
+                            onChange={(e) => handleStorefrontImageUpload("wholesaleBannerImage", e)}
+                          />
+                          <span>{uploadingField === "wholesaleBannerImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                        </label>
 
-                      <button
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, wholesaleBannerImage: DEFAULT_STOREFRONT_IMAGES.wholesaleBannerImage })}
+                          className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                        >
+                          Reset to Original
+                        </button>
+                      </div>
+
+                      <Button
                         type="button"
-                        onClick={() => setForm({ ...form, wholesaleBannerImage: DEFAULT_STOREFRONT_IMAGES.wholesaleBannerImage })}
-                        className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                        size="sm"
+                        disabled={isSavingBusiness}
+                        onClick={() => saveBusinessData(form)}
+                        className="bg-maroon hover:bg-maroon-dark text-white text-[0.6875rem] py-1 px-3"
                       >
-                        Reset to Original
-                      </button>
+                        {isSavingBusiness ? "Saving..." : "Save Photo"}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -767,9 +867,20 @@ export default function AdminSettingsPage() {
                         <label className="font-semibold text-ink text-sm block">
                           3. &quot;Why Partner with Kunal Sarees&quot; Photo
                         </label>
-                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
-                          Why Us Section
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {form.whyChooseUsImage && !form.whyChooseUsImage.includes("unsplash.com") ? (
+                            <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.625rem] font-semibold text-success">
+                              ● Custom Uploaded
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-line px-2 py-0.5 text-[0.625rem] font-medium text-muted">
+                              ● Default Stock
+                            </span>
+                          )}
+                          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
+                            Why Us Section
+                          </span>
+                        </div>
                       </div>
                       <p className="text-muted mt-1 text-xs">
                         Featured alongside the wholesale advantage pillars (titled <em>&quot;Exquisite Weaves &amp; Craftsmanship&quot;</em>).
@@ -789,25 +900,37 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2.5 pt-2 border-t border-line/60">
-                      <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "whyChooseUsImage" ? "opacity-60 pointer-events-none" : ""}`}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          disabled={uploadingField === "whyChooseUsImage"}
-                          onChange={(e) => handleStorefrontImageUpload("whyChooseUsImage", e)}
-                        />
-                        <span>{uploadingField === "whyChooseUsImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
-                      </label>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-line/60">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "whyChooseUsImage" ? "opacity-60 pointer-events-none" : ""}`}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            disabled={uploadingField === "whyChooseUsImage"}
+                            onChange={(e) => handleStorefrontImageUpload("whyChooseUsImage", e)}
+                          />
+                          <span>{uploadingField === "whyChooseUsImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                        </label>
 
-                      <button
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, whyChooseUsImage: DEFAULT_STOREFRONT_IMAGES.whyChooseUsImage })}
+                          className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                        >
+                          Reset to Original
+                        </button>
+                      </div>
+
+                      <Button
                         type="button"
-                        onClick={() => setForm({ ...form, whyChooseUsImage: DEFAULT_STOREFRONT_IMAGES.whyChooseUsImage })}
-                        className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                        size="sm"
+                        disabled={isSavingBusiness}
+                        onClick={() => saveBusinessData(form)}
+                        className="bg-maroon hover:bg-maroon-dark text-white text-[0.6875rem] py-1 px-3"
                       >
-                        Reset to Original
-                      </button>
+                        {isSavingBusiness ? "Saving..." : "Save Photo"}
+                      </Button>
                     </div>
                   </div>
                 </div>
