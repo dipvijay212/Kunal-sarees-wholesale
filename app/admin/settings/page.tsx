@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSettingsSavedInDatabase } from "@/components/providers/SettingsProvider";
 import { useLocalStore } from "@/hooks/use-local-store";
 import { useSettings } from "@/hooks/use-settings";
-import { businessSettings as defaultSettings } from "@/data/business";
+import { businessSettings as defaultSettings, DEFAULT_STOREFRONT_IMAGES } from "@/data/business";
 import { adminSettingsStore } from "@/lib/admin-stores";
 import type { BusinessSettings } from "@/types";
 import { adminApi } from "@/lib/api";
@@ -23,6 +23,7 @@ export default function AdminSettingsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSavingLang, setIsSavingLang] = useState(false);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
 
   // Business settings form
   const toForm = (source: BusinessSettings) => ({
@@ -39,8 +40,45 @@ export default function AdminSettingsPage() {
     instagram: source.social.find((s) => s.platform === "instagram")?.href || "",
     facebook: source.social.find((s) => s.platform === "facebook")?.href || "",
     youtube: source.social.find((s) => s.platform === "youtube")?.href || "",
+    heroImage: source.storefrontImages?.heroImage || DEFAULT_STOREFRONT_IMAGES.heroImage,
+    wholesaleBannerImage: source.storefrontImages?.wholesaleBannerImage || DEFAULT_STOREFRONT_IMAGES.wholesaleBannerImage,
+    whyChooseUsImage: source.storefrontImages?.whyChooseUsImage || DEFAULT_STOREFRONT_IMAGES.whyChooseUsImage,
   });
   const [form, setForm] = useState(() => toForm(settings));
+
+  useEffect(() => {
+    if (settings) {
+      setForm(toForm(settings));
+    }
+  }, [settings]);
+
+  const handleStorefrontImageUpload = async (
+    field: "heroImage" | "wholesaleBannerImage" | "whyChooseUsImage",
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setUploadingField(field);
+    setErrorMessage(null);
+    try {
+      const res = await adminApi.media.uploadImages([file]);
+      if (res && res.urls && res.urls[0]) {
+        setForm((prev) => ({
+          ...prev,
+          [field]: res.urls[0],
+        }));
+        setSuccessMessage("Photo uploaded to Cloudinary successfully. Click 'Save All Settings' to apply.");
+        setTimeout(() => setSuccessMessage(null), 4000);
+      }
+    } catch (err: any) {
+      const msg = err?.message || "Failed to upload image.";
+      setErrorMessage(`Upload failed: ${msg}`);
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setUploadingField(null);
+    }
+  };
 
   // Older versions of this page saved contact details only in this browser. Until the
   // database has settings, offer to load those so they can be saved properly.
@@ -171,9 +209,14 @@ export default function AdminSettingsPage() {
           { platform: "facebook", label: "Facebook", href: form.facebook },
           { platform: "youtube", label: "YouTube", href: form.youtube },
         ].filter((link) => link.href.trim() !== "") as { platform: "instagram" | "facebook" | "youtube"; label: string; href: string }[],
+        storefrontImages: {
+          heroImage: form.heroImage?.trim() || null,
+          wholesaleBannerImage: form.wholesaleBannerImage?.trim() || null,
+          whyChooseUsImage: form.whyChooseUsImage?.trim() || null,
+        },
       });
 
-      setSuccessMessage("Contact settings saved. The website shows the new details within about 30 seconds.");
+      setSuccessMessage("Store settings & homepage showcase images saved. The storefront updates immediately or within about 30 seconds.");
       setTimeout(() => setSuccessMessage(null), 5000);
       router.refresh();
     } catch (err) {
@@ -532,9 +575,249 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          {/* ================================================================= */}
+          {/* STOREFRONT BANNERS & EDITORIAL SHOWCASE IMAGES                    */}
+          {/* ================================================================= */}
+          <div className="rounded-xs border border-line bg-canvas p-6 shadow-xs ring-1 ring-gold/20">
+            <div className="border-b border-line pb-3">
+              <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-gold">Storefront Visuals</span>
+              <h3 className="type-h4 text-ink font-serif mt-0.5">Homepage Banners &amp; Editorial Showcase Images</h3>
+              <p className="text-xs text-muted mt-1">
+                Customize the high-resolution photographs displayed across your homepage sections. You can upload new photos directly to Cloudinary or paste existing image URLs.
+              </p>
+            </div>
+
+            <div className="mt-6 space-y-6 text-xs">
+              {/* 1. Hero Showcase Image */}
+              <div className="rounded-xs border border-line bg-surface p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  {/* Preview */}
+                  <div className="shrink-0">
+                    <div className="relative aspect-[3/4] w-28 sm:w-32 overflow-hidden rounded-xs border border-line bg-cream-warm shadow-xs">
+                      {form.heroImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={form.heroImage}
+                          alt="Hero banner preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted text-[0.6875rem] p-2 text-center">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <span className="mt-1 block text-center text-[0.625rem] text-muted">Preview (3:4)</span>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="font-semibold text-ink text-sm block">
+                          1. Homepage Hero Showcase Photo
+                        </label>
+                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
+                          Top Hero
+                        </span>
+                      </div>
+                      <p className="text-muted mt-1 text-xs">
+                        Featured on the right side of the main homepage hero banner (beside <em>&quot;Curated Weaves for Boutiques &amp; Retailers&quot;</em>).
+                      </p>
+
+                      <div className="mt-3">
+                        <label className="text-[0.6875rem] font-medium text-muted block mb-1">
+                          Image URL (Cloudinary or CDN)
+                        </label>
+                        <input
+                          type="url"
+                          value={form.heroImage}
+                          onChange={(e) => setForm({ ...form, heroImage: e.target.value })}
+                          placeholder="https://..."
+                          className="w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2.5 pt-2 border-t border-line/60">
+                      <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "heroImage" ? "opacity-60 pointer-events-none" : ""}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={uploadingField === "heroImage"}
+                          onChange={(e) => handleStorefrontImageUpload("heroImage", e)}
+                        />
+                        <span>{uploadingField === "heroImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, heroImage: DEFAULT_STOREFRONT_IMAGES.heroImage })}
+                        className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                      >
+                        Reset to Original
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Wholesale Inquiries Banner Image */}
+              <div className="rounded-xs border border-line bg-surface p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  {/* Preview */}
+                  <div className="shrink-0">
+                    <div className="relative aspect-[4/3] w-28 sm:w-32 overflow-hidden rounded-xs border border-line bg-cream-warm shadow-xs">
+                      {form.wholesaleBannerImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={form.wholesaleBannerImage}
+                          alt="Wholesale banner preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted text-[0.6875rem] p-2 text-center">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <span className="mt-1 block text-center text-[0.625rem] text-muted">Preview</span>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="font-semibold text-ink text-sm block">
+                          2. Wholesale Enquiry Banner Photo
+                        </label>
+                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
+                          Wholesale CTA
+                        </span>
+                      </div>
+                      <p className="text-muted mt-1 text-xs">
+                        Featured on the maroon wholesale CTA banner (beside <em>&quot;Looking for the Right Sarees for Your Business?&quot;</em>).
+                      </p>
+
+                      <div className="mt-3">
+                        <label className="text-[0.6875rem] font-medium text-muted block mb-1">
+                          Image URL (Cloudinary or CDN)
+                        </label>
+                        <input
+                          type="url"
+                          value={form.wholesaleBannerImage}
+                          onChange={(e) => setForm({ ...form, wholesaleBannerImage: e.target.value })}
+                          placeholder="https://..."
+                          className="w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2.5 pt-2 border-t border-line/60">
+                      <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "wholesaleBannerImage" ? "opacity-60 pointer-events-none" : ""}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={uploadingField === "wholesaleBannerImage"}
+                          onChange={(e) => handleStorefrontImageUpload("wholesaleBannerImage", e)}
+                        />
+                        <span>{uploadingField === "wholesaleBannerImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, wholesaleBannerImage: DEFAULT_STOREFRONT_IMAGES.wholesaleBannerImage })}
+                        className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                      >
+                        Reset to Original
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Why Partner with Kunal Sarees Image */}
+              <div className="rounded-xs border border-line bg-surface p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  {/* Preview */}
+                  <div className="shrink-0">
+                    <div className="relative aspect-[4/5] w-28 sm:w-32 overflow-hidden rounded-xs border border-line bg-cream-warm shadow-xs">
+                      {form.whyChooseUsImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={form.whyChooseUsImage}
+                          alt="Why partner image preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted text-[0.6875rem] p-2 text-center">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <span className="mt-1 block text-center text-[0.625rem] text-muted">Preview (4:5)</span>
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="font-semibold text-ink text-sm block">
+                          3. &quot;Why Partner with Kunal Sarees&quot; Photo
+                        </label>
+                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.625rem] font-semibold text-maroon">
+                          Why Us Section
+                        </span>
+                      </div>
+                      <p className="text-muted mt-1 text-xs">
+                        Featured alongside the wholesale advantage pillars (titled <em>&quot;Exquisite Weaves &amp; Craftsmanship&quot;</em>).
+                      </p>
+
+                      <div className="mt-3">
+                        <label className="text-[0.6875rem] font-medium text-muted block mb-1">
+                          Image URL (Cloudinary or CDN)
+                        </label>
+                        <input
+                          type="url"
+                          value={form.whyChooseUsImage}
+                          onChange={(e) => setForm({ ...form, whyChooseUsImage: e.target.value })}
+                          placeholder="https://..."
+                          className="w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2.5 pt-2 border-t border-line/60">
+                      <label className={`inline-flex items-center gap-1.5 rounded-xs border border-line bg-canvas px-3 py-1.5 text-xs font-semibold text-ink shadow-xs transition-colors hover:border-accent hover:text-accent cursor-pointer ${uploadingField === "whyChooseUsImage" ? "opacity-60 pointer-events-none" : ""}`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={uploadingField === "whyChooseUsImage"}
+                          onChange={(e) => handleStorefrontImageUpload("whyChooseUsImage", e)}
+                        />
+                        <span>{uploadingField === "whyChooseUsImage" ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, whyChooseUsImage: DEFAULT_STOREFRONT_IMAGES.whyChooseUsImage })}
+                        className="text-[0.6875rem] text-muted hover:text-maroon underline px-2 py-1"
+                      >
+                        Reset to Original
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
             <Button type="submit" size="lg" disabled={isSavingBusiness}>
-              {isSavingBusiness ? "Saving to Database..." : "Save Contact Settings"}
+              {isSavingBusiness ? "Saving to Database..." : "Save Store & Banner Settings"}
             </Button>
           </div>
         </form>

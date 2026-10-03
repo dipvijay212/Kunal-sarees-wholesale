@@ -133,7 +133,7 @@ export function HomeHero({}: HomeHeroProps) {
           <div className="relative lg:col-span-5">
             <div className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-xs border border-line-strong bg-cream-warm shadow-lift ring-4 ring-gold/15">
               <Image
-                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85"
+                src={settings.storefrontImages?.heroImage || "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85"}
                 alt={t.hero.photoTagTitle}
                 fill
                 priority

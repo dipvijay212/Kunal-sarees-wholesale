@@ -5,10 +5,15 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useSettings } from "@/hooks/use-settings";
 
 export function WholesaleCta() {
+  const settings = useSettings();
   const { t } = useLanguage();
   const { cta } = t;
+  const bannerImage =
+    settings.storefrontImages?.wholesaleBannerImage ||
+    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=85";
 
   return (
     <section aria-labelledby="cta-heading" className="section-y border-t border-line bg-canvas">
@@ -50,7 +55,7 @@ export function WholesaleCta() {
             {/* Right Column: Premium Saree Photograph (Span 5) */}
             <div className="relative min-h-[16rem] sm:min-h-[20rem] lg:min-h-full lg:col-span-5 overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=85"
+                src={bannerImage}
                 alt="Exquisite Indian silk saree with intricate zari border"
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"

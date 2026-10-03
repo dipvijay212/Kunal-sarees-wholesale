@@ -4,12 +4,17 @@ import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { ChatIcon, PackageIcon, ShieldCheckIcon, TagIcon } from "@/components/ui/Icons";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useSettings } from "@/hooks/use-settings";
 
 const pillarIcons = [ShieldCheckIcon, TagIcon, PackageIcon, ChatIcon];
 
 export function WhyKunalSarees() {
+  const settings = useSettings();
   const { t } = useLanguage();
   const { whyUs } = t;
+  const whyImage =
+    settings.storefrontImages?.whyChooseUsImage ||
+    "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80";
 
   return (
     <section aria-labelledby="why-us-heading" className="section-y border-t border-line bg-canvas">
@@ -50,7 +55,7 @@ export function WhyKunalSarees() {
           <div className="relative lg:col-span-5">
             <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-xs border border-line bg-cream-warm shadow-lift ring-4 ring-gold/10">
               <Image
-                src="https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80"
+                src={whyImage}
                 alt="Finely woven Indian silk saree with intricate gold zari"
                 fill
                 sizes="(min-width: 1024px) 35vw, 90vw"

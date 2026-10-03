@@ -578,6 +578,11 @@ export interface StoredBusinessSettings {
     hours: { days: string; hours: string }[];
   };
   social: { platform: 'instagram' | 'facebook' | 'youtube'; label: string; href: string }[];
+  storefrontImages?: {
+    heroImage?: string | null;
+    wholesaleBannerImage?: string | null;
+    whyChooseUsImage?: string | null;
+  } | null;
 }
 
 export const settingsApi = {

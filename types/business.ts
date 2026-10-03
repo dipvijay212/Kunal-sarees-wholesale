@@ -19,6 +19,12 @@ export interface SocialLink {
   href: string;
 }
 
+export interface StorefrontImages {
+  heroImage?: string;
+  wholesaleBannerImage?: string;
+  whyChooseUsImage?: string;
+}
+
 /** Single source of truth for business identity, contact and wholesale policy. */
 export interface BusinessSettings {
   id: string;
@@ -55,4 +61,5 @@ export interface BusinessSettings {
     siteUrl: string;
   };
   social: SocialLink[];
+  storefrontImages?: StorefrontImages;
 }

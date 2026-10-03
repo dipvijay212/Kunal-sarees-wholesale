@@ -46,6 +46,17 @@ export function mergeBusinessSettings(stored: StoredBusinessSettings | null | un
     },
     // Once saved, the admin's list is used as-is (an empty list hides the icons).
     social: Array.isArray(stored.social) ? stored.social : defaultSettings.social,
+    storefrontImages: {
+      heroImage:
+        stored.storefrontImages?.heroImage?.trim() ||
+        defaultSettings.storefrontImages?.heroImage,
+      wholesaleBannerImage:
+        stored.storefrontImages?.wholesaleBannerImage?.trim() ||
+        defaultSettings.storefrontImages?.wholesaleBannerImage,
+      whyChooseUsImage:
+        stored.storefrontImages?.whyChooseUsImage?.trim() ||
+        defaultSettings.storefrontImages?.whyChooseUsImage,
+    },
   };
 }
 

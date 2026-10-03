@@ -76,4 +76,11 @@ export const businessSettings: BusinessSettings = {
   },
   // Social links are set in Admin → Settings.
   social: [],
+  storefrontImages: {
+    heroImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85",
+    wholesaleBannerImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=85",
+    whyChooseUsImage: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=900&q=80",
+  },
 };
+
+export const DEFAULT_STOREFRONT_IMAGES = businessSettings.storefrontImages!;
