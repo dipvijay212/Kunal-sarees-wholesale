@@ -1,6 +1,6 @@
 import type { BusinessSettings } from "@/types";
 
-const DEFAULT_WHATSAPP_NUMBER = "919913238496";
+const DEFAULT_WHATSAPP_NUMBER = "919898407607";
 
 /** Returns digits with the country code, as wa.me links require. A bare 10-digit number is treated as Indian. */
 function normaliseWhatsAppNumber(value: string | undefined): string {
@@ -50,13 +50,13 @@ export const businessSettings: BusinessSettings = {
     whatsappNumber,
     phoneDisplay: `+${whatsappNumber.slice(0, 2)} ${whatsappNumber.slice(2, 7)} ${whatsappNumber.slice(7)}`,
     phoneHref: `tel:+${whatsappNumber}`,
-    email: "",
-    mapUrl: "https://maps.app.goo.gl/QhiMqT5FrAuZDJ3m6",
+    email: "kunalsarees250684@gmail.com",
+    mapUrl: "https://maps.app.goo.gl/fP4S4CNxp4bYPrdLA",
     address: {
-      lines: [],
-      city: "Surat",
-      region: "Gujarat",
-      postalCode: "",
+      lines: ["PLOT NO.- 1, DIPAK NAGAR, DIPAK CORPORATION, NAVAGAM, DINDOLI ROAD, UDHNA"],
+      city: "SURAT",
+      region: "GUJARAT",
+      postalCode: "394210",
       country: "India",
     },
     hours: [],
@@ -75,7 +75,6 @@ export const businessSettings: BusinessSettings = {
   seo: {
     siteUrl: normaliseSiteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   },
-  // Social links are set in Admin → Settings.
   social: [],
   storefrontImages: {
     heroImage: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85",
