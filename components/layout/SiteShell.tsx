@@ -12,6 +12,8 @@ import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { siteConfig } from "@/data/site";
 import { categoryRepository, productRepository } from "@/lib/repositories";
 
+import { SmartAdminLauncher } from "@/components/layout/SmartAdminLauncher";
+
 export function SiteShell({ children, footerCategories }: { children: React.ReactNode; footerCategories?: FooterCategory[] }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
@@ -30,6 +32,7 @@ export function SiteShell({ children, footerCategories }: { children: React.Reac
 
   return (
     <>
+      <SmartAdminLauncher />
       <IntroAnimation />
       <TopBar />
       <Header />

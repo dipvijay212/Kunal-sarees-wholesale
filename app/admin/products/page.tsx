@@ -15,6 +15,7 @@ import { adminApi } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import type { Product, Fabric, DesignType, ProductStatus } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { PlusIcon, SearchIcon, CloseIcon } from "@/components/ui/Icons";
 import type { Language } from "@/lib/translations";
 
@@ -248,6 +249,23 @@ export default function AdminProductsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+
+  // Delete Confirmation Modal State
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteAdminProduct(productToDelete.id);
+      setProductToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete product:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -872,7 +890,7 @@ export default function AdminProductsPage() {
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteAdminProduct(product.id)}
+                      onClick={() => setProductToDelete(product)}
                       className="text-xs font-semibold text-alert hover:underline"
                     >
                       Delete
@@ -884,6 +902,102 @@ export default function AdminProductsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={Boolean(productToDelete)}
+        onClose={() => {
+          if (!isDeleting) setProductToDelete(null);
+        }}
+        title="Delete Saree Product?"
+        description="Are you sure you want to permanently delete this saree from your catalogue?"
+        size="md"
+      >
+        {productToDelete ? (
+          <div className="space-y-4">
+            {/* Warning banner */}
+            <div className="rounded-xs border border-amber-300 bg-amber-50/80 p-3 text-xs text-amber-950 flex items-start gap-2.5">
+              <span className="text-base leading-none">⚠️</span>
+              <p className="leading-relaxed">
+                This action cannot be undone. Once deleted, buyers will no longer see or order this saree on the wholesale website.
+              </p>
+            </div>
+
+            {/* Product Summary Preview Card */}
+            <div className="flex items-center gap-3.5 rounded-xs border border-line bg-canvas-deep p-3.5">
+              <div className="relative size-16 rounded-xs bg-line/40 overflow-hidden shrink-0 border border-line">
+                {productToDelete.images && productToDelete.images[0] ? (
+                  <img
+                    src={productToDelete.images[0].url}
+                    alt={productToDelete.productCode}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <div className="size-full flex items-center justify-center text-[10px] text-muted">
+                    No photo
+                  </div>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-ink">
+                    {productToDelete.productCode}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      productToDelete.status === "active"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-muted/20 text-muted"
+                    }`}
+                  >
+                    {productToDelete.status === "active" ? "In Stock" : "Out of Stock"}
+                  </span>
+                </div>
+
+                <p className="text-xs font-semibold text-ink truncate mt-1">
+                  {productToDelete.name || productToDelete.name_en || productToDelete.name_hi || "Saree Product"}
+                </p>
+
+                <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
+                  <span className="font-semibold text-maroon">
+                    {formatPrice(productToDelete.price)}
+                  </span>
+                  <span>•</span>
+                  <span>MOQ: {productToDelete.moq} pcs</span>
+                  {productToDelete.fabric ? (
+                    <>
+                      <span>•</span>
+                      <span className="truncate">{productToDelete.fabric}</span>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setProductToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="bg-alert hover:bg-alert/90 text-white"
+              >
+                {isDeleting ? "Deleting..." : "Yes, Delete Product"}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       {/* Add / Edit Product Modal */}
       {isModalOpen && editingProduct ? (

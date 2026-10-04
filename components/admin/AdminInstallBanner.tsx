@@ -45,8 +45,8 @@ export function AdminInstallBanner() {
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="relative flex size-12 shrink-0 items-center justify-center rounded-full ring-2 ring-gold/40 bg-canvas p-0.5 shadow-sm">
               <Image
-                src="/brand/ks-logo-320.png"
-                alt="Kunal Sarees Logo"
+                src="/admin/icon-admin-192.png"
+                alt="KS Admin App Icon"
                 width={48}
                 height={48}
                 className="size-full rounded-full object-cover"
@@ -56,14 +56,14 @@ export function AdminInstallBanner() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="type-h4 text-ink font-serif text-base sm:text-lg">
-                  Install Kunal Sarees Admin App
+                  📱 कुणाल साड़ी एडमिन ऐप इंस्टॉल करें (KS Admin)
                 </h3>
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[0.6875rem] font-bold text-accent">
-                  <SparkleIcon size={12} /> Fast 1-Tap Access
+                  <SparkleIcon size={12} /> डायरेक्ट 1-टैप एडमिन
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-muted max-w-xl leading-relaxed">
-                Add Kunal Sarees to your Desktop or Mobile Home Screen for instant loading, full-screen workspace, and seamless wholesale order management.
+                फोन की होम स्क्रीन पर KS Admin ऐप जोड़ें। ऐप खोलते ही सीधे ऑर्डर्स, प्रोडक्ट्स और स्टॉक दिखेंगे (पब्लिक वेबसाइट नहीं)।
               </p>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function AdminInstallBanner() {
               disabled={isPrompting}
               className="shadow-xs"
             >
-              {isPrompting ? "Opening..." : "Install App"}
+              {isPrompting ? "Opening..." : "एडमिन ऐप इंस्टॉल करें"}
             </Button>
             <button
               type="button"

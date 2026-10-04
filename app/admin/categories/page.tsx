@@ -12,6 +12,7 @@ import {
 import { adminApi } from "@/lib/api";
 import type { Category } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { PlusIcon, CloseIcon } from "@/components/ui/Icons";
 
 export default function AdminCategoriesPage() {
@@ -30,6 +31,23 @@ export default function AdminCategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Delete Confirmation Modal State
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteAdminCategory(categoryToDelete.id);
+      setCategoryToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete category:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleOpenAddModal = () => {
     setEditingCategory({
@@ -185,7 +203,7 @@ export default function AdminCategoriesPage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => deleteAdminCategory(cat.id)}
+                    onClick={() => setCategoryToDelete(cat)}
                     className="text-xs font-semibold text-alert hover:underline"
                   >
                     Delete
@@ -196,6 +214,75 @@ export default function AdminCategoriesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Category Confirmation Modal */}
+      <Modal
+        open={Boolean(categoryToDelete)}
+        onClose={() => {
+          if (!isDeleting) setCategoryToDelete(null);
+        }}
+        title="Delete Category?"
+        description="Are you sure you want to permanently delete this category?"
+        size="md"
+      >
+        {categoryToDelete ? (
+          <div className="space-y-4">
+            <div className="rounded-xs border border-amber-300 bg-amber-50/80 p-3 text-xs text-amber-950 flex items-start gap-2.5">
+              <span className="text-base leading-none">⚠️</span>
+              <p className="leading-relaxed">
+                This action cannot be undone.{" "}
+                {(productCounts.get(categoryToDelete.id) || 0) > 0 ? (
+                  <strong className="text-alert">
+                    Warning: There are {productCounts.get(categoryToDelete.id)} saree(s) currently assigned to this category.
+                  </strong>
+                ) : (
+                  "The category will be removed immediately from the wholesale catalog."
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3.5 rounded-xs border border-line bg-canvas-deep p-3.5">
+              {categoryToDelete.image?.url ? (
+                <div className="relative size-14 rounded-xs bg-line/40 overflow-hidden shrink-0 border border-line">
+                  <img
+                    src={categoryToDelete.image.url}
+                    alt={categoryToDelete.name}
+                    className="size-full object-cover"
+                  />
+                </div>
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <p className="font-serif text-sm font-bold text-ink truncate">
+                  {categoryToDelete.name || categoryToDelete.name_en || categoryToDelete.name_hi}
+                </p>
+                <p className="text-xs text-muted mt-0.5">
+                  {productCounts.get(categoryToDelete.id) || 0} sarees in this category
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCategoryToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmDeleteCategory}
+                disabled={isDeleting}
+                className="bg-alert hover:bg-alert/90 text-white"
+              >
+                {isDeleting ? "Deleting..." : "Yes, Delete Category"}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       {isModalOpen && editingCategory ? (
         <div

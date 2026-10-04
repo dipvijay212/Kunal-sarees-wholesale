@@ -36,6 +36,12 @@ export async function loginAdmin(email: string, password: string): Promise<{ suc
       name: res.user.name,
       loginAt: Date.now(),
     });
+    // Mark this device as an Owner / Admin device for direct app launch
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("ks:owner_mode", "true");
+      } catch {}
+    }
     // Trigger initial background sync for admin data
     syncAdminData();
     return { success: true };
