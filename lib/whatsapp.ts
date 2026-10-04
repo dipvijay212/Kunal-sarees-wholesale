@@ -17,8 +17,15 @@ export function getBusinessName(): string {
 
 export function buildWhatsAppUrl(message?: string, phoneNumber?: string): string {
   const numberToUse = phoneNumber || getWhatsAppNumber();
-  const base = `https://wa.me/${numberToUse}`;
-  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+  const isMobile =
+    typeof navigator !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  const base = isMobile
+    ? `https://api.whatsapp.com/send?phone=${numberToUse}`
+    : `https://web.whatsapp.com/send?phone=${numberToUse}`;
+
+  return message ? `${base}&text=${encodeURIComponent(message)}` : base;
 }
 
 /** Absolute product image URL (Cloudinary, hosted, or CDN), safe for WhatsApp links. */

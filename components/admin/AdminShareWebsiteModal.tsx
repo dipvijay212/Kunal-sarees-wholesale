@@ -113,18 +113,26 @@ export function AdminShareWebsiteModal({ open, onClose }: AdminShareWebsiteModal
   };
 
   const handleWhatsAppShare = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // wa.me's 302 redirect has an upstream server bug that corrupts 4-byte UTF-8 emojis into %EF%BF%BD ().
+    // Using api.whatsapp.com/send on mobile and web.whatsapp.com/send on desktop preserves all emojis 100%.
+    const baseUrl = isMobile
+      ? "https://api.whatsapp.com/send"
+      : "https://web.whatsapp.com/send";
+
+    const url = `${baseUrl}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
   };
 
   const handleNativeShare = async () => {
     if (typeof navigator !== "undefined" && navigator.share) {
-      const siteUrl = (settings?.seo?.siteUrl?.trim().replace(/\/+$/, "") || "https://www.kunalsarees.in") + "/";
       try {
         await navigator.share({
           title: "Kunal Sarees — Wholesale Sarees",
           text: message,
-          url: siteUrl,
         });
       } catch {}
     } else {
