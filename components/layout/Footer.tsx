@@ -129,7 +129,7 @@ export function Footer({ categories = [] }: { categories?: FooterCategory[] }) {
                   ) : null}
                   <span className="block text-cream/80">{cityLine}</span>
                   <a
-                    href={getDirectionsUrl()}
+                    href={getDirectionsUrl(settings)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-1 inline-block text-[0.6875rem] font-bold uppercase tracking-wider text-gold-light underline hover:text-white"

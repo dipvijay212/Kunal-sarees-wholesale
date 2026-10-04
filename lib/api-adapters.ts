@@ -291,6 +291,25 @@ export function adaptCollection(backend: BackendCollection, index = 0): Collecti
   };
 }
 
+export function mapBackendStatusToLabel(status?: string): "New" | "Confirmed" | "Processing" | "Ready" | "Completed" | "Cancelled" {
+  switch (status?.toLowerCase()) {
+    case 'confirmed':
+      return 'Confirmed';
+    case 'processing':
+      return 'Processing';
+    case 'packed':
+    case 'shipped':
+      return 'Ready';
+    case 'completed':
+      return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'pending':
+    default:
+      return 'New';
+  }
+}
+
 export function adaptOrder(backend: BackendOrder): PlacedOrder {
   const subtotal = typeof backend.subtotal === 'string' ? parseFloat(backend.subtotal) : backend.subtotal;
   const totalAmount = typeof backend.totalAmount === 'string' ? parseFloat(backend.totalAmount) : backend.totalAmount;
@@ -333,5 +352,7 @@ export function adaptOrder(backend: BackendOrder): PlacedOrder {
     },
     placedAt: backend.createdAt,
     whatsappUrl: '',
+    orderStatus: mapBackendStatusToLabel(backend.status),
+    rawStatus: backend.status || 'pending',
   };
 }

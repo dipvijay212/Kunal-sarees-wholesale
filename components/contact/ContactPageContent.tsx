@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { MailIcon, PhoneIcon, WhatsAppIcon } from "@/components/ui/Icons";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-import { formatAddress, shopMap } from "@/data/site";
+import { formatAddress, getDirectionsUrl, shopMap } from "@/data/site";
 import { useSettings } from "@/hooks/use-settings";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 
@@ -115,7 +115,7 @@ export function ContactPageContent() {
               />
               <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line p-4 sm:px-6">
                 <p className="min-w-0 text-sm text-muted">{formatAddress(", ", settings)}</p>
-                <Button href={shopMap.placeUrl} external variant="secondary" size="sm">
+                <Button href={getDirectionsUrl(settings)} external variant="secondary" size="sm">
                   {isHi ? "गूगल मैप्स पर देखें" : "View on Google Maps"}
                 </Button>
               </div>

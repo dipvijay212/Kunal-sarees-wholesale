@@ -63,8 +63,58 @@ export default function AdminOrdersPage() {
     );
   });
 
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [statusFeedback, setStatusFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const handleStatusChange = async (orderId: string, orderNumber: string, newStatus: OrderStatusLabel) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await updateOrderStatus(orderId, newStatus);
+      if (res?.success) {
+        setStatusFeedback({
+          type: "success",
+          message: `✓ Order ${orderNumber} status updated to "${newStatus}" and saved to database.`,
+        });
+        setTimeout(() => setStatusFeedback(null), 4000);
+      } else {
+        setStatusFeedback({
+          type: "error",
+          message: `⚠ Failed to update status for order ${orderNumber}: ${res?.error || "Error"}`,
+        });
+        setTimeout(() => setStatusFeedback(null), 5000);
+      }
+    } catch (err: any) {
+      setStatusFeedback({
+        type: "error",
+        message: `⚠ Failed to update status: ${err?.message || "Unknown error"}`,
+      });
+      setTimeout(() => setStatusFeedback(null), 5000);
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
   return (
     <AdminLayout title="Wholesale Order Management">
+      {statusFeedback ? (
+        <div
+          className={`mb-4 rounded-xs border p-3 text-xs font-semibold animate-in fade-in flex items-center justify-between gap-3 ${
+            statusFeedback.type === "success"
+              ? "border-success/40 bg-success/10 text-success"
+              : "border-danger/40 bg-danger/10 text-danger"
+          }`}
+        >
+          <span>{statusFeedback.message}</span>
+          <button
+            type="button"
+            onClick={() => setStatusFeedback(null)}
+            className="text-xs opacity-70 hover:opacity-100 font-bold"
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-5">
         <div>
           <h2 className="type-h4 text-ink font-serif">Customer Enquiries ({filteredOrders.length})</h2>
@@ -145,17 +195,35 @@ export default function AdminOrdersPage() {
                     <td className="px-4 py-3 text-ink font-semibold">{formatPrice(order.summary.estimatedValue)}</td>
                     <td className="px-4 py-3 text-xs text-muted">{formatDate(order.placedAt)}</td>
                     <td className="px-4 py-3">
-                      <select
-                        value={order.orderStatus || "New"}
-                        onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatusLabel)}
-                        className="rounded-xs border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-accent focus:border-accent focus:outline-none"
-                      >
-                        {STATUS_OPTIONS.map((st) => (
-                          <option key={st} value={st}>
-                            {st}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-1.5">
+                        <select
+                          disabled={updatingOrderId === order.id}
+                          value={order.orderStatus || "New"}
+                          onChange={(e) => handleStatusChange(order.id, order.orderNumber, e.target.value as OrderStatusLabel)}
+                          className={`rounded-xs border px-2.5 py-1 text-xs font-bold transition-all focus:outline-none cursor-pointer ${
+                            updatingOrderId === order.id ? "opacity-50 pointer-events-none" : ""
+                          } ${
+                            order.orderStatus === "Completed"
+                              ? "border-success/40 bg-success/10 text-success"
+                              : order.orderStatus === "Cancelled"
+                              ? "border-danger/40 bg-danger/10 text-danger"
+                              : order.orderStatus === "Confirmed"
+                              ? "border-maroon/40 bg-accent-soft text-maroon"
+                              : order.orderStatus === "Processing" || order.orderStatus === "Ready"
+                              ? "border-gold/50 bg-gold/10 text-gold-dark"
+                              : "border-line bg-canvas text-accent"
+                          }`}
+                        >
+                          {STATUS_OPTIONS.map((st) => (
+                            <option key={st} value={st} className="bg-canvas text-ink font-medium">
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                        {updatingOrderId === order.id ? (
+                          <span className="text-[0.625rem] text-muted animate-pulse font-medium">Saving...</span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right">
                       {order.whatsappUrl ? (

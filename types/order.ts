@@ -70,4 +70,6 @@ export interface PlacedOrder {
   };
   placedAt: string;
   whatsappUrl: string;
+  orderStatus?: "New" | "Confirmed" | "Processing" | "Ready" | "Completed" | "Cancelled";
+  rawStatus?: string;
 }

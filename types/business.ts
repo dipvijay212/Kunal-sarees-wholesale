@@ -41,6 +41,7 @@ export interface BusinessSettings {
     phoneDisplay: string;
     phoneHref: string;
     email: string;
+    mapUrl?: string;
     address: BusinessAddress;
     hours: BusinessHours[];
   };

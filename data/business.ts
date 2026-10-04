@@ -51,6 +51,7 @@ export const businessSettings: BusinessSettings = {
     phoneDisplay: `+${whatsappNumber.slice(0, 2)} ${whatsappNumber.slice(2, 7)} ${whatsappNumber.slice(7)}`,
     phoneHref: `tel:+${whatsappNumber}`,
     email: "",
+    mapUrl: "https://maps.app.goo.gl/QhiMqT5FrAuZDJ3m6",
     address: {
       lines: [],
       city: "Surat",

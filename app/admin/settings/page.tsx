@@ -14,6 +14,7 @@ import { mergeBusinessSettings } from "@/lib/business-settings";
 import { Button } from "@/components/ui/Button";
 import { DEFAULT_LANGUAGE_SETTINGS, type Language, type WebsiteLanguageSettings } from "@/lib/translations";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { MapPinIcon } from "@/components/ui/Icons";
 
 export default function AdminSettingsPage() {
   // Current values from the database (loaded by the root layout).
@@ -27,6 +28,7 @@ export default function AdminSettingsPage() {
   const [isSavingLang, setIsSavingLang] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [imageSuccessMessage, setImageSuccessMessage] = useState<string | null>(null);
+  const [mapSuccessMessage, setMapSuccessMessage] = useState<string | null>(null);
 
   // Business settings form
   const toForm = (source: BusinessSettings) => ({
@@ -34,6 +36,7 @@ export default function AdminSettingsPage() {
     whatsappNumber: source.contact.whatsappNumber,
     phoneDisplay: source.contact.phoneDisplay,
     email: source.contact.email,
+    mapUrl: source.contact.mapUrl || "",
     lines: source.contact.address.lines.join("\n"),
     city: source.contact.address.city,
     region: source.contact.address.region,
@@ -72,6 +75,7 @@ export default function AdminSettingsPage() {
           whatsappNumber: formToSave.whatsappNumber,
           phoneDisplay: formToSave.phoneDisplay,
           email: formToSave.email,
+          mapUrl: formToSave.mapUrl?.trim() || null,
           address: {
             lines: formToSave.lines.split("\n").filter(Boolean),
             city: formToSave.city,
@@ -107,11 +111,13 @@ export default function AdminSettingsPage() {
       await refreshBusinessSettings();
       router.refresh();
 
-      setSuccessMessage("✓ Settings & Homepage Showcase Images saved successfully! Storefront has been updated.");
+      setSuccessMessage("✓ Settings saved successfully! Storefront has been updated.");
       setImageSuccessMessage("✓ Saved to database! Your storefront homepage images are now updated.");
+      setMapSuccessMessage("✓ Saved to database! Your Google Maps link is now active on the storefront.");
       setTimeout(() => {
         setSuccessMessage(null);
         setImageSuccessMessage(null);
+        setMapSuccessMessage(null);
       }, 7000);
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Failed to save settings.");
@@ -553,6 +559,92 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
                   className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none"
                 />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xs border border-line bg-canvas p-6 shadow-xs ring-1 ring-gold/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
+              <div>
+                <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-gold">Location &amp; Maps</span>
+                <h3 className="type-h4 text-ink font-serif mt-0.5">Google Maps &amp; Directions</h3>
+                <p className="text-xs text-muted mt-0.5">
+                  Set the direct Google Maps URL for your showroom so customers can navigate directly to your shop.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0">
+                {form.mapUrl?.trim() ? (
+                  <a
+                    href={form.mapUrl.trim().startsWith("http") ? form.mapUrl.trim() : `https://${form.mapUrl.trim()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xs border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-maroon hover:bg-gold/20 transition-colors"
+                  >
+                    <MapPinIcon size={14} className="text-gold-dark" />
+                    <span>Test Map Link ↗</span>
+                  </a>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isSavingBusiness}
+                  onClick={() => saveBusinessData(form)}
+                  className="bg-maroon hover:bg-maroon-dark text-white text-xs font-semibold px-4 py-2 shadow-xs"
+                >
+                  {isSavingBusiness ? "Saving..." : "Save Map URL"}
+                </Button>
+              </div>
+            </div>
+
+            {mapSuccessMessage ? (
+              <div className="mt-4 rounded-xs border border-success/40 bg-success/10 p-3 text-xs font-semibold text-success flex items-center justify-between gap-3 animate-in fade-in">
+                <span>{mapSuccessMessage}</span>
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xs bg-success/20 px-2.5 py-1 text-xs font-bold text-success hover:bg-success/30 underline shrink-0 transition-colors"
+                >
+                  View Footer on Website ↗
+                </a>
+              </div>
+            ) : null}
+
+            <div className="mt-4 space-y-3 text-xs">
+              <div>
+                <label className="font-semibold text-ink block text-xs">
+                  Google Maps URL (Get Directions Link)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://maps.app.goo.gl/... or https://maps.google.com/..."
+                  value={form.mapUrl}
+                  onChange={(e) => setForm({ ...form, mapUrl: e.target.value })}
+                  className="mt-1 w-full rounded-xs border border-line bg-canvas px-3 py-2 text-xs text-ink focus:border-accent focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="rounded-xs bg-surface p-3.5 border border-line/60 flex items-start gap-2.5 text-muted text-[0.6875rem] leading-relaxed">
+                <span className="text-gold font-bold text-xs mt-0.5 shrink-0">📍</span>
+                <div>
+                  When customers click <strong className="text-ink font-semibold">&ldquo;GET DIRECTIONS (GOOGLE MAPS) &rarr;&rdquo;</strong> in the website footer or the map button on the Contact page, they will directly navigate to this link.
+                  <br />
+                  <span className="text-subtle mt-0.5 block">
+                    Tip: Open Google Maps on your phone or computer &rarr; Search your shop / showroom location &rarr; Click <em>Share</em> &rarr; Click <em>Copy link</em> &rarr; Paste here. If left empty, the website will automatically search Google Maps for your business name &amp; address.
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isSavingBusiness}
+                  onClick={() => saveBusinessData(form)}
+                  className="bg-maroon hover:bg-maroon-dark text-white text-xs font-semibold px-4 py-2 shadow-xs"
+                >
+                  {isSavingBusiness ? "Saving..." : "Save Map URL"}
+                </Button>
               </div>
             </div>
           </div>

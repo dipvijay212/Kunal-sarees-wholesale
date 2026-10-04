@@ -50,7 +50,7 @@ export function ContactDetails({ showHours = true, className }: ContactDetailsPr
           </span>
         </address>
         <a
-          href={getDirectionsUrl()}
+          href={getDirectionsUrl(settings)}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-1.5 inline-flex min-h-8 items-center text-xs font-semibold tracking-[0.14em] text-ink uppercase transition-colors hover:text-accent-strong"

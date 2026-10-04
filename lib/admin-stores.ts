@@ -467,7 +467,7 @@ export async function syncAdminOrders() {
   }
 }
 
-export async function updateOrderStatus(id: string, newStatus: OrderStatusLabel) {
+export async function updateOrderStatus(id: string, newStatus: OrderStatusLabel): Promise<{ success: boolean; error?: string }> {
   const rawId = id.replace(/^ord-/, "");
   const statusMap: Record<OrderStatusLabel, string> = {
     New: "pending",
@@ -477,13 +477,21 @@ export async function updateOrderStatus(id: string, newStatus: OrderStatusLabel)
     Completed: "completed",
     Cancelled: "cancelled",
   };
+  const backendStatus = statusMap[newStatus] || "pending";
+
+  // Optimistically update the store immediately
+  adminOrdersStore.set((orders) =>
+    orders.map((o) => (o.id === id || o.orderNumber === id ? { ...o, orderStatus: newStatus } : o))
+  );
+
   try {
-    await adminApi.orders.updateStatus(rawId, statusMap[newStatus] || "pending");
-    adminOrdersStore.set((orders) =>
-      orders.map((o) => (o.id === id ? { ...o, orderStatus: newStatus } : o))
-    );
-  } catch (err) {
-    console.error("Error updating order status:", err);
+    await adminApi.orders.updateStatus(rawId, backendStatus);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error updating order status in backend:", err);
+    // Revert to backend state if update failed
+    await syncAdminOrders();
+    return { success: false, error: err?.message || "Failed to update order status" };
   }
 }
 

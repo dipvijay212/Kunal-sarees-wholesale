@@ -33,6 +33,7 @@ export function mergeBusinessSettings(stored: StoredBusinessSettings | null | un
       phoneDisplay: contact.phoneDisplay || formatPhoneDisplay(whatsappNumber),
       phoneHref: `tel:+${whatsappNumber}`,
       email: contact.email || defaultSettings.contact.email,
+      mapUrl: contact.mapUrl !== undefined && contact.mapUrl !== null ? contact.mapUrl : defaultSettings.contact.mapUrl,
       address: hasAddress
         ? {
             lines: address.lines ?? [],

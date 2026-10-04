@@ -33,7 +33,11 @@ export const shopMap = {
   placeUrl: "https://maps.app.goo.gl/QhiMqT5FrAuZDJ3m6",
 } as const;
 
-/** Google Maps search link for the saved business address. */
+/** Google Maps link for the showroom: uses the admin-configured mapUrl if set, otherwise searches by address. */
 export function getDirectionsUrl(settings: BusinessSettings = getLiveSettings()): string {
+  const customUrl = settings?.contact?.mapUrl?.trim();
+  if (customUrl) {
+    return customUrl;
+  }
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${settings.businessName}, ${formatAddress(", ", settings)}`)}`;
 }

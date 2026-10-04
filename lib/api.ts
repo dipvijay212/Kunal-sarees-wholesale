@@ -574,6 +574,7 @@ export interface StoredBusinessSettings {
     whatsappNumber: string | null;
     phoneDisplay: string | null;
     email: string | null;
+    mapUrl?: string | null;
     address: { lines: string[]; city: string; region: string; postalCode: string; country: string };
     hours: { days: string; hours: string }[];
   };
