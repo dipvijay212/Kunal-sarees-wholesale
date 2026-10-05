@@ -51,10 +51,13 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
     ? product.variants.map((v) => ({ name: v.color.name, hex: v.color.hex, stock: v.stock }))
     : product.colors.map((c) => ({ name: c.name, hex: c.hex, stock: product.stock }));
 
-  const updateColorQty = (colorName: string, delta: number, maxStock: number) => {
+  // Sarees are sold in full sets only, so a colour can hold whole sets and nothing in between.
+  const maxSetQty = (maxStock: number) => Math.floor(maxStock / rules.step) * rules.step;
+
+  const updateColorQty = (colorName: string, direction: 1 | -1, maxStock: number) => {
     setColorQuantities((prev) => {
       const current = prev[colorName] || 0;
-      const next = Math.max(0, Math.min(maxStock, current + delta));
+      const next = Math.max(0, Math.min(maxSetQty(maxStock), current + direction * rules.step));
       return { ...prev, [colorName]: next };
     });
   };
@@ -65,14 +68,14 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
       if (current > 0) {
         return { ...prev, [colorName]: 0 };
       } else {
-        const addQty = totalQuantity === 0 ? Math.min(rules.min, maxStock) : Math.min(rules.step || 1, maxStock);
+        const addQty = Math.min(totalQuantity === 0 ? rules.min : rules.step, maxSetQty(maxStock));
         return { ...prev, [colorName]: addQty };
       }
     });
   };
 
   const handleAddToOrderList = () => {
-    if (isBelowMoq || isOutOfStock) return;
+    if (isBelowMoq || isOutOfStock || totalQuantity % rules.step !== 0) return;
     rememberCatalogueProduct(product);
     addItem(product.id, totalQuantity);
     openOrderList();
@@ -162,7 +165,7 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
                   <span className="w-8 text-center text-sm font-semibold text-ink tabular-nums">{qty}</span>
                   <button
                     type="button"
-                    disabled={qty >= color.stock}
+                    disabled={qty + rules.step > maxSetQty(color.stock)}
                     onClick={() => updateColorQty(color.name, 1, color.stock)}
                     className="flex size-7 items-center justify-center rounded-xs border border-line bg-canvas text-ink hover:border-accent disabled:opacity-40"
                     aria-label={`${color.name} - ${t.buttons.increase}`}
