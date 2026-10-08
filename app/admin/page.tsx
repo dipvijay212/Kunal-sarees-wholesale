@@ -16,10 +16,8 @@ export default function AdminDashboardPage() {
   // Derive metrics
   const totalProducts = products.length;
   const activeProducts = products.filter((p) => p.status === "active").length;
-  const lowStockProducts = products.filter((p) => p.stock < 15).length;
 
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter((o) => o.orderStatus === "New" || o.orderStatus === "Confirmed").length;
 
   // Live database customer count
   const totalCustomers = Math.max(
@@ -33,7 +31,7 @@ export default function AdminDashboardPage() {
       <AdminInstallBanner />
 
       {/* Metric Cards Grid */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xs border border-line bg-canvas p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted uppercase tracking-wider">Total Products</span>
@@ -54,29 +52,11 @@ export default function AdminDashboardPage() {
 
         <div className="rounded-xs border border-line bg-canvas p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Low Stock</span>
-            <span className="flex size-2 rounded-full bg-alert"></span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-alert">{lowStockProducts}</p>
-          <span className="text-[0.625rem] text-alert font-medium">&lt; 15 pcs available</span>
-        </div>
-
-        <div className="rounded-xs border border-line bg-canvas p-5 shadow-xs">
-          <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted uppercase tracking-wider">Total Orders</span>
             <BagIcon size={18} className="text-accent" />
           </div>
           <p className="mt-2 text-2xl font-bold text-ink">{totalOrders}</p>
           <span className="text-[0.625rem] text-muted">WhatsApp enquiries</span>
-        </div>
-
-        <div className="rounded-xs border border-line bg-canvas p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted uppercase tracking-wider">Pending Orders</span>
-            <span className="flex size-2 rounded-full bg-amber-500"></span>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-ink">{pendingOrders}</p>
-          <span className="text-[0.625rem] font-medium text-amber-600">Needs confirmation</span>
         </div>
 
         <div className="rounded-xs border border-line bg-canvas p-5 shadow-xs">

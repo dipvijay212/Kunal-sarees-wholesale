@@ -567,8 +567,18 @@ export async function fetchFeaturedCollections(limit = 6): Promise<CollectionWit
   return collections.filter((col) => col.featured).slice(0, limit);
 }
 
-export async function fetchNewArrivals(limit = 6): Promise<Product[]> {
+/** The most recently added products, newest first. Adding a product pushes the oldest one out. */
+export async function fetchNewArrivals(limit = 10): Promise<Product[]> {
   const products = await fetchProducts();
-  return products.filter((p) => p.newArrival).slice(0, limit);
+  const addedAt = (p: Product) => {
+    const time = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+    return isNaN(time) ? 0 : time;
+  };
+  return [...products]
+    .sort(
+      (a, b) =>
+        addedAt(b) - addedAt(a) || String(b.id).localeCompare(String(a.id), undefined, { numeric: true }),
+    )
+    .slice(0, limit);
 }
 

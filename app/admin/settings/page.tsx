@@ -164,6 +164,8 @@ export default function AdminSettingsPage() {
 
   // Website language settings state
   const [langSettings, setLangSettings] = useState<WebsiteLanguageSettings>(DEFAULT_LANGUAGE_SETTINGS);
+  // Hide the form until saved settings arrive so defaults never flash as the selection
+  const [isLangLoading, setIsLangLoading] = useState(true);
 
   useEffect(() => {
     adminApi.settings.getLanguage()
@@ -178,7 +180,8 @@ export default function AdminSettingsPage() {
       })
       .catch(() => {
         // Fallback to defaults
-      });
+      })
+      .finally(() => setIsLangLoading(false));
   }, []);
 
   const handleLangCheckboxChange = (lang: Language) => {
@@ -293,6 +296,13 @@ export default function AdminSettingsPage() {
             </p>
           </div>
 
+          {isLangLoading ? (
+            <div className="mt-5 space-y-5 animate-pulse" aria-busy="true" aria-label="Loading language settings">
+              <div className="h-16 rounded-xs bg-line/50" />
+              <div className="h-16 rounded-xs bg-line/50" />
+              <div className="h-12 rounded-xs bg-line/50" />
+            </div>
+          ) : (
           <form onSubmit={handleSaveLanguageSettings} className="mt-5 space-y-5 text-xs">
             {/* Enabled / Available Languages */}
             <div>
@@ -445,6 +455,7 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </form>
+          )}
         </div>
 
         {/* ================================================================= */}
