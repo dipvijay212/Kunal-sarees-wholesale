@@ -18,6 +18,7 @@ export default function AdminDashboardPage() {
   const activeProducts = products.filter((p) => p.status === "active").length;
 
   const totalOrders = orders.length;
+  const recentOrders = orders.slice(0, 5);
 
   // Live database customer count
   const totalCustomers = Math.max(
@@ -70,22 +71,54 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Orders Section */}
-      <div className="mt-8 rounded-xs border border-line bg-canvas p-6 shadow-xs">
-        <div className="flex items-center justify-between border-b border-line pb-4">
+      <div className="mt-8 rounded-xs border border-line bg-canvas p-4 shadow-xs sm:p-6">
+        <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="type-h4 text-ink font-serif">Recent WhatsApp Orders</h2>
             <p className="text-xs text-muted">Latest wholesale order enquiries created by retail buyers</p>
           </div>
           <Link
             href="/admin/orders"
-            className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:underline"
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-accent hover:underline"
           >
             <span>View All Orders</span>
             <ArrowRightIcon size={14} />
           </Link>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
+        {recentOrders.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted">No orders yet. New WhatsApp enquiries will appear here.</p>
+        ) : (
+        <>
+        {/* Phones: one card per order instead of a sideways-scrolling table */}
+        <ul className="mt-4 divide-y divide-line md:hidden">
+          {recentOrders.map((order) => (
+            <li key={order.id} className="py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-mono text-sm font-bold text-ink">{order.orderNumber}</span>
+                <span className="inline-flex shrink-0 rounded-xs bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                  {order.orderStatus || "New"}
+                </span>
+              </div>
+              <p className="mt-1 text-sm font-medium text-ink">{order.customerDetails.fullName}</p>
+              {order.customerDetails.businessName ? (
+                <p className="text-xs text-muted">{order.customerDetails.businessName}</p>
+              ) : null}
+              <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+                <span className="text-ink">
+                  <span className="font-semibold">{formatPieces(order.summary.totalPieces)}</span>
+                  {" · "}
+                  {formatPrice(order.summary.estimatedValue)}
+                </span>
+                <Link href="/admin/orders" className="font-medium text-accent hover:underline">
+                  Manage
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line bg-canvas-deep text-xs uppercase tracking-wider text-muted font-semibold">
               <tr>
@@ -99,7 +132,7 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {orders.slice(0, 5).map((order) => (
+              {recentOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-canvas-deep/50 transition-colors">
                   <td className="px-4 py-3 font-mono font-bold text-ink">{order.orderNumber}</td>
                   <td className="px-4 py-3 font-medium text-ink">{order.customerDetails.fullName}</td>
@@ -124,6 +157,8 @@ export default function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
+        </>
+        )}
       </div>
     </AdminLayout>
   );
