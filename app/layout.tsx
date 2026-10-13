@@ -10,6 +10,7 @@ import { UIProvider } from "@/components/providers/UIProvider";
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, DEFAULT_TITLE, SITE_NAME, SITE_URL } from "@/lib/seo";
 import type { Language } from "@/lib/translations";
 import { GoogleTagHead, GoogleTagNoscript } from "@/components/seo/GoogleTag";
+import { VercelAnalytics } from "@/components/analytics/VercelAnalytics";
 import "@/styles/globals.css";
 
 const displayFont = Cormorant_Garamond({
@@ -105,6 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </UIProvider>
           </LanguageProvider>
         </SettingsProvider>
+        <VercelAnalytics />
       </body>
     </html>
   );

@@ -53,7 +53,7 @@ export function HomeSections({
         </Container>
       </section>
 
-      {/* 2. NEW ARRIVALS (hidden until at least one saree is marked as a new arrival) */}
+      {/* 2. NEW ARRIVALS (the latest sarees added; hidden while the catalogue is empty) */}
       {newArrivals.length > 0 ? (
       <section aria-labelledby="new-arrivals-heading" className="section-y border-t border-line bg-canvas">
         <Container>
@@ -62,7 +62,7 @@ export function HomeSections({
             eyebrow={t.products.newArrivalsEyebrow}
             title={t.products.newArrivalsTitle}
             description={t.products.newArrivalsDesc}
-            action={{ label: t.products.viewAllNew, href: "/products" }}
+            action={{ label: t.products.viewAllNew, href: "/new-arrivals" }}
           />
           <div className="mt-10 lg:mt-12">
             <ProductGrid products={newArrivals} eagerCount={3} singleRow />

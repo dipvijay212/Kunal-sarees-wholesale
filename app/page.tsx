@@ -46,7 +46,7 @@ export default async function HomePage() {
     fetchBusinessSettings(),
   ]);
 
-  // The home page previews one row of new arrivals and 8 sarees, so only those are sent
+  // The home page previews one row of the latest sarees as new arrivals and 8 more sarees, so only those are sent
   // to the browser. New arrivals are left out of "All Sarees" unless nothing else exists.
   const newArrivalIds = new Set(newArrivals.map((product) => product.id));
   const otherProducts = products.filter((product) => !newArrivalIds.has(product.id));

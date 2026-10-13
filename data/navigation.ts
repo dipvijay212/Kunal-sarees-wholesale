@@ -4,6 +4,7 @@ import type { TranslationDictionary } from "@/lib/translations";
 export const getMainNavigation = (t?: TranslationDictionary): NavItem[] => [
   { label: t ? t.nav.home : "होम", href: "/" },
   { label: t ? t.nav.sarees : "साड़ियां", href: "/products" },
+  { label: t ? t.nav.newArrivals : "नई साड़ियां", href: "/new-arrivals" },
   { label: t ? t.nav.categories : "कलेक्शन", href: "/collections" },
   { label: t ? t.nav.about : "हमारे बारे में", href: "/about" },
   { label: t ? t.nav.contact : "संपर्क", href: "/contact" },
@@ -12,6 +13,7 @@ export const getMainNavigation = (t?: TranslationDictionary): NavItem[] => [
 export const getFooterQuickLinks = (t?: TranslationDictionary): NavItem[] => [
   { label: t ? t.nav.home : "होम", href: "/" },
   { label: t ? t.nav.sarees : "साड़ियां", href: "/products" },
+  { label: t ? t.nav.newArrivals : "नई साड़ियां", href: "/new-arrivals" },
   { label: t ? t.nav.categories : "कलेक्शन", href: "/collections" },
   { label: t ? t.wholesale.title : "होलसेल नियम", href: "/wholesale" },
   { label: t ? t.nav.about : "हमारे बारे में", href: "/about" },

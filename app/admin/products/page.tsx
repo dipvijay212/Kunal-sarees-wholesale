@@ -16,6 +16,7 @@ import { formatPrice } from "@/lib/format";
 import type { Product, Fabric, DesignType, ProductStatus } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { AdminPagination, usePagination } from "@/components/admin/AdminPagination";
 import { PlusIcon, SearchIcon, CloseIcon } from "@/components/ui/Icons";
 import type { Language } from "@/lib/translations";
 
@@ -384,6 +385,8 @@ export default function AdminProductsPage() {
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const productPages = usePagination(filteredProducts, 10, `${search}|${selectedCategory}|${selectedStatus}`);
 
   const handleOpenAddModal = () => {
     setUploadError(null);
@@ -805,7 +808,7 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {filteredProducts.map((product) => {
+            {productPages.pageItems.map((product) => {
               const category = categories.find((c) => c.id === product.categoryId);
               const pVideos = product.videoUrls && product.videoUrls.length > 0
                 ? product.videoUrls
@@ -902,6 +905,15 @@ export default function AdminProductsPage() {
           </tbody>
         </table>
       </div>
+
+      <AdminPagination
+        page={productPages.page}
+        totalPages={productPages.totalPages}
+        totalItems={productPages.totalItems}
+        pageSize={productPages.pageSize}
+        onPageChange={productPages.setPage}
+        itemLabel="sarees"
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal

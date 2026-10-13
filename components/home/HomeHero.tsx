@@ -145,25 +145,6 @@ export function HomeHero({ settings: propSettings }: HomeHeroProps) {
                 sizes="(min-width: 1024px) 40vw, 90vw"
                 className="object-cover object-center transition-transform duration-700 hover:scale-105"
               />
-              {/* Luxury gradient frame & badge */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-transparent" />
-
-              {/* Floating Bottom Editorial Tag */}
-              <div className="absolute inset-x-4 bottom-4 rounded-xs border border-white/20 bg-black/55 p-3.5 backdrop-blur-md text-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-gold-light">
-                      {t.hero.photoTagSub}
-                    </p>
-                    <p className="font-display text-base sm:text-lg font-medium">
-                      {t.hero.photoTagTitle}
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-xs border border-gold/40 bg-gold/20 px-2.5 py-1 text-[0.6875rem] font-medium text-gold-light uppercase tracking-[0.08em]">
-                    {t.hero.moqBadge}
-                  </span>
-                </div>
-              </div>
             </div>
 
             {/* Subtle decorative gold corner frame */}

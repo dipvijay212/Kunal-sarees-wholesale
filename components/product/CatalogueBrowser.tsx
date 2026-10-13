@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
@@ -46,17 +46,36 @@ const urlParamFor: Record<string, string> = {
 };
 
 interface PricePreset {
-  key: "under2500" | "between2500And5000" | "between5000And10000" | "above10000";
+  key: string;
   min: number | null;
   max: number | null;
 }
 
-const PRICE_PRESETS: PricePreset[] = [
-  { key: "under2500", min: null, max: 2500 },
-  { key: "between2500And5000", min: 2500, max: 5000 },
-  { key: "between5000And10000", min: 5000, max: 10000 },
-  { key: "above10000", min: 10000, max: null },
-];
+const PRICE_STEPS = [50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000];
+
+/**
+ * Price ranges built from the prices actually in the catalogue, so every range can contain
+ * products. Splits at round numbers into at most five ranges that do not overlap.
+ */
+function buildPricePresets(products: Product[]): PricePreset[] {
+  const prices = products.map((p) => p.price).filter((price) => Number.isFinite(price) && price > 0);
+  if (prices.length === 0) return [];
+  const lowest = Math.min(...prices);
+  const highest = Math.max(...prices);
+
+  for (const step of PRICE_STEPS) {
+    const cuts: number[] = [];
+    for (let cut = (Math.floor(lowest / step) + 1) * step; cut <= highest; cut += step) cuts.push(cut);
+    if (cuts.length > 4) continue;
+    if (cuts.length === 0) return [];
+    return [
+      { key: `under-${cuts[0]}`, min: null, max: cuts[0] - 1 },
+      ...cuts.slice(0, -1).map((cut, i) => ({ key: `from-${cut}`, min: cut, max: cuts[i + 1] - 1 })),
+      { key: `above-${cuts[cuts.length - 1]}`, min: cuts[cuts.length - 1], max: null },
+    ];
+  }
+  return [];
+}
 
 function formatSareeTypeLabel(name: string): string {
   return name.replace(/\s+Sarees$/i, "").trim();
@@ -98,6 +117,18 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
   // Derived options from product pool
   const categoryOptions = getCategoryOptions(products, categories);
 
+  const pricePresets = useMemo(() => buildPricePresets(products), [products]);
+  const pricePresetLabel = (preset: PricePreset): string => {
+    if (preset.min === null) {
+      const limit = formatPrice((preset.max ?? 0) + 1);
+      return language === "en" ? `Under ${limit}` : `${limit} से कम`;
+    }
+    if (preset.max === null) {
+      return language === "en" ? `${formatPrice(preset.min)} & above` : `${formatPrice(preset.min)} या ज्यादा`;
+    }
+    return `${formatPrice(preset.min)} – ${formatPrice(preset.max)}`;
+  };
+
   const sortOptionsList = [
     { value: "newest", label: t.filters.sortOptions.newest },
     { value: "featured", label: t.filters.sortOptions.featured },
@@ -131,6 +162,12 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
     startTransition(() => {
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     });
+  };
+
+  /** Pagination buttons: change page and return to the top, so the new page isn't opened at its end. */
+  const goToPage = (page: number) => {
+    updateParams({ page });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // The box keeps exactly what is typed (including a trailing space between words);
@@ -191,11 +228,11 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
     });
   }
   if (effectiveFilters.minPrice !== null || effectiveFilters.maxPrice !== null) {
-    const activePreset = PRICE_PRESETS.find(
+    const activePreset = pricePresets.find(
       (p) => p.min === effectiveFilters.minPrice && p.max === effectiveFilters.maxPrice,
     );
     if (activePreset) {
-      activeFilters.push({ key: "price", label: `${t.filters.price}: ${t.filters.priceRanges[activePreset.key]}` });
+      activeFilters.push({ key: "price", label: `${t.filters.price}: ${pricePresetLabel(activePreset)}` });
     } else {
       const min = effectiveFilters.minPrice !== null ? formatPrice(effectiveFilters.minPrice) : "₹0";
       const max = effectiveFilters.maxPrice !== null ? formatPrice(effectiveFilters.maxPrice) : (language === "en" ? "Max" : "अधिकतम");
@@ -271,6 +308,8 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
 
   const renderPriceFilter = () => {
     const isAllPrices = effectiveFilters.minPrice === null && effectiveFilters.maxPrice === null;
+    // Nothing to choose between when every saree costs about the same.
+    if (pricePresets.length === 0 && isAllPrices) return null;
     return (
       <div className="py-5">
         <h3 className="type-eyebrow text-gold-accent font-semibold tracking-[0.12em] uppercase text-[0.6875rem] mb-3">
@@ -299,10 +338,10 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
               <span>{language === "en" ? "All Prices" : "सभी कीमतें"}</span>
             </button>
           </li>
-          {PRICE_PRESETS.map((preset) => {
+          {pricePresets.map((preset) => {
             const isSelected =
               effectiveFilters.minPrice === preset.min && effectiveFilters.maxPrice === preset.max;
-            const presetLabel = t.filters.priceRanges[preset.key];
+            const presetLabel = pricePresetLabel(preset);
             return (
               <li key={preset.key}>
                 <button
@@ -518,7 +557,7 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
                         variant="secondary"
                         size="sm"
                         disabled={currentPage <= 1}
-                        onClick={() => updateParams({ page: currentPage - 1 })}
+                        onClick={() => goToPage(currentPage - 1)}
                         leadingIcon={<ChevronLeftIcon size={16} />}
                       >
                         {language === "en" ? "Previous" : "पिछला"}
@@ -528,7 +567,7 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
                           <button
                             key={pageNum}
                             type="button"
-                            onClick={() => updateParams({ page: pageNum })}
+                            onClick={() => goToPage(pageNum)}
                             className={cn(
                               "size-8 rounded-xs text-xs font-semibold transition-colors",
                               pageNum === currentPage
@@ -544,7 +583,7 @@ export function CatalogueBrowser({ products, categories, defaultCollectionId }: 
                         variant="secondary"
                         size="sm"
                         disabled={currentPage >= totalPages}
-                        onClick={() => updateParams({ page: currentPage + 1 })}
+                        onClick={() => goToPage(currentPage + 1)}
                         trailingIcon={<ChevronRightIcon size={16} />}
                       >
                         {language === "en" ? "Next" : "अगला"}

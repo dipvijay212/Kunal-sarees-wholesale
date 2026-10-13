@@ -34,10 +34,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchCollections(),
   ]);
 
-  // /new-arrivals and /order-list only redirect, so they are not listed.
+  // /order-list only redirects, so it is not listed.
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: absoluteUrl("/"), changeFrequency: "weekly", priority: 1 },
     { url: absoluteUrl("/products"), changeFrequency: "daily", priority: 0.9 },
+    { url: absoluteUrl("/new-arrivals"), changeFrequency: "daily", priority: 0.8 },
     { url: absoluteUrl("/collections"), changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl("/wholesale"), changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/about"), changeFrequency: "monthly", priority: 0.5 },

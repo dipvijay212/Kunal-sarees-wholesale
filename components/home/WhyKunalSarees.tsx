@@ -67,11 +67,6 @@ export function WhyKunalSarees({ settings: propSettings }: WhyKunalSareesProps =
                 sizes="(min-width: 1024px) 35vw, 90vw"
                 className="object-cover transition-transform duration-700 hover:scale-105"
               />
-              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 rounded-xs border border-white/20 bg-black/60 p-3 text-white backdrop-blur-xs text-center">
-                <p className="font-display text-base font-medium">{whyUs.badgeTitle}</p>
-                <p className="text-[0.6875rem] text-gold-light">{whyUs.badgeSubtitle}</p>
-              </div>
             </div>
           </div>
         </div>

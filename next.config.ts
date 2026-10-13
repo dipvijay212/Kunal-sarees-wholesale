@@ -31,8 +31,7 @@ const nextConfig: NextConfig = {
         destination: "https://www.kunalsarees.in/:path*",
         permanent: true,
       },
-      // These pages only redirect; make it permanent so they don't linger as separate URLs.
-      { source: "/new-arrivals", destination: "/products", permanent: true },
+      // This page only redirects; make it permanent so it doesn't linger as a separate URL.
       { source: "/order-list", destination: "/order", permanent: true },
     ];
   },

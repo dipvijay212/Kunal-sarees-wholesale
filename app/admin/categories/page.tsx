@@ -13,6 +13,7 @@ import { adminApi } from "@/lib/api";
 import type { Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { AdminPagination, usePagination } from "@/components/admin/AdminPagination";
 import { PlusIcon, CloseIcon } from "@/components/ui/Icons";
 
 export default function AdminCategoriesPage() {
@@ -27,6 +28,8 @@ export default function AdminCategoriesPage() {
     });
     return counts;
   }, [products]);
+
+  const categoryPages = usePagination(categories, 10);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
@@ -156,7 +159,7 @@ export default function AdminCategoriesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {categories.map((cat) => (
+            {categoryPages.pageItems.map((cat) => (
               <tr key={cat.id} className="hover:bg-canvas-deep/50 transition-colors">
                 <td className="px-4 py-3">
                   {cat.image?.url ? (
@@ -214,6 +217,15 @@ export default function AdminCategoriesPage() {
           </tbody>
         </table>
       </div>
+
+      <AdminPagination
+        page={categoryPages.page}
+        totalPages={categoryPages.totalPages}
+        totalItems={categoryPages.totalItems}
+        pageSize={categoryPages.pageSize}
+        onPageChange={categoryPages.setPage}
+        itemLabel="categories"
+      />
 
       {/* Delete Category Confirmation Modal */}
       <Modal
