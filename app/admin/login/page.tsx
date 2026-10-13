@@ -15,10 +15,11 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // If already logged in, redirect to admin
+    // If already actively logged in, redirect to admin
     const token = typeof window !== "undefined" ? localStorage.getItem("ks:admin:jwt:v1") : null;
+    const refreshToken = typeof window !== "undefined" ? localStorage.getItem("ks:admin:refresh_jwt:v1") : null;
     const session = adminAuthStore.getSnapshot();
-    if (session.isAuthenticated || token) {
+    if (session.isAuthenticated && (token || refreshToken)) {
       router.replace("/admin");
     }
   }, [router]);

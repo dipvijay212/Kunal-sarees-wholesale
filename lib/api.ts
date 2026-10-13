@@ -228,7 +228,84 @@ export function setStoredToken(token: string | null) {
   }
 }
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('ks:admin:refresh_jwt:v1') || null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredRefreshToken(token: string | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (token) {
+      localStorage.setItem('ks:admin:refresh_jwt:v1', token);
+    } else {
+      localStorage.removeItem('ks:admin:refresh_jwt:v1');
+    }
+  } catch (err) {
+    console.error('Error setting refresh token', err);
+  }
+}
+
+// Single-flight promise so concurrent 401 requests don't trigger multiple refresh calls
+let activeRefreshPromise: Promise<string | null> | null = null;
+
+async function refreshAdminToken(): Promise<string | null> {
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
+  }
+
+  activeRefreshPromise = (async () => {
+    try {
+      const storedRefreshToken = getStoredRefreshToken();
+      if (!storedRefreshToken) {
+        return null;
+      }
+
+      const refreshUrl = `${API_BASE}/auth/refresh-token`;
+      const res = await fetch(refreshUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
+      });
+
+      if (!res.ok) {
+        // Refresh token expired or invalid
+        setStoredToken(null);
+        setStoredRefreshToken(null);
+        return null;
+      }
+
+      const json = await res.json().catch(() => null);
+      if (json && json.success && json.data?.token) {
+        const newAccessToken = json.data.token as string;
+        setStoredToken(newAccessToken);
+        if (json.data.refreshToken) {
+          setStoredRefreshToken(json.data.refreshToken);
+        }
+        return newAccessToken;
+      }
+
+      setStoredToken(null);
+      setStoredRefreshToken(null);
+      return null;
+    } catch (err) {
+      console.warn('Failed to refresh admin authentication token silently:', err);
+      return null;
+    } finally {
+      activeRefreshPromise = null;
+    }
+  })();
+
+  return activeRefreshPromise;
+}
+
+async function request<T>(endpoint: string, options: RequestInit = {}, isRetry: boolean = false): Promise<T> {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   const headers = new Headers(options.headers || {});
 
@@ -259,6 +336,32 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   const res = await fetch(url, fetchOptions);
 
+  // Silent Refresh Interceptor for 401 Unauthorized
+  const isAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/refresh');
+  if (res.status === 401 && !isRetry && !isAuthEndpoint && typeof window !== 'undefined') {
+    const refreshedToken = await refreshAdminToken();
+    if (refreshedToken) {
+      // Re-create headers with the fresh token
+      const retryHeaders = new Headers(options.headers || {});
+      if (!retryHeaders.has('Content-Type') && !(options.body instanceof FormData)) {
+        retryHeaders.set('Content-Type', 'application/json');
+      }
+      retryHeaders.set('Authorization', `Bearer ${refreshedToken}`);
+
+      const retryOptions: RequestInit = {
+        ...options,
+        headers: retryHeaders,
+      };
+
+      // Seamlessly replay original request with fresh credentials
+      return request<T>(endpoint, retryOptions, true);
+    } else {
+      // Both tokens expired or absent: clear stale credentials
+      setStoredToken(null);
+      setStoredRefreshToken(null);
+    }
+  }
+
   const json: ApiResponse<T> = await res.json().catch(() => ({
     success: false,
     message: `Server returned invalid JSON (${res.status})`,
@@ -279,14 +382,21 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const authApi = {
   login: async (credentials: { email: string; password: string }) => {
-    const data = await request<{ user: BackendUser; token: string }>('/auth/login', {
+    const data = await request<{ user: BackendUser; token: string; refreshToken?: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
     if (data.token) {
       setStoredToken(data.token);
     }
+    if (data.refreshToken) {
+      setStoredRefreshToken(data.refreshToken);
+    }
     return data;
+  },
+
+  refreshToken: async () => {
+    return refreshAdminToken();
   },
 
   getMe: async () => {
@@ -316,6 +426,7 @@ export const authApi = {
 
   logout: () => {
     setStoredToken(null);
+    setStoredRefreshToken(null);
   },
 };
 

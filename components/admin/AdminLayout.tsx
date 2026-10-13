@@ -30,12 +30,13 @@ export function AdminLayout({
     if (!isClientReady) return;
 
     const token = typeof window !== "undefined" ? localStorage.getItem("ks:admin:jwt:v1") : null;
-    const isAuthed = session.isAuthenticated || Boolean(token);
+    const refreshToken = typeof window !== "undefined" ? localStorage.getItem("ks:admin:refresh_jwt:v1") : null;
+    const isAuthed = session.isAuthenticated || Boolean(token) || Boolean(refreshToken);
 
     if (pathname !== "/admin/login" && !isAuthed) {
       router.replace("/admin/login");
     } else if (isAuthed) {
-      if (!session.isAuthenticated && token) {
+      if (!session.isAuthenticated && (token || refreshToken)) {
         adminAuthStore.set({
           isAuthenticated: true,
           email: session.email || "admin@kunalsarees.com",
@@ -55,7 +56,9 @@ export function AdminLayout({
     return <>{children}</>;
   }
 
-  const hasToken = typeof window !== "undefined" ? Boolean(localStorage.getItem("ks:admin:jwt:v1")) : false;
+  const hasToken = typeof window !== "undefined"
+    ? Boolean(localStorage.getItem("ks:admin:jwt:v1") || localStorage.getItem("ks:admin:refresh_jwt:v1"))
+    : false;
   const isAuthed = session.isAuthenticated || hasToken;
 
   if (!isClientReady || !isAuthed) {

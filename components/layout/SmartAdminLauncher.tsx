@@ -40,7 +40,7 @@ export function SmartAdminLauncher() {
     const isStandalone = checkIsInstalled();
 
     // Check admin credentials
-    const token = localStorage.getItem("ks:admin:jwt:v1");
+    const token = localStorage.getItem("ks:admin:jwt:v1") || localStorage.getItem("ks:admin:refresh_jwt:v1");
     const session = adminAuthStore.getSnapshot();
     const isAuthed = Boolean(session.isAuthenticated || token);
     const isOwnerDevice = localStorage.getItem(OWNER_MODE_KEY) === "true";
