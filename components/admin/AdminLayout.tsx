@@ -31,12 +31,17 @@ export function AdminLayout({
 
     const token = typeof window !== "undefined" ? localStorage.getItem("ks:admin:jwt:v1") : null;
     const refreshToken = typeof window !== "undefined" ? localStorage.getItem("ks:admin:refresh_jwt:v1") : null;
-    const isAuthed = session.isAuthenticated || Boolean(token) || Boolean(refreshToken);
+    const hasToken = Boolean(token || refreshToken);
 
-    if (pathname !== "/admin/login" && !isAuthed) {
-      router.replace("/admin/login");
-    } else if (isAuthed) {
-      if (!session.isAuthenticated && (token || refreshToken)) {
+    if (pathname !== "/admin/login") {
+      // If there is no token at all, clear session and immediately show login screen
+      if (!hasToken) {
+        adminAuthStore.reset();
+        router.replace("/admin/login");
+        return;
+      }
+
+      if (!session.isAuthenticated) {
         adminAuthStore.set({
           isAuthenticated: true,
           email: session.email || "admin@kunalsarees.com",
@@ -44,10 +49,11 @@ export function AdminLayout({
           loginAt: Date.now(),
         });
       }
-      if (pathname === "/admin/login") {
+      syncAdminData();
+    } else {
+      // On /admin/login: only redirect to /admin if actively authenticated with an actual token
+      if (session.isAuthenticated && hasToken) {
         router.replace("/admin");
-      } else {
-        syncAdminData();
       }
     }
   }, [pathname, session.isAuthenticated, session.email, session.name, isClientReady, router]);
@@ -56,12 +62,12 @@ export function AdminLayout({
     return <>{children}</>;
   }
 
+  // To view any admin screen, a token is strictly required
   const hasToken = typeof window !== "undefined"
     ? Boolean(localStorage.getItem("ks:admin:jwt:v1") || localStorage.getItem("ks:admin:refresh_jwt:v1"))
     : false;
-  const isAuthed = session.isAuthenticated || hasToken;
 
-  if (!isClientReady || !isAuthed) {
+  if (!isClientReady || !hasToken) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-canvas p-6">
         <LoadingState variant="lines" count={3} label="Authenticating admin session..." />

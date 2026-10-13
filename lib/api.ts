@@ -359,6 +359,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}, isRetry: 
       // Both tokens expired or absent: clear stale credentials
       setStoredToken(null);
       setStoredRefreshToken(null);
+      try {
+        localStorage.removeItem('ks:admin:session:v1');
+      } catch {}
+
+      // If user is currently on an admin screen, immediately show the login screen
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+        window.location.replace('/admin/login?expired=1');
+      }
     }
   }
 

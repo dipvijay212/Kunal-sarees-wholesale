@@ -12,6 +12,7 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -21,6 +22,14 @@ export default function AdminLoginPage() {
     const session = adminAuthStore.getSnapshot();
     if (session.isAuthenticated && (token || refreshToken)) {
       router.replace("/admin");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("expired") === "1") {
+        setSessionExpiredNotice(true);
+      }
     }
   }, [router]);
 
@@ -58,6 +67,13 @@ export default function AdminLoginPage() {
               Enter your credentials to access the wholesale admin management portal.
             </p>
           </div>
+
+          {/* Session Expired Notice */}
+          {sessionExpiredNotice ? (
+            <div className="mt-4 rounded-xs border border-line bg-canvas-subtle p-3 text-xs text-ink text-center">
+              Your session has expired. Please sign in to continue.
+            </div>
+          ) : null}
 
           {/* Error Message */}
           {error ? (
