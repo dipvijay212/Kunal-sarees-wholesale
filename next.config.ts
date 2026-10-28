@@ -36,7 +36,10 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    formats: ["image/avif", "image/webp"],
+    // Cloudinary/Unsplash resize images themselves (lib/image-loader.ts), so Vercel's
+    // Image Optimization (and its free-tier transformation quota) is not used.
+    loader: "custom",
+    loaderFile: "./lib/image-loader.ts",
     remotePatterns: [
       // Development product photography (see data/images.ts).
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
